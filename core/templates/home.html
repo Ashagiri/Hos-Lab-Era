@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hos-Lab-Era - Home</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; }
+        .navbar { background: #2c3e50; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-radius: 6px; }
+        .navbar h1 { margin: 0; font-size: 22px; }
+        .user-info { font-size: 14px; }
+        .container { margin-top: 30px; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        h2 { color: #2c3e50; margin-top: 0; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 20px; }
+        .stat-card { background: #ecf0f1; padding: 20px; border-radius: 6px; text-align: center; border-left: 5px solid #3498db; }
+        .stat-card h3 { margin: 0 0 10px 0; color: #7f8c8d; font-size: 14px; text-transform: uppercase; }
+        .stat-card p { margin: 0; font-size: 24px; font-weight: bold; color: #2c3e50; }
+    </style>
+</head>
+<body>
+
+<div class="navbar">
+    <h1>🚀 Hos-Lab-Era Platform Engine</h1>
+    <div class="user-info">
+        Welcome back, <strong>{% if user.is_authenticated %}{{ user.username }}{% else %}Guest{% endif %}</strong>!
+    </div>
+</div>
+
+<div class="container">
+    <h2>🏥 Laboratory Overview Dashboard</h2>
+    <p>Your database environment links are online, synchronized, and running stable.</p>
+    
+    <div class="grid">
+        <div class="stat-card">
+            <h3>Account Profile Status</h3>
+            <p>{% if user.is_authenticated %}Active{% else %}Offline{% endif %}</p>
+        </div>
+        <div class="stat-card" style="border-left-color: #2ecc71;">
+            <h3>Role Assigned</h3>
+            <p>{% if user.is_authenticated %}{{ user.role }}{% else %}None{% endif %}</p>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

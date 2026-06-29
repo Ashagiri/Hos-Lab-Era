@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hos-Lab-Era - Register</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            background: #f4f6f9; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+        }
+        .card { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+            width: 380px; 
+        }
+        h2 { 
+            margin-top: 0; 
+            color: #2c3e50; 
+            text-align: center; 
+            margin-bottom: 20px;
+        }
+        .form-group { 
+            margin-bottom: 15px; 
+        }
+        label { 
+            display: block; 
+            margin-bottom: 5px; 
+            color: #7f8c8d; 
+            font-size: 14px; 
+        }
+        input { 
+            width: 100%; 
+            padding: 10px; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            box-sizing: border-box; 
+            font-size: 14px;
+        }
+        input:focus {
+            border-color: #2ecc71;
+            outline: none;
+        }
+        button { 
+            width: 100%; 
+            background: #2ecc71; 
+            color: white; 
+            padding: 10px; 
+            border: none; 
+            border-radius: 4px; 
+            font-size: 16px; 
+            cursor: pointer; 
+            margin-top: 10px; 
+        }
+        button:hover { 
+            background: #27ae60; 
+        }
+        .switch-link { 
+            text-align: center; 
+            margin-top: 15px; 
+            font-size: 13px; 
+        }
+        .switch-link a { 
+            color: #3498db; 
+            text-decoration: none; 
+        }
+        .switch-link a:hover {
+            text-decoration: underline;
+        }
+        .messages { 
+            color: #e74c3c; 
+            font-size: 14px; 
+            margin-bottom: 15px; 
+            text-align: center; 
+            background: #fde8e7;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>📝 Patient Registration</h2>
+
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                {{ message }}
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <form method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" name="username" placeholder="Choose a simple username" required>
+        </div>
+        <div class="form-group">
+            <label>Phone Number</label>
+            <input type="text" name="phone" placeholder="e.g. 9800000000" required>
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" name="password" placeholder="Choose a password" required>
+        </div>
+        <button type="submit">Create Account</button>
+    </form>
+    
+    <div class="switch-link">
+        Already have an account? <a href="/accounts/login/">Login here</a>
+    </div>
+</div>
+
+</body>
+</html>
