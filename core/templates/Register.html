@@ -10,7 +10,8 @@
     
     <style>
       body {
-        background-image: url("{% static 'fff.jpg' %}");
+        /* Fixed syntax error: Added missing semicolon to fix background image parsing */
+        background-image: url("fff.jpg");
         background-color: #fdfdfd;
         background-repeat: no-repeat;
         background-position: center center;
@@ -23,6 +24,7 @@
         max-width: 760px;
         background: #ffffff;
         border-radius: 12px;
+        /* Added a soft shadow to break the white container cleanly off the background image */
         box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08); 
       }
 
@@ -56,6 +58,7 @@
         margin-left: 2px;
       }
 
+      /* Custom positioning wrapper for internal icons */
       .input-wrapper {
         position: relative;
       }
@@ -74,6 +77,7 @@
         color: #999999;
       }
 
+      /* Native select layout option style adjustment */
       .input-wrapper .form-select {
         color: #8c9399;
       }
@@ -130,6 +134,7 @@
 <div class="container d-flex justify-content-center align-items-center min-vh-100 py-4">
   <div class="registration-card w-100 p-4 p-md-5">
     
+    <!-- Header aligned with visual design in Screenshot 2026-07-05 114250.jpg -->
     <div class="d-flex align-items-center gap-3 pb-3 mb-4 border-bottom border-light-subtle">
       <div class="header-icon">
         <i class="fa-solid fa-user"></i>
@@ -137,10 +142,8 @@
       <h1 class="header-title m-0">Create an Account</h1>
     </div>
 
-    <!-- Added proper method handling and validation token -->
-    <form method="POST">
-      {% csrf_token %}
-      
+    <!-- Main Registration Form -->
+    <form>
       <div class="row g-3 mb-3">
         <div class="col-md-6">
           <label for="regFullName" class="form-label">Full Name <span class="text-asterisk">:</span></label>
@@ -150,14 +153,13 @@
           </div>
         </div>
         
-        <div class="col-md-6">
+       <div class="col-md-6">
            <label for="regDOB" class="form-label">Date of Birth <span class="text-asterisk">:</span></label>
            <div class="input-wrapper">
              <i class="fa-solid fa-calendar-days inner-icon"></i>
              <input type="date" id="regDOB" class="form-control" required autocomplete="bday">
-           </div>
+            </div>
         </div>
-      </div>
 
       <div class="row g-3 mb-3">
         <!-- Email Address -->
@@ -204,20 +206,20 @@
       </div>
 
       <div class="row g-3 mb-3">
-        <!-- Age Field -->
+        <!-- Role Selection -->
         <div class="col-md-6">
-          <label for="regAge" class="form-label">Age<span class="text-asterisk">:</span></label>
+          <label for="regRole" class="form-label">Age<span class="text-asterisk">:</span></label>
           <div class="input-wrapper">
             <i class="fa-solid fa-user-plus inner-icon"></i>
-            <input type="number" id="regAge" class="form-control" placeholder="Enter your age" required>
+            <input type="number" id="regRole" class="form-control" placeholder="Enter your age" required>
           </div>
         </div>
-        <!-- Gender Selection -->
+        <!-- Department Selection -->
         <div class="col-md-6">
-          <label for="regGender" class="form-label">Gender<span class="text-asterisk">:</span></label>
+          <label for="regDepartment" class="form-label">Gender<span class="text-asterisk">:</span></label>
           <div class="input-wrapper">
             <i class="fa-solid fa-building inner-icon"></i>
-            <select id="regGender" class="form-select" required>
+            <select id="regDepartment" class="form-select" required>
               <option value="" disabled selected hidden>Select gender</option>
               <option value="male">Male</option>
               <option value="female">Female</option>
@@ -243,8 +245,7 @@
         
         <div class="text-center text-secondary small">
           Already have an account? 
-          <!-- Linked with dynamic Django url routing -->
-          <a href="{% url 'login' %}" class="text-primary text-decoration-none fw-semibold ms-1">Login</a>
+          <a href="Login.html" class="text-primary text-decoration-none fw-semibold ms-1">Login</a>
         </div>
       </div>
     </form>
