@@ -1,112 +1,252 @@
+{% load static %}
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>HLMS Portal Login</title>
+    <title>HLMS - Create Account</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     
     <style>
-      /* Keeping custom backdrop blur styling as it's not natively included in Bootstrap utilities */
-      .glass-card {
-        background-color: rgba(33, 43, 49, 0.8) !important;
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
+      body, html {
+        height: 100%;
+        margin: 0;
+        font-family: system-ui, -apple-system, sans-serif;
       }
-      
-      /* Pure styling polish for input placeholders to match the aesthetic */
-      .form-custom-control::placeholder {
-        color: #8a99a1 !important;
+
+      .bg-overlay-wrapper {
+        background-image: url("{% static 'fff.jpg' %}");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        min-height: 100vh;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 15px;
+      }
+
+      .form-card {
+        background-color: rgba(255, 255, 255, 0.96);
+        border-radius: 12px;
+        width: 100%;
+        max-width: 680px;
+        padding: 40px 45px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      }
+
+      .card-title-accent {
+        color: #0b5ed7;
+        font-weight: 700;
+      }
+
+      .field-label {
+        font-weight: 600;
+        color: #495057;
+        font-size: 0.9rem;
+        margin-bottom: 6px;
+      }
+
+      .input-group-custom {
+        display: flex;
+        align-items: center;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        background-color: #ffffff;
+        height: 42px;
+        overflow: hidden;
+      }
+
+      .input-group-custom:focus-within {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+      }
+
+      .input-group-custom .icon-addon {
+        color: #6c757d;
+        width: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-right: 1px solid #e9ecef;
+      }
+
+      .input-group-custom .form-control-clean,
+      .input-group-custom .form-select-clean {
+        border: none;
+        outline: none;
+        width: 100%;
+        padding: 0 12px;
+        color: #212529;
+        font-size: 0.95rem;
+        background: transparent;
+      }
+
+      .password-eye-btn {
+        background: transparent;
+        border: none;
+        color: #6c757d;
+        padding-right: 12px;
+        cursor: pointer;
+      }
+
+      .btn-primary-action {
+        background-color: #0d6efd;
+        color: #ffffff;
+        border: none;
+        border-radius: 6px;
+        height: 45px;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: background-color 0.2s ease;
+      }
+
+      .btn-primary-action:hover {
+        background-color: #0b5ed7;
+      }
+
+      .redirect-footer-link {
+        color: #0d6efd;
+        text-decoration: none;
+        font-weight: 500;
+      }
+
+      .redirect-footer-link:hover {
+        text-decoration: underline;
       }
     </style>
   </head>
   <body>
 
-<div class="d-flex justify-content-center align-items-center min-vh-100 px-3" 
-     style="background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('A.jpeg') no-repeat center center/cover;">
-  
-  <div class="card mb-3 shadow-lg border-0 text-white glass-card w-100 rounded-4" style="max-width: 840px;">
-    <div class="row g-0 align-items-center">
+<div class="bg-overlay-wrapper">
+  <div class="form-card">
+    
+    <div class="d-flex align-items-center gap-3 mb-4">
+      <div class="fs-2 text-primary"><i class="fa-solid fa-circle-user"></i></div>
+      <h3 class="m-0 card-title-accent">Create an Account</h3>
+    </div>
+
+    <form method="POST">
+      {% csrf_token %}
       
-      <div class="col-md-5 d-none d-md-block">
-        <img src="ddd.jpg" class="img-fluid h-100 object-fit-cover rounded-start-4 opacity-75" alt="Login Banner" style="min-height: 460px;">
-      </div>
-      
-      <div class="col-md-7">
-        <div class="card-body p-4 p-sm-5 text-center">
-          
-          <div class="mb-3">
-            <i class="fa-solid fa-shield-heart display-4 text-info"></i>
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="field-label">Full Name :</label>
+          <div class="input-group-custom">
+            <div class="icon-addon"><i class="fa-solid fa-user"></i></div>
+            <input type="text" name="full_name" class="form-control-clean" placeholder="Enter full name" required>
           </div>
-          
-          <h2 class="text-white fw-bold mb-1 fs-3">Please sign in</h2>
-          <p class="mb-4 text-white-50 small tracking-wide" style="letter-spacing: 0.5px;">Hospital Laboratory Management System</p>
-          
-          <form>
-            
-            <div class="input-group mb-3 w-85 mx-auto">
-              <span class="input-group-text bg-white bg-opacity-10 border-white border-opacity-25 text-secondary">
-                <i class="fa-solid fa-envelope"></i>
-              </span>
-              <input type="email" id="emailAddress" class="form-control form-custom-control bg-white bg-opacity-5 border-white border-opacity-25 text-white py-2.5 shadow-none" placeholder="Email Address" required autofocus>
-            </div>
-            
-            <div class="input-group mb-3 w-85 mx-auto">
-              <span class="input-group-text bg-white bg-opacity-10 border-white border-opacity-25 text-secondary">
-                <i class="fa-solid fa-key"></i>
-              </span>
-              <input type="password" id="password" class="form-control form-custom-control bg-white bg-opacity-5 border-white border-opacity-25 text-white py-2.5 shadow-none" placeholder="Password" required>
-              <button class="btn btn-outline-secondary border-white border-opacity-25 bg-white bg-opacity-10 text-secondary px-3" type="button" id="togglePassword">
-                <i class="fa-solid fa-eye" id="toggleIcon"></i>
-              </button>
-            </div>
-            
-            <div class="d-flex justify-content-between align-items-center mb-4 w-85 mx-auto small">
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" value="remember-me" id="rememberMeCheck">
-                <label class="form-check-label text-white-50" for="rememberMeCheck">
-                  Remember me
-                </label>
-              </div>
-              <a href="ForgotPassword.html" class="text-decoration-none text-info fw-medium link-light-hover">
-                Forgot password?
-              </a>
-            </div>
-            
-            <div class="d-grid gap-3 w-85 mx-auto">
-              <button class="btn btn-info btn-lg rounded-pill py-2.5 fs-6 fw-medium text-white d-flex align-items-center justify-content-center gap-2 shadow" type="submit">
-                <i class="fa-solid fa-right-to-bracket"></i> Login
-              </button>
-
-            </div>
-
-          </form>
-          
+        </div>
+        <div class="col-md-6">
+          <label class="field-label">Username :</label>
+          <div class="input-group-custom">
+            <div class="icon-addon"><i class="fa-solid fa-at"></i></div>
+            <input type="text" name="username" class="form-control-clean" placeholder="Choose a username" required>
+          </div>
         </div>
       </div>
 
-    </div>
-  </div>
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="field-label">Email Address :</label>
+          <div class="input-group-custom">
+            <div class="icon-addon"><i class="fa-solid fa-envelope"></i></div>
+            <input type="email" name="email" class="form-control-clean" placeholder="Enter email address" required>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="field-label">Phone Number :</label>
+          <div class="input-group-custom">
+            <div class="icon-addon"><i class="fa-solid fa-phone"></i></div>
+            <input type="tel" name="phone" class="form-control-clean" placeholder="Enter phone number" required>
+          </div>
+        </div>
+      </div>
 
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="field-label">Password :</label>
+          <div class="input-group-custom">
+            <div class="icon-addon"><i class="fa-solid fa-lock"></i></div>
+            <input type="password" id="regPass" name="password" class="form-control-clean" placeholder="Create a password" required>
+            <button type="button" class="password-eye-btn" id="toggleRegPass">
+              <i class="fa-solid fa-eye-slash" id="regPassIcon"></i>
+            </button>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="field-label">Confirm Password :</label>
+          <div class="input-group-custom">
+            <div class="icon-addon"><i class="fa-solid fa-lock"></i></div>
+            <input type="password" id="confirmPass" name="confirm_password" class="form-control-clean" placeholder="Confirm your password" required>
+            <button type="button" class="password-eye-btn" id="toggleConfirmPass">
+              <i class="fa-solid fa-eye-slash" id="confirmPassIcon"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <label class="field-label">Age :</label>
+          <div class="input-group-custom">
+            <div class="icon-addon"><i class="fa-solid fa-user-clock"></i></div>
+            <input type="number" name="age" class="form-control-clean" placeholder="Enter your age" required min="1">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="field-label">Gender :</label>
+          <div class="input-group-custom">
+            <div class="icon-addon"><i class="fa-solid fa-venus-mars"></i></div>
+            <select name="gender" class="form-select-clean" required>
+              <option value="" disabled selected hidden>Select gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-4 form-check text-start">
+        <input type="checkbox" class="form-check-input" id="termsCheck" required>
+        <label class="form-check-label text-muted small" for="termsCheck">
+          I agree to the <a href="#" class="redirect-footer-link">Terms & Conditions</a> and <a href="#" class="redirect-footer-link">Privacy Policy</a>
+        </label>
+      </div>
+
+      <div class="d-grid gap-3">
+        <button class="btn btn-primary-action d-flex align-items-center justify-content-center gap-2 shadow-sm" type="submit">
+          <i class="fa-solid fa-user-plus"></i> Register
+        </button>
+        
+        <div class="text-center text-muted small mt-1">
+          Already have an account? 
+          <a href="{% url 'login' %}" class="redirect-footer-link ms-1">Login</a>
+        </div>
+      </div>
+    </form>
+  </div>
 </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
     <script>
-      const passwordInput = document.getElementById('password');
-      const togglePasswordBtn = document.getElementById('togglePassword');
-      const toggleIcon = document.getElementById('toggleIcon');
-
-      togglePasswordBtn.addEventListener('click', function () {
-        const currentType = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-        passwordInput.setAttribute('type', currentType);
-        
-        toggleIcon.classList.toggle('fa-eye');
-        toggleIcon.classList.toggle('fa-eye-slash');
-      });
+      function linkToggle(inputId, btnId, iconId) {
+        const input = document.getElementById(inputId);
+        const btn = document.getElementById(btnId);
+        const icon = document.getElementById(iconId);
+        btn.addEventListener('click', function() {
+          const check = input.type === 'password';
+          input.type = check ? 'text' : 'password';
+          icon.classList.toggle('fa-eye-slash', !check);
+          icon.classList.toggle('fa-eye', check);
+        });
+      }
+      linkToggle('regPass', 'toggleRegPass', 'regPassIcon');
+      linkToggle('confirmPass', 'toggleConfirmPass', 'confirmPassIcon');
     </script>
   </body>
 </html>
-
-
