@@ -5,7 +5,7 @@ from .models import User  # Targets your custom User model
 
 def register_view(request):
     if request.method == 'POST':
-        # Extract inputs exactly matching your form configuration
+        # 1. Extract inputs matching your UI fields exactly (image_d492f4.jpg)
         full_name = request.POST.get('full_name')
         dob = request.POST.get('dob')
         email = request.POST.get('email')
@@ -15,7 +15,7 @@ def register_view(request):
         password = request.POST.get('password')
         confirm_password = request.POST.get('confirm_password')
         
-        # Validation checks
+        # 2. Validation Checks
         if password != confirm_password:
             messages.error(request, "Passwords do not match!")
             return render(request, 'accounts/register.html')
@@ -25,8 +25,8 @@ def register_view(request):
             return render(request, 'accounts/register.html')
 
         try:
-            # FIX: We use the unique email address as the core username property 
-            # to fulfill Django's requirement without needing a field in the UI
+            # 3. Create the user using the email as the core username
+            # This links the registration form (image_d492f4.jpg) with the login form (image_d495e1.jpg)
             user = User.objects.create_user(
                 username=email, 
                 email=email,
@@ -35,7 +35,7 @@ def register_view(request):
                 role='Patient'
             )
             
-            # Save extra user fields dynamically if they exist in your model
+            # 4. Save your application's extra custom fields dynamically
             if hasattr(user, 'full_name'): user.full_name = full_name
             if hasattr(user, 'dob') and dob: user.dob = dob
             if hasattr(user, 'age') and age: user.age = int(age)
@@ -43,7 +43,7 @@ def register_view(request):
             
             user.save()
 
-            # Active login session initialization
+            # 5. Establish user session and route to homepage
             login(request, user)
             return redirect('home')
             
@@ -56,16 +56,17 @@ def register_view(request):
 
 def login_view(request):
     if request.method == 'POST':
-        # This matches the 'username' field name inside your login layout
+        # Extracts what the user typed into the "Username" input box (image_d495e1.jpg)
         username = request.POST.get('username') 
         password = request.POST.get('password')
         
+        # Authenticates the credentials using the email address stored as the username property
         user = authenticate(request, username=username, password=password)
         
         if user is not None:
             login(request, user)
             return redirect('home')
         else:
-            messages.error(request, "Invalid credentials provided.")
+            messages.error(request, "Invalid username or password.")
             
     return render(request, 'accounts/login.html')
