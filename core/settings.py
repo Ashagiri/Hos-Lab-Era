@@ -48,7 +48,8 @@ ROOT_URLCONF = 'core.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'core' / 'templates'],  # <-- Must have 'core' here!
+        # FIXED: Removed 'core' to correctly point to your root templates folder (image_d2cffd.png)
+        'DIRS': [BASE_DIR / 'templates'],  
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -112,4 +113,5 @@ STATICFILES_DIRS = [
     BASE_DIR / 'core' / 'static',
 ]
 
+# Custom Auth Configuration
 AUTH_USER_MODEL = 'accounts.User'
