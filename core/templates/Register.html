@@ -1,3 +1,4 @@
+{% load static %}
 <!doctype html>
 <html lang="en">
   <head>
@@ -24,13 +25,13 @@
   <body>
 
 <div class="d-flex justify-content-center align-items-center min-vh-100 px-3 py-5" 
-     style="background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('A.jpeg') no-repeat center center/cover;">
+     style="background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('{% static 'A.jpeg' %}') no-repeat center center/cover;">
   
   <div class="card mb-3 shadow-lg border-0 text-white glass-card w-100 rounded-4" style="max-width: 840px;">
     <div class="row g-0 align-items-center">
       
       <div class="col-md-5 d-none d-md-block">
-        <img src="ddd.jpg" class="img-fluid h-100 object-fit-cover rounded-start-4 opacity-75" alt="Registration Banner" style="min-height: 520px;">
+        <img src="{% static 'ddd.jpg' %}" class="img-fluid h-100 object-fit-cover rounded-start-4 opacity-75" alt="Registration Banner" style="min-height: 520px;">
       </div>
       
       <div class="col-md-7">
@@ -43,7 +44,8 @@
           <h2 class="text-white fw-bold mb-1 fs-3">Create an Account</h2>
           <p class="mb-4 text-white-50 small" style="letter-spacing: 0.5px;">Join the Hospital Laboratory Management System</p>
           
-          <form>
+          <form method="POST">
+            {% csrf_token %}
             
             <div class="input-group mb-3 w-85 mx-auto">
               <span class="input-group-text bg-white bg-opacity-10 border-white border-opacity-25 text-secondary">
@@ -92,7 +94,7 @@
               
               <div class="mt-2 text-white-50 small">
                 Already have an account? 
-                <a href="Login.html" class="text-info text-decoration-none fw-bold ms-1">Sign In</a>
+                <a href="{% url 'login' %}" class="text-info text-decoration-none fw-bold ms-1">Sign In</a>
               </div>
             </div>
 
