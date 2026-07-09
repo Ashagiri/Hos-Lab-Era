@@ -75,9 +75,6 @@ DATABASES = {
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
 
-# Password validation
-# https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     # Comment these out for testing so you can use easy passwords!
     # {
@@ -110,5 +107,9 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-AUTH_USER_MODEL = 'accounts.User'
+# Tell Django exactly where to look for your static files folder
+STATICFILES_DIRS = [
+    BASE_DIR / 'core' / 'static',
+]
 
+AUTH_USER_MODEL = 'accounts.User'
