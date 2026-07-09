@@ -5,3 +5,4 @@ from django.http import HttpResponse
 def home_view(request):
     # FIXED: Added the 'laboratory/' folder prefix so Django can find it perfectly!
     return render(request, 'laboratory/home.html')
+    
