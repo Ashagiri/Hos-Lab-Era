@@ -1,3 +1,4 @@
+{% load static %}
 <!doctype html>
 <html lang="en">
   <head>
@@ -8,123 +9,294 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     
     <style>
-      /* Smooth frosted glass backing style */
-      .glass-card {
-        background-color: rgba(33, 43, 49, 0.8) !important;
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
+      body {
+        background-color: #636e72;
+        font-family: system-ui, -apple-system, sans-serif;
       }
       
-      /* Pure custom helper styling for matched placeholders */
-      .form-custom-control::placeholder {
-        color: #8a99a1 !important;
+      .main-wrapper {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 30px 15px;
+      }
+
+      .custom-card {
+        background-color: #2d3436;
+        border-radius: 16px;
+        width: 100%;
+        max-width: 1050px;
+        box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+        overflow: hidden;
+      }
+
+      .banner-side {
+        background-color: #222728;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .banner-side img {
+        max-width: 100%;
+        height: auto;
+        object-fit: cover;
+        border-radius: 8px;
+      }
+
+      .form-side {
+        padding: 45px 40px;
+        color: #ffffff;
+      }
+
+      .header-accent-icon {
+        color: #00cec9;
+        font-size: 3.2rem;
+        margin-bottom: 8px;
+      }
+
+      .custom-input-group {
+        display: flex;
+        background-color: #ffffff;
+        border-radius: 6px;
+        overflow: hidden;
+        height: 44px;
+      }
+
+      .custom-input-group .icon-box {
+        background-color: #555f61;
+        color: #dfe6e9;
+        width: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+      }
+
+      .custom-input-group .form-control,
+      .custom-input-group .form-select {
+        border: none;
+        background: transparent;
+        color: #2d3436;
+        font-weight: 500;
+        padding-left: 12px;
+      }
+
+      .custom-input-group .form-control::placeholder {
+        color: #b2bec3;
+      }
+
+      .custom-input-group .form-control:focus,
+      .custom-input-group .form-select:focus {
+        box-shadow: none;
+        background: transparent;
+      }
+
+      /* Native select option placeholder styling */
+      .custom-input-group .form-select {
+        color: #636e72;
+      }
+      .custom-input-group .form-select option:not([disabled]) {
+        color: #2d3436;
+      }
+
+      .password-toggle-addon {
+        background: transparent;
+        border: none;
+        color: #636e72;
+        padding-right: 15px;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+      }
+
+      .form-check-input {
+        background-color: transparent;
+        border: 2px solid #00cec9;
+      }
+
+      .form-check-input:checked {
+        background-color: #00cec9;
+        border-color: #00cec9;
+      }
+
+      .btn-cyan-submit {
+        background-color: #00cec9;
+        color: #ffffff;
+        border: none;
+        border-radius: 24px;
+        height: 46px;
+        font-weight: 700;
+        font-size: 1rem;
+        transition: all 0.2s ease;
+      }
+
+      .btn-cyan-submit:hover {
+        background-color: #00b894;
+        color: #ffffff;
+        transform: translateY(-1px);
+      }
+
+      .accent-link {
+        color: #00cec9;
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      .accent-link:hover {
+        text-decoration: underline;
+        color: #00b894;
       }
     </style>
   </head>
   <body>
 
-<div class="d-flex justify-content-center align-items-center min-vh-100 px-3 py-5" 
-     style="background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('A.jpeg') no-repeat center center/cover;">
-  
-  <div class="card mb-3 shadow-lg border-0 text-white glass-card w-100 rounded-4" style="max-width: 840px;">
-    <div class="row g-0 align-items-center">
+<div class="main-wrapper">
+  <div class="custom-card">
+    <div class="row g-0">
       
-      <div class="col-md-5 d-none d-md-block">
-        <img src="ddd.jpg" class="img-fluid h-100 object-fit-cover rounded-start-4 opacity-75" alt="Registration Banner" style="min-height: 520px;">
+      <div class="col-lg-5 banner-side d-none d-lg-flex">
+        <img src="{% static 'fff.jpg' %}" alt="Registration Banner">
       </div>
-      
-      <div class="col-md-7">
-        <div class="card-body p-4 p-sm-5 text-center">
-          
-          <div class="mb-3">
-            <i class="fa-solid fa-user-plus display-4 text-info"></i>
+
+      <div class="col-lg-7 form-side">
+        <div class="text-center mb-4">
+          <div class="header-accent-icon">
+            <i class="fa-solid fa-user-plus"></i>
           </div>
-          
-          <h2 class="text-white fw-bold mb-1 fs-3">Create an Account</h2>
-          <p class="mb-4 text-white-50 small" style="letter-spacing: 0.5px;">Join the Hospital Laboratory Management System</p>
-          
-          <form>
-            
-            <div class="input-group mb-3 w-85 mx-auto">
-              <span class="input-group-text bg-white bg-opacity-10 border-white border-opacity-25 text-secondary">
-                <i class="fa-solid fa-user"></i>
-              </span>
-              <input type="text" id="regFullName" class="form-control form-custom-control bg-white bg-opacity-5 border-white border-opacity-25 text-white py-2.5 shadow-none" placeholder="Full Name" required autocomplete="name">
-            </div>
-
-            <div class="input-group mb-3 w-85 mx-auto">
-              <span class="input-group-text bg-white bg-opacity-10 border-white border-opacity-25 text-secondary">
-                <i class="fa-solid fa-envelope"></i>
-              </span>
-              <input type="email" id="regEmailAddress" class="form-control form-custom-control bg-white bg-opacity-5 border-white border-opacity-25 text-white py-2.5 shadow-none" placeholder="Email Address" required autocomplete="email">
-            </div>
-            
-            <div class="input-group mb-3 w-85 mx-auto">
-              <span class="input-group-text bg-white bg-opacity-10 border-white border-opacity-25 text-secondary">
-                <i class="fa-solid fa-key"></i>
-              </span>
-              <input type="password" id="regPassword" class="form-control form-custom-control bg-white bg-opacity-5 border-white border-opacity-25 text-white py-2.5 shadow-none" placeholder="Create Password" required>
-              <button class="btn btn-outline-secondary border-white border-opacity-25 bg-white bg-opacity-10 text-secondary px-3" type="button" id="toggleRegPassword">
-                <i class="fa-solid fa-eye" id="regPasswordIcon"></i>
-              </button>
-            </div>
-
-            <div class="input-group mb-4 w-85 mx-auto">
-              <span class="input-group-text bg-white bg-opacity-10 border-white border-opacity-25 text-secondary">
-                <i class="fa-solid fa-lock"></i>
-              </span>
-              <input type="password" id="confirmPassword" class="form-control form-custom-control bg-white bg-opacity-5 border-white border-opacity-25 text-white py-2.5 shadow-none" placeholder="Confirm Password" required>
-            </div>
-            
-            <div class="mb-4 text-start w-85 mx-auto small">
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="termsCheck" required>
-                <label class="form-check-label text-white-50" for="termsCheck">
-                  I agree to the <a href="#" class="text-info text-decoration-none fw-medium">Terms & Privacy Policy</a>
-                </label>
-              </div>
-            </div>
-            
-            <div class="d-grid gap-3 w-85 mx-auto">
-              <button class="btn btn-info btn-lg rounded-pill py-2.5 fs-6 fw-medium text-white d-flex align-items-center justify-content-center gap-2 shadow" type="submit">
-                <i class="fa-solid fa-id-card"></i> Register Account
-              </button>
-              
-              <div class="mt-2 text-white-50 small">
-                Already have an account? 
-                <a href="Login.html" class="text-info text-decoration-none fw-bold ms-1">Sign In</a>
-              </div>
-            </div>
-
-          </form>
-          
+          <h3 class="fw-bold m-0">Create an Account</h3>
+          <p class="text-white-50 small mt-1">Join the Hospital Laboratory Management System</p>
         </div>
+
+        <form method="POST">
+          {% csrf_token %}
+          
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <div class="custom-input-group">
+                <div class="icon-box"><i class="fa-solid fa-user"></i></div>
+                <input type="text" name="full_name" class="form-control" placeholder="Full Name" required autocomplete="name">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="custom-input-group">
+                <div class="icon-box"><i class="fa-solid fa-calendar-days"></i></div>
+                <input type="date" id="dobInput" name="dob" class="form-control" required autocomplete="bday">
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <div class="custom-input-group">
+                <div class="icon-box"><i class="fa-solid fa-envelope"></i></div>
+                <input type="email" name="email" class="form-control" placeholder="Email Address" required autocomplete="email">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="custom-input-group">
+                <div class="icon-box"><i class="fa-solid fa-phone"></i></div>
+                <input type="tel" name="phone" class="form-control" placeholder="Phone Number" required autocomplete="tel">
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <div class="custom-input-group">
+                <div class="icon-box"><i class="fa-solid fa-key"></i></div>
+                <input type="password" id="regPassword" name="password" class="form-control" placeholder="Create Password" required>
+                <button type="button" class="password-toggle-addon" id="toggleRegPassword">
+                  <i class="fa-solid fa-eye-slash" id="regPasswordIcon"></i>
+                </button>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="custom-input-group">
+                <div class="icon-box"><i class="fa-solid fa-lock"></i></div>
+                <input type="password" id="confirmPassword" name="confirm_password" class="form-control" placeholder="Confirm Password" required>
+                <button type="button" class="password-toggle-addon" id="toggleConfirmPassword">
+                  <i class="fa-solid fa-eye-slash" id="confirmPasswordIcon"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <div class="custom-input-group">
+                <div class="icon-box"><i class="fa-solid fa-circle-info"></i></div>
+                <input type="number" name="age" class="form-control" placeholder="Age" required min="1">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="custom-input-group">
+                <div class="icon-box"><i class="fa-solid fa-venus-mars"></i></div>
+                <select id="genderSelect" name="gender" class="form-select" required>
+                  <option value="" disabled selected hidden>Select Gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-4 form-check text-start">
+            <input type="checkbox" class="form-check-input" id="termsCheck" name="terms_consent" required>
+            <label class="form-check-label small text-white-50" for="termsCheck">
+              I agree to the <a href="#" class="accent-link">Terms & Privacy Policy</a>
+            </label>
+          </div>
+
+          <div class="d-grid gap-3">
+            <button class="btn btn-cyan-submit d-flex align-items-center justify-content-center gap-2 shadow" type="submit">
+              <i class="fa-solid fa-address-card"></i> Register Account
+            </button>
+            
+            <div class="text-center text-white-50 small mt-1">
+              Already have an account? 
+              <a href="{% url 'login' %}" class="accent-link ms-1">Sign In</a>
+            </div>
+          </div>
+        </form>
       </div>
 
     </div>
   </div>
-
 </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
     <script>
-      const regPasswordInput = document.getElementById('regPassword');
-      const confirmPasswordInput = document.getElementById('confirmPassword');
-      const toggleRegPasswordBtn = document.getElementById('toggleRegPassword');
-      const regPasswordIcon = document.getElementById('regPasswordIcon');
+      function setupPasswordToggle(inputId, buttonId, iconId) {
+        const input = document.getElementById(inputId);
+        const button = document.getElementById(buttonId);
+        const icon = document.getElementById(iconId);
 
-      toggleRegPasswordBtn.addEventListener('click', function () {
-        const currentType = regPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-        regPasswordInput.setAttribute('type', currentType);
-        confirmPasswordInput.setAttribute('type', currentType);
-        
-        regPasswordIcon.classList.toggle('fa-eye');
-        regPasswordIcon.classList.toggle('fa-eye-slash');
+        button.addEventListener('click', function() {
+          const isPassword = input.type === 'password';
+          input.type = isPassword ? 'text' : 'password';
+          icon.classList.toggle('fa-eye-slash', !isPassword);
+          icon.classList.toggle('fa-eye', isPassword);
+        });
+      }
+      setupPasswordToggle('regPassword', 'toggleRegPassword', 'regPasswordIcon');
+      setupPasswordToggle('confirmPassword', 'toggleConfirmPassword', 'confirmPasswordIcon');
+
+      // Change select colors when option picked
+      const genderSelect = document.getElementById('genderSelect');
+      genderSelect.addEventListener('change', function() {
+        if(this.value !== "") { this.style.color = "#2d3436"; }
+      });
+
+      // Keep text alignment clean for date inputs
+      const dobInput = document.getElementById('dobInput');
+      dobInput.style.color = "#636e72";
+      dobInput.addEventListener('change', function() {
+        if(this.value !== "") { this.style.color = "#2d3436"; }
       });
     </script>
   </body>
 </html>
-
-
-
