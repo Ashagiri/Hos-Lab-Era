@@ -10,7 +10,7 @@
     
     <style>
       body {
-        background-color: #636e72;
+        background-color: #1e2229;
         font-family: system-ui, -apple-system, sans-serif;
       }
       
@@ -19,42 +19,42 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 30px 15px;
+        padding: 40px 15px;
       }
 
       .custom-card {
-        background-color: #2d3436;
+        background-color: #262c36;
         border-radius: 16px;
         width: 100%;
-        max-width: 1050px;
-        box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+        max-width: 1000px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.5);
         overflow: hidden;
       }
 
       .banner-side {
-        background-color: #222728;
+        background-color: #1a1e24;
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 20px;
+        padding: 30px;
       }
 
       .banner-side img {
-        max-width: 100%;
-        height: auto;
+        width: 100%;
+        max-height: 420px;
         object-fit: cover;
-        border-radius: 8px;
+        border-radius: 12px;
       }
 
       .form-side {
-        padding: 45px 40px;
+        padding: 40px;
         color: #ffffff;
       }
 
-      .header-accent-icon {
+      .header-icon {
         color: #00cec9;
-        font-size: 3.2rem;
-        margin-bottom: 8px;
+        font-size: 2.8rem;
+        margin-bottom: 10px;
       }
 
       .custom-input-group {
@@ -66,26 +66,25 @@
       }
 
       .custom-input-group .icon-box {
-        background-color: #555f61;
-        color: #dfe6e9;
-        width: 48px;
+        background-color: #4a5568;
+        color: #cbd5e1;
+        width: 46px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1rem;
       }
 
       .custom-input-group .form-control,
       .custom-input-group .form-select {
         border: none;
         background: transparent;
-        color: #2d3436;
+        color: #1e2229;
         font-weight: 500;
         padding-left: 12px;
       }
 
       .custom-input-group .form-control::placeholder {
-        color: #b2bec3;
+        color: #94a3b8;
       }
 
       .custom-input-group .form-control:focus,
@@ -94,19 +93,11 @@
         background: transparent;
       }
 
-      /* Native select option placeholder styling */
-      .custom-input-group .form-select {
-        color: #636e72;
-      }
-      .custom-input-group .form-select option:not([disabled]) {
-        color: #2d3436;
-      }
-
       .password-toggle-addon {
         background: transparent;
         border: none;
-        color: #636e72;
-        padding-right: 15px;
+        color: #64748b;
+        padding-right: 12px;
         display: flex;
         align-items: center;
         cursor: pointer;
@@ -122,21 +113,19 @@
         border-color: #00cec9;
       }
 
-      .btn-cyan-submit {
+      .btn-submit {
         background-color: #00cec9;
         color: #ffffff;
         border: none;
-        border-radius: 24px;
+        border-radius: 30px;
         height: 46px;
         font-weight: 700;
-        font-size: 1rem;
         transition: all 0.2s ease;
       }
 
-      .btn-cyan-submit:hover {
+      .btn-submit:hover {
         background-color: #00b894;
         color: #ffffff;
-        transform: translateY(-1px);
       }
 
       .accent-link {
@@ -147,7 +136,6 @@
 
       .accent-link:hover {
         text-decoration: underline;
-        color: #00b894;
       }
     </style>
   </head>
@@ -155,7 +143,7 @@
 
 <div class="main-wrapper">
   <div class="custom-card">
-    <div class="row g-0">
+    <div class="row g-0 align-items-center">
       
       <div class="col-lg-5 banner-side d-none d-lg-flex">
         <img src="{% static 'fff.jpg' %}" alt="Registration Banner">
@@ -163,7 +151,7 @@
 
       <div class="col-lg-7 form-side">
         <div class="text-center mb-4">
-          <div class="header-accent-icon">
+          <div class="header-icon">
             <i class="fa-solid fa-user-plus"></i>
           </div>
           <h3 class="fw-bold m-0">Create an Account</h3>
@@ -177,13 +165,13 @@
             <div class="col-md-6">
               <div class="custom-input-group">
                 <div class="icon-box"><i class="fa-solid fa-user"></i></div>
-                <input type="text" name="full_name" class="form-control" placeholder="Full Name" required autocomplete="name">
+                <input type="text" name="full_name" class="form-control" placeholder="Full Name" required>
               </div>
             </div>
             <div class="col-md-6">
               <div class="custom-input-group">
                 <div class="icon-box"><i class="fa-solid fa-calendar-days"></i></div>
-                <input type="date" id="dobInput" name="dob" class="form-control" required autocomplete="bday">
+                <input type="date" name="dob" class="form-control" required>
               </div>
             </div>
           </div>
@@ -192,13 +180,13 @@
             <div class="col-md-6">
               <div class="custom-input-group">
                 <div class="icon-box"><i class="fa-solid fa-envelope"></i></div>
-                <input type="email" name="email" class="form-control" placeholder="Email Address" required autocomplete="email">
+                <input type="email" name="email" class="form-control" placeholder="Email Address" required>
               </div>
             </div>
             <div class="col-md-6">
               <div class="custom-input-group">
                 <div class="icon-box"><i class="fa-solid fa-phone"></i></div>
-                <input type="tel" name="phone" class="form-control" placeholder="Phone Number" required autocomplete="tel">
+                <input type="tel" name="phone" class="form-control" placeholder="Phone Number" required>
               </div>
             </div>
           </div>
@@ -234,7 +222,7 @@
             <div class="col-md-6">
               <div class="custom-input-group">
                 <div class="icon-box"><i class="fa-solid fa-venus-mars"></i></div>
-                <select id="genderSelect" name="gender" class="form-select" required>
+                <select name="gender" class="form-select" required>
                   <option value="" disabled selected hidden>Select Gender</option>
                   <option value="male">Male</option>
                   <option value="female">Female</option>
@@ -244,21 +232,17 @@
             </div>
           </div>
 
-          <div class="mb-4 form-check text-start">
-            <input type="checkbox" class="form-check-input" id="termsCheck" name="terms_consent" required>
+          <div class="mb-4 form-check">
+            <input type="checkbox" class="form-check-input" id="termsCheck" required>
             <label class="form-check-label small text-white-50" for="termsCheck">
               I agree to the <a href="#" class="accent-link">Terms & Privacy Policy</a>
             </label>
           </div>
 
           <div class="d-grid gap-3">
-            <button class="btn btn-cyan-submit d-flex align-items-center justify-content-center gap-2 shadow" type="submit">
-              <i class="fa-solid fa-address-card"></i> Register Account
-            </button>
-            
-            <div class="text-center text-white-50 small mt-1">
-              Already have an account? 
-              <a href="{% url 'login' %}" class="accent-link ms-1">Sign In</a>
+            <button class="btn btn-submit shadow" type="submit">Register Account</button>
+            <div class="text-center text-white-50 small">
+              Already have an account? <a href="{% url 'login' %}" class="accent-link ms-1">Sign In</a>
             </div>
           </div>
         </form>
@@ -268,13 +252,11 @@
   </div>
 </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
       function setupPasswordToggle(inputId, buttonId, iconId) {
         const input = document.getElementById(inputId);
         const button = document.getElementById(buttonId);
         const icon = document.getElementById(iconId);
-
         button.addEventListener('click', function() {
           const isPassword = input.type === 'password';
           input.type = isPassword ? 'text' : 'password';
@@ -284,19 +266,6 @@
       }
       setupPasswordToggle('regPassword', 'toggleRegPassword', 'regPasswordIcon');
       setupPasswordToggle('confirmPassword', 'toggleConfirmPassword', 'confirmPasswordIcon');
-
-      // Change select colors when option picked
-      const genderSelect = document.getElementById('genderSelect');
-      genderSelect.addEventListener('change', function() {
-        if(this.value !== "") { this.style.color = "#2d3436"; }
-      });
-
-      // Keep text alignment clean for date inputs
-      const dobInput = document.getElementById('dobInput');
-      dobInput.style.color = "#636e72";
-      dobInput.addEventListener('change', function() {
-        if(this.value !== "") { this.style.color = "#2d3436"; }
-      });
     </script>
   </body>
 </html>
