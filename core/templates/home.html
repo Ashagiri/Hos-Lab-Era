@@ -1,3 +1,4 @@
+{% load static %}
 <!doctype html>
 <html lang="en">
   <head>
@@ -56,15 +57,15 @@
     <div class="carousel-inner h-100">
       
       <div class="carousel-item active h-100">
-        <img src="A.jpeg" class="d-block w-100 h-100 object-fit-cover" alt="Slide 1">
+        <img src="{% static 'A.jpeg' %}" class="d-block w-100 h-100 object-fit-cover" alt="Slide 1">
       </div>
       
       <div class="carousel-item h-100">
-        <img src="bbb.jpg" class="d-block w-100 h-100 object-fit-cover" alt="Slide 2">
+        <img src="{% static 'bbb.jpg' %}" class="d-block w-100 h-100 object-fit-cover" alt="Slide 2">
       </div>
       
       <div class="carousel-item h-100">
-        <img src="ccc.jpg" class="d-block w-100 h-100 object-fit-cover" alt="Slide 3">
+        <img src="{% static 'ccc.jpg' %}" class="d-block w-100 h-100 object-fit-cover" alt="Slide 3">
       </div>
 
     </div>
@@ -108,7 +109,7 @@
 
         <div class="col-12 col-md-6 col-lg-4 d-flex justify-content-center">
             <div class="card w-100 mx-2" style="max-width:26rem;">
-                <img src="fff.jpg" class="card-img-top" alt="..." style="height:250px; object-fit:cover;">
+                <img src="{% static 'fff.jpg' %}" class="card-img-top" alt="..." style="height:250px; object-fit:cover;">
                 <div class="card-body">
                     <h5 class="card-title">Online Test Booking</h5>
                     <p class="card-text">
@@ -123,7 +124,7 @@
 
         <div class="col-12 col-md-6 col-lg-4 d-flex justify-content-center">
             <div class="card w-100 mx-2" style="max-width:26rem;">
-                <img src="A.jpeg" class="card-img-top" alt="..." style="height:250px; object-fit:cover;">
+                <img src="{% static 'A.jpeg' %}" class="card-img-top" alt="..." style="height:250px; object-fit:cover;">
                 <div class="card-body">
                     <h5 class="card-title">Automated Notifications</h5>
                     <p class="card-text">
@@ -138,7 +139,7 @@
 
         <div class="col-12 col-md-6 col-lg-4 d-flex justify-content-center">
             <div class="card w-100 mx-2" style="max-width:26rem;">
-                <img src="eee.jpg" class="card-img-top" alt="..." style="height:250px; object-fit:cover;">
+                <img src="{% static 'eee.jpg' %}" class="card-img-top" alt="..." style="height:250px; object-fit:cover;">
                 <div class="card-body">
                     <h5 class="card-title">Secure Record Management</h5>
                     <p class="card-text">
@@ -269,7 +270,7 @@
                  class="mx-auto mb-3"
                  style="width:80px;height:80px;object-fit:contain;">
             <h5 class="fw-normal mb-4">
-                  Vaccination Program   
+                   Vaccination Program   
             </h5>
             <a href="#" class="btn rounded-pill px-4"
                 style="border:1px dashed #ddd; background-color:#5e636b; color:#fff;">
@@ -285,7 +286,7 @@
                  class="mx-auto mb-3"
                  style="width:80px;height:80px;object-fit:contain;">
             <h5 class="fw-normal mb-4">
-                 Cancer Marker Test
+                  Cancer Marker Test
             </h5>
             <a href="#" class="btn rounded-pill px-4"
                 style="border:1px dashed #ddd; background-color:#5e636b; color:#fff;">
