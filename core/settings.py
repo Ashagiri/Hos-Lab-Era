@@ -48,8 +48,8 @@ ROOT_URLCONF = 'core.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        # FIXED: Removed 'core' to correctly point to your root templates folder (image_d2cffd.png)
-        'DIRS': [BASE_DIR / 'templates'],  
+        # CHANGED: Added / 'core' to look inside your nested folder setup
+        'DIRS': [BASE_DIR / 'core' / 'templates'],  
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
