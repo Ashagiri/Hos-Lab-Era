@@ -137,7 +137,6 @@
       <h1 class="header-title m-0">Create an Account</h1>
     </div>
 
-    <!-- Added proper method handling and validation token -->
     <form method="POST">
       {% csrf_token %}
       
@@ -146,7 +145,7 @@
           <label for="regFullName" class="form-label">Full Name <span class="text-asterisk">:</span></label>
           <div class="input-wrapper">
             <i class="fa-solid fa-user inner-icon"></i>
-            <input type="text" id="regFullName" class="form-control" placeholder="Enter full name" required autocomplete="name">
+            <input type="text" id="regFullName" name="full_name" class="form-control" placeholder="Enter full name" required autocomplete="name">
           </div>
         </div>
         
@@ -154,48 +153,44 @@
            <label for="regDOB" class="form-label">Date of Birth <span class="text-asterisk">:</span></label>
            <div class="input-wrapper">
              <i class="fa-solid fa-calendar-days inner-icon"></i>
-             <input type="date" id="regDOB" class="form-control" required autocomplete="bday">
+             <input type="date" id="regDOB" name="dob" class="form-control" required autocomplete="bday">
            </div>
         </div>
       </div>
 
       <div class="row g-3 mb-3">
-        <!-- Email Address -->
         <div class="col-md-6">
           <label for="regEmailAddress" class="form-label">Email Address <span class="text-asterisk">:</span></label>
           <div class="input-wrapper">
             <i class="fa-solid fa-envelope inner-icon"></i>
-            <input type="email" id="regEmailAddress" class="form-control" placeholder="Enter email address" required autocomplete="email">
+            <input type="email" id="regEmailAddress" name="email" class="form-control" placeholder="Enter email address" required autocomplete="email">
           </div>
         </div>
-        <!-- Phone Number -->
         <div class="col-md-6">
           <label for="regPhone" class="form-label">Phone Number <span class="text-asterisk">:</span></label>
           <div class="input-wrapper">
             <i class="fa-solid fa-phone inner-icon"></i>
-            <input type="tel" id="regPhone" class="form-control" placeholder="Enter phone number" required autocomplete="tel">
+            <input type="tel" id="regPhone" name="phone" class="form-control" placeholder="Enter phone number" required autocomplete="tel">
           </div>
         </div>
       </div>
 
       <div class="row g-3 mb-3">
-        <!-- Password -->
         <div class="col-md-6">
           <label for="regPassword" class="form-label">Password <span class="text-asterisk">:</span></label>
           <div class="input-wrapper">
             <i class="fa-solid fa-lock inner-icon"></i>
-            <input type="password" id="regPassword" class="form-control pe-5" placeholder="Create a password" required>
+            <input type="password" id="regPassword" name="password" class="form-control pe-5" placeholder="Create a password" required>
             <button type="button" class="password-toggle-btn" id="toggleRegPassword">
               <i class="fa-solid fa-eye-slash" id="regPasswordIcon"></i>
             </button>
           </div>
         </div>
-        <!-- Confirm Password -->
         <div class="col-md-6">
           <label for="confirmPassword" class="form-label">Confirm Password <span class="text-asterisk">:</span></label>
           <div class="input-wrapper">
             <i class="fa-solid fa-lock inner-icon"></i>
-            <input type="password" id="confirmPassword" class="form-control pe-5" placeholder="Confirm your password" required>
+            <input type="password" id="confirmPassword" name="confirm_password" class="form-control pe-5" placeholder="Confirm your password" required>
             <button type="button" class="password-toggle-btn" id="toggleConfirmPassword">
               <i class="fa-solid fa-eye-slash" id="confirmPasswordIcon"></i>
             </button>
@@ -204,20 +199,18 @@
       </div>
 
       <div class="row g-3 mb-3">
-        <!-- Age Field -->
         <div class="col-md-6">
           <label for="regAge" class="form-label">Age<span class="text-asterisk">:</span></label>
           <div class="input-wrapper">
             <i class="fa-solid fa-user-plus inner-icon"></i>
-            <input type="number" id="regAge" class="form-control" placeholder="Enter your age" required>
+            <input type="number" id="regAge" name="age" class="form-control" placeholder="Enter your age" required>
           </div>
         </div>
-        <!-- Gender Selection -->
         <div class="col-md-6">
           <label for="regGender" class="form-label">Gender<span class="text-asterisk">:</span></label>
           <div class="input-wrapper">
             <i class="fa-solid fa-building inner-icon"></i>
-            <select id="regGender" class="form-select" required>
+            <select id="regGender" name="gender" class="form-select" required>
               <option value="" disabled selected hidden>Select gender</option>
               <option value="male">Male</option>
               <option value="female">Female</option>
@@ -227,15 +220,13 @@
         </div>
       </div>
 
-      <!-- Consent Agreement -->
       <div class="mb-4 form-check text-start">
-        <input type="checkbox" class="form-check-input" id="termsCheck" required>
+        <input type="checkbox" class="form-check-input" id="termsCheck" name="terms_consent" required>
         <label class="form-check-label text-dark small label-checkbox" for="termsCheck">
           I agree to the <a href="#" class="text-primary text-decoration-none fw-semibold">Terms & Conditions</a> and <a href="#" class="text-primary text-decoration-none fw-semibold">Privacy Policy</a>
         </label>
       </div>
 
-      <!-- Actions Section -->
       <div class="d-grid gap-3">
         <button class="btn btn-primary btn-register d-flex align-items-center justify-content-center gap-2 shadow-sm text-white" type="submit">
           <i class="fa-solid fa-user-plus"></i> Register
@@ -243,7 +234,6 @@
         
         <div class="text-center text-secondary small">
           Already have an account? 
-          <!-- Linked with dynamic Django url routing -->
           <a href="{% url 'login' %}" class="text-primary text-decoration-none fw-semibold ms-1">Login</a>
         </div>
       </div>
