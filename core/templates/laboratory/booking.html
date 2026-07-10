@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <style>
       body {
-        /* FIXED: Updated to find your background image in static assets */
         background-image: url("{% static 'fff.jpg' %}");
         background-color: #fdfdfd;
         background-repeat: no-repeat;
@@ -51,7 +50,7 @@
             {% endfor %}
         {% endif %}
 
-        <form action="{% url 'book_test' %}" method="POST">
+        <form action="{% url 'booking' %}" method="POST">
             {% csrf_token %}
             
             <div class="card shadow-sm border-0 rounded-4 mb-4 bg-white">
@@ -65,7 +64,7 @@
                             <label class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fa-solid fa-user text-muted"></i></span>
-                                <input type="text" name="full_name" class="form-control" placeholder="Enter your full name" required>
+                                <input type="text" name="full_name" class="form-control" placeholder="Enter your full name" value="{{ request.user.username }}" required>
                             </div>
                         </div>
 
@@ -99,7 +98,7 @@
                             <label class="form-label fw-semibold">Email Address</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fa-solid fa-envelope text-muted"></i></span>
-                                <input type="email" name="email" class="form-control" placeholder="example@gmail.com">
+                                <input type="email" name="email" class="form-control" placeholder="example@gmail.com" value="{{ request.user.email }}">
                             </div>
                         </div>
 
@@ -112,10 +111,10 @@
                         </div>
 
                         <div class="col-md-6">
-                            <label for="IDNumber" class="form-label fw-semibold">ID Number <span class="text-danger">*</span></label>
+                            <label class="form-label fw-semibold">ID Number <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fa-solid fa-id-card text-muted"></i></span>
-                                <input type="text" id="IDNumber" name="id_number" class="form-control" placeholder="Enter your ID number" required>
+                                <input type="text" name="id_number" class="form-control" placeholder="Enter your ID number" required>
                             </div>
                         </div>
                     </div>
@@ -154,101 +153,23 @@
                 </div>
                 
                 <div class="list-group list-group-flush">
+                    {% for test in tests %}
                     <label class="list-group-item d-flex align-items-center justify-content-between p-3 border-bottom border-light-subtle">
                         <div class="d-flex align-items-center gap-3">
-                            <input class="form-check-input flex-shrink-0 m-0 border-secondary-subtle fs-5" type="checkbox" name="tests[]" value="cbc" checked>
-                            <div class="fs-4 px-2 py-1 rounded bg-danger-subtle">🩸</div>
+                            <input class="form-check-input flex-shrink-0 m-0 border-secondary-subtle fs-5" type="checkbox" name="tests[]" value="{{ test.id }}">
+                            <div class="fs-4 px-2 py-1 rounded bg-info-subtle">🧪</div>
                             <div>
-                                <h6 class="mb-0 fw-bold text-dark fs-6">Complete Blood Count (CBC)</h6>
-                                <p class="text-muted mb-0 small" style="font-size: 0.75rem;">Measures different components of your blood</p>
+                                <h6 class="mb-0 fw-bold text-dark fs-6">{{ test.test_name }}</h6>
+                                <p class="text-muted mb-0 small" style="font-size: 0.75rem;">Category: {{ test.category.name }} | Normal Range: {{ test.normal_range }} {{ test.unit }}</p>
                             </div>
                         </div>
-                        <span class="fw-bold text-dark fs-6 ps-2">₹350</span>
+                        <span class="fw-bold text-dark fs-6 ps-2">Rs. {{ test.price }}</span>
                     </label>
-
-                    <label class="list-group-item d-flex align-items-center justify-content-between p-3 border-bottom border-light-subtle">
-                        <div class="d-flex align-items-center gap-3">
-                            <input class="form-check-input flex-shrink-0 m-0 border-secondary-subtle fs-5" type="checkbox" name="tests[]" value="dengue">
-                            <div class="fs-4 px-2 py-1 rounded bg-warning-subtle">🦟</div>
-                            <div>
-                                <h6 class="mb-0 fw-bold text-dark fs-6">Dengue NS1 Antigen</h6>
-                                <p class="text-muted mb-0 small" style="font-size: 0.75rem;">Detects active dengue virus or immune response antibodies</p>
-                            </div>
-                        </div>
-                        <span class="fw-bold text-dark fs-6 ps-2">₹850</span>
-                    </label>
-
-                    <label class="list-group-item d-flex align-items-center justify-content-between p-3 border-bottom border-light-subtle">
-                        <div class="d-flex align-items-center gap-3">
-                            <input class="form-check-input flex-shrink-0 m-0 border-secondary-subtle fs-5" type="checkbox" name="tests[]" value="tb">
-                            <div class="fs-4 px-2 py-1 rounded bg-secondary-subtle">🫁</div>
-                            <div>
-                                <h6 class="mb-0 fw-bold text-dark fs-6">Tuberculosis (TB)</h6>
-                                <p class="text-muted mb-0 small" style="font-size: 0.75rem;">Detects exposure, latent infection, or active immune response to TB bacteria</p>
-                            </div>
-                        </div>
-                        <span class="fw-bold text-dark fs-6 ps-2">₹450</span>
-                    </label>
-
-                    <label class="list-group-item d-flex align-items-center justify-content-between p-3 border-bottom border-light-subtle">
-                        <div class="d-flex align-items-center gap-3">
-                            <input class="form-check-input flex-shrink-0 m-0 border-secondary-subtle fs-5" type="checkbox" name="tests[]" value="xray">
-                            <div class="fs-4 px-2 py-1 rounded bg-dark-subtle">🩻</div>
-                            <div>
-                                <h6 class="mb-0 fw-bold text-dark fs-6">X-Ray</h6>
-                                <p class="text-muted mb-0 small" style="font-size: 0.75rem;">Advanced digital imaging for internal bone structures and chest analysis</p>
-                            </div>
-                        </div>
-                        <span class="fw-bold text-dark fs-6 ps-2">₹450</span>
-                    </label>
-
-                    <label class="list-group-item d-flex align-items-center justify-content-between p-3 border-bottom border-light-subtle">
-                        <div class="d-flex align-items-center gap-3">
-                            <input class="form-check-input flex-shrink-0 m-0 border-secondary-subtle fs-5" type="checkbox" name="tests[]" value="video_xray">
-                            <div class="fs-4 px-2 py-1 rounded bg-dark-subtle">🩻</div>
-                            <div>
-                                <h6 class="mb-0 fw-bold text-dark fs-6">Video X-Ray</h6>
-                                <p class="text-muted mb-0 small" style="font-size: 0.75rem;">Advanced digital imaging for internal bone structures and chest analysis</p>
-                            </div>
-                        </div>
-                        <span class="fw-bold text-dark fs-6 ps-2">₹600</span>
-                    </label>
-
-                    <label class="list-group-item d-flex align-items-center justify-content-between p-3 border-bottom border-light-subtle">
-                        <div class="d-flex align-items-center gap-3">
-                            <input class="form-check-input flex-shrink-0 m-0 border-secondary-subtle fs-5" type="checkbox" name="tests[]" value="vit_b12">
-                            <div class="fs-4 px-2 py-1 rounded" style="background-color: #ffe6eb;">💊</div>
-                            <div>
-                                <h6 class="mb-0 fw-bold text-dark fs-6">Vitamin B12 Test</h6>
-                                <p class="text-muted mb-0 small" style="font-size: 0.75rem;">Measures Vitamin B12 levels to check for deficiencies or anemia flags</p>
-                            </div>
-                        </div>
-                        <span class="fw-bold text-dark fs-6 ps-2">₹550</span>
-                    </label>
-
-                    <label class="list-group-item d-flex align-items-center justify-content-between p-3 border-bottom border-light-subtle">
-                        <div class="d-flex align-items-center gap-3">
-                            <input class="form-check-input flex-shrink-0 m-0 border-secondary-subtle fs-5" type="checkbox" name="tests[]" value="urinalysis">
-                            <div class="fs-4 px-2 py-1 rounded" style="background-color: #fff9db;">🧪</div>
-                            <div>
-                                <h6 class="mb-0 fw-bold text-dark fs-6">Urinalysis & Stool Examination</h6>
-                                <p class="text-muted mb-0 small" style="font-size: 0.75rem;">Complete chemical, physical, and microscopic evaluation for metabolic or infection markers</p>
-                            </div>
-                        </div>
-                        <span class="fw-bold text-dark fs-6 ps-2">₹400</span>
-                    </label>
-
-                    <label class="list-group-item d-flex align-items-center justify-content-between p-3">
-                        <div class="d-flex align-items-center gap-3">
-                            <input class="form-check-input flex-shrink-0 m-0 border-secondary-subtle fs-5" type="checkbox" name="tests[]" value="cancer_test">
-                            <div class="fs-4 px-2 py-1 rounded" style="background-color: #fff9db;">🧪</div>
-                            <div>
-                                <h6 class="mb-0 fw-bold text-dark fs-6">Cancer Test</h6>
-                                <p class="text-muted mb-0 small" style="font-size: 0.75rem;">Complete chemical, physical, and microscopic evaluation for metabolic or infection markers</p>
-                            </div>
-                        </div>
-                        <span class="fw-bold text-dark fs-6 ps-2">₹400</span>
-                    </label>
+                    {% empty %}
+                    <div class="p-4 text-center text-muted">
+                        No laboratory tests available in the system yet. Please add them in the admin dashboard.
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
 
