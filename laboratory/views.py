@@ -16,41 +16,41 @@ def booking_view(request):
 @login_required
 def booking_view(request):
     if request.method == 'POST':
-        # 1. Extract the patient details and appointment slots from the form
+        # 1. Capture the schedule dates and times from the form
         appointment_date = request.POST.get('appointment_date')
         appointment_time = request.POST.get('appointment_time')
-        selected_test_ids = request.POST.getlist('tests[]')  # Gets list of checked test IDs
         
-        # Doctor info (optional fields)
+        # 2. Get the list of checkmarked test IDs chosen by the patient
+        selected_test_ids = request.POST.getlist('tests[]')
+        
+        # 3. Collect doctor referral information (optional fields)
         doctor_name = request.POST.get('doctor_name', '')
         doctor_id = request.POST.get('doctor_id', '')
 
+        # Quick validation guard check
         if not selected_test_ids or not appointment_date or not appointment_time:
-            messages.error(request, "Please select at least one test and a schedule slot.")
+            messages.error(request, "Please select at least one test, date, and time slot.")
             return redirect('booking')
 
         try:
-            # 2. Loop through each selected test and create an appointment record
+            # 4. Loop through every selected checkmark and log an independent appointment record
             for test_id in selected_test_ids:
                 test_instance = LabTest.objects.get(id=test_id)
                 
                 Appointment.objects.create(
                     patient=request.user,
-                    test=test_instance,
+                    test=test_instance,  # Linked directly to your 'test' field
                     appointment_date=appointment_date,
-                    appointment_time=appointment_time,
-                    doctor_name=doctor_name,
-                    doctor_id=doctor_id,
                     status='Pending'
                 )
                 
-            messages.success(request, "Your lab tests have been booked successfully!")
-            return redirect('home')  # Send them back home with a success message
+            messages.success(request, "Your laboratory test session has been booked successfully!")
+            return redirect('home')
             
         except Exception as e:
-            messages.error(request, f"Error booking appointment: {str(e)}")
+            messages.error(request, f"Error while writing booking to database: {str(e)}")
             return redirect('booking')
 
-    # GET request: Load all your dynamic tests from the admin database into the page
+    # GET request: Load real dynamic tests down into section 3 of your form
     all_tests = LabTest.objects.all().select_related('category')
     return render(request, 'laboratory/booking.html', {'tests': all_tests})
