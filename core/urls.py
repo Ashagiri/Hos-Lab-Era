@@ -14,10 +14,11 @@ urlpatterns = [
     # This keeps your booking page over at http://127.0.0.1:8000/booking/
     path('booking/', booking_view, name='booking'),
     
+    # NEW: Add this line for your dashboard layout page
+    path('dashboard/', dashboard_view, name='dashboard'),
+    
     path('accounts/register/', register_view, name='register'),
     path('accounts/login/', login_view, name='login'),
-    
-    path('dashboard/', dashboard_view, name='dashboard'),
 ]
 
 if settings.DEBUG:

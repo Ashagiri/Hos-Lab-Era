@@ -12,51 +12,84 @@
     <style>
       :root {
         --sidebar-bg: #1a233a;
-        --card-hover-transform: translateY(-5px);
+        --card-hover-transform: translateY(-6px);
+        --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
       body {
         background-color: #f8fafc;
         min-height: 100vh;
         font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        -webkit-font-smoothing: antialiased;
       }
 
+      /* Glassmorphism Cards */
       .glass-card {
-        background-color: rgba(255, 255, 255, 0.9) !important;
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
+        background: rgba(255, 255, 255, 0.95) !important;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.8) !important;
       }
 
+      /* Sidebar Navigation Link Styling */
       .sidebar-link {
-        transition: all 0.2s ease;
-        border-radius: 8px;
+        transition: var(--transition-smooth);
+        border-radius: 10px;
+        font-weight: 500;
+        letter-spacing: 0.3px;
       }
       .sidebar-link:hover, .sidebar-link.active {
-        background-color: rgba(255, 255, 255, 0.1) !important;
+        background-color: rgba(255, 255, 255, 0.08) !important;
+        transform: translateX(3px);
         opacity: 1 !important;
       }
       .sidebar-link.active {
         background-color: #2563eb !important;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
       }
 
+      /* Interactive Dashboard Action Grid */
       .interactive-card {
         text-decoration: none;
         color: inherit;
-        transition: transform 0.25s ease, box-shadow 0.25s ease;
+        transition: var(--transition-smooth);
+        border: 1px solid rgba(226, 232, 240, 0.8) !important;
       }
       .interactive-card:hover {
         transform: var(--card-hover-transform);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08) !important;
-        color: inherit;
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.04) !important;
+        background: #ffffff !important;
+      }
+      .icon-box {
+        transition: var(--transition-smooth);
+      }
+      .interactive-card:hover .icon-box {
+        transform: scale(1.1);
       }
 
+      /* Clean Pill Status Indicators */
+      .status-pill {
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        padding: 6px 12px;
+        border-radius: 30px;
+      }
+
+      /* Notification Badge Styling */
       .badge-notify {
         position: absolute;
-        top: -2px;
-        right: -2px;
-        padding: 4px;
+        top: 0px;
+        right: 0px;
+        width: 8px;
+        height: 8px;
         border-radius: 50%;
         background-color: #ef4444;
+        box-shadow: 0 0 0 2px #fff;
+      }
+
+      .section-card {
+        border: 1px solid rgba(226, 232, 240, 0.7);
+        transition: var(--transition-smooth);
       }
     </style>
   </head>
@@ -65,34 +98,34 @@
     <div class="container-fluid p-0">
       <div class="d-flex flex-column flex-md-row">
         
-        <div class="col-12 col-md-3 col-lg-2 text-white p-3 min-vh-md-100 position-sticky top-0 style-sticky" style="background-color: var(--sidebar-bg); z-index: 1000;">
+        <div class="col-12 col-md-3 col-lg-2 text-white p-4 min-vh-md-100 position-sticky top-0" style="background-color: var(--sidebar-bg); z-index: 1000;">
           <div class="d-flex flex-row flex-md-column h-100 justify-content-between justify-content-md-start">
             
             <div class="w-100">
               <div class="d-flex align-items-center mb-0 mb-md-4 px-2 pt-2">
-                <i class="fa-solid fa-flask-vial fs-4 text-primary me-2"></i>
-                <span class="fs-5 fw-bold d-none d-sm-inline">LabPortal</span>
+                <i class="fa-solid fa-flask-vial fs-4 text-primary me-2 animate-pulse"></i>
+                <span class="fs-5 fw-bold tracking-tight d-none d-sm-inline">LabPortal</span>
               </div>
-              <hr class="text-white-50 d-none d-md-block my-3">
+              <hr class="text-white-50 d-none d-md-block my-4">
               
-              <ul class="nav nav-pills flex-row flex-md-column justify-content-around justify-content-md-start gap-1 w-100">
+              <ul class="nav nav-pills flex-row flex-md-column justify-content-around justify-content-md-start gap-2 w-100">
                 <li class="nav-item flex-fill flex-md-initial">
-                  <a href="{% url 'dashboard' %}" class="nav-link active sidebar-link text-white py-2 px-3">
+                  <a href="{% url 'dashboard' %}" class="nav-link active sidebar-link text-white py-2.5 px-3">
                     <i class="fa-solid fa-house me-0 me-md-2"></i> <span class="d-none d-md-inline">Home</span>
                   </a>
                 </li>
                 <li class="nav-item flex-fill flex-md-initial">
-                  <a href="{% url 'booking' %}" class="nav-link sidebar-link text-white opacity-75 py-2 px-3">
+                  <a href="{% url 'booking' %}" class="nav-link sidebar-link text-white opacity-75 py-2.5 px-3">
                     <i class="fa-solid fa-calendar-check me-0 me-md-2"></i> <span class="d-none d-md-inline">Booking Now</span>
                   </a>
                 </li>
                 <li class="nav-item flex-fill flex-md-initial">
-                  <a href="#" class="nav-link sidebar-link text-white opacity-75 py-2 px-3">
+                  <a href="#" class="nav-link sidebar-link text-white opacity-75 py-2.5 px-3">
                     <i class="fa-solid fa-file-medical me-0 me-md-2"></i> <span class="d-none d-md-inline">Reports</span>
                   </a>
                 </li>
                 <li class="nav-item flex-fill flex-md-initial">
-                  <a href="#" class="nav-link sidebar-link text-white opacity-75 py-2 px-3">
+                  <a href="#" class="nav-link sidebar-link text-white opacity-75 py-2.5 px-3">
                     <i class="fa-solid fa-gear me-0 me-md-2"></i> <span class="d-none d-md-inline">Settings</span>
                   </a>
                 </li>
@@ -100,8 +133,8 @@
             </div>
             
             <div class="mt-0 mt-md-auto pt-2 w-100 d-none d-md-block">
-              <hr class="text-white-50 my-3">
-              <a href="{% url 'home' %}" class="nav-link sidebar-link text-danger py-2 px-3">
+              <hr class="text-white-50 my-4">
+              <a href="{% url 'home' %}" class="nav-link sidebar-link text-danger py-2.5 px-3 d-flex align-items-center">
                 <i class="fa-solid fa-right-from-bracket me-2"></i> <span>Back to Main</span>
               </a>
             </div>
@@ -109,43 +142,44 @@
           </div>
         </div>
 
-        <div class="col-12 col-md-9 col-lg-10 min-vh-100 pb-5 px-3 px-md-4">
+        <div class="col-12 col-md-9 col-lg-10 min-vh-100 pb-5 px-3 px-md-5">
           
-          <nav class="navbar navbar-light bg-white border-bottom rounded-4 px-4 py-3 my-3 shadow-sm glass-card">
+          <nav class="navbar navbar-light bg-white border-0 rounded-4 px-4 py-3 my-4 shadow-sm glass-card">
             <div class="container-fluid p-0 d-flex justify-content-between align-items-center">
-              <h4 class="mb-0 fw-bold text-dark fs-5 fs-sm-4">Hospital Laboratory System</h4>
-              <div class="d-flex align-items-center gap-3">
-                <a href="#" class="text-secondary text-decoration-none position-relative me-2">
+              <h4 class="mb-0 fw-bold text-dark fs-5 fs-sm-4 tracking-tight">Hospital Laboratory System</h4>
+              <div class="d-flex align-items-center gap-4">
+                <a href="#" class="text-secondary text-decoration-none position-relative p-1">
                   <i class="fa-regular fa-bell fs-5"></i>
                   <span class="badge-notify"></span>
                 </a>
-                <span class="fw-semibold text-secondary d-flex align-items-center">
+                <div class="vr bg-secondary opacity-25 d-none d-sm-block" style="height: 20px;"></div>
+                <span class="fw-semibold text-secondary d-flex align-items-center bg-light px-3 py-1.5 rounded-pill fs-7">
                   <i class="fa-regular fa-circle-user fs-5 me-2 text-primary"></i> 
-                  Hello, {{ request.user.username }}
+                  Hello, <strong class="text-dark ms-1">{{ request.user.username }}</strong>
                 </span>
               </div>
             </div>
           </nav>
 
           <div class="mb-4">
-            <div class="card border-0 rounded-4 overflow-hidden shadow-sm" 
-                 style="background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%); min-height: 160px;">
+            <div class="card border-0 rounded-4 overflow-hidden shadow-sm section-card" 
+                 style="background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%); min-height: 180px;">
               
               <div class="position-absolute rounded-circle opacity-25" 
-                   style="top: -40px; right: 60px; width: 220px; height: 220px; background-color: #3b82f6; filter: blur(24px); z-index: 1;">
+                   style="top: -40px; right: 60px; width: 220px; height: 220px; background-color: #3b82f6; filter: blur(30px); z-index: 1;">
               </div>
 
               <div class="card-body p-4 p-md-5 d-flex align-items-center">
                 <div class="row align-items-center g-3 w-100">
                   <div class="col-12 col-md-8 position-relative" style="z-index: 2;">
-                    <h2 class="card-title fw-extrabold text-dark mb-2 fs-3">Welcome back, {{ request.user.username }}!</h2>
-                    <p class="card-text text-secondary mb-0 small" style="max-width: 500px; line-height: 1.5;">
+                    <h2 class="card-title fw-bold text-dark mb-2 fs-2 tracking-tight">Welcome back, {{ request.user.username }}!</h2>
+                    <p class="card-text text-secondary mb-0" style="max-width: 540px; line-height: 1.6; font-size: 14px;">
                       Easily check, filter, schedule, and track your ongoing clinical results, prescriptions, and medical reports.
                     </p>
                   </div>
                   <div class="col-12 col-md-4 d-none d-md-flex justify-content-end position-relative" style="z-index: 2;">
-                    <div class="bg-white p-3 rounded-circle shadow-sm">
-                      <i class="fa-solid fa-microscope text-primary" style="font-size: 3rem;"></i>
+                    <div class="bg-white p-3.5 rounded-circle shadow-sm d-flex align-items-center justify-content-center" style="width: 90px; height: 90px;">
+                      <i class="fa-solid fa-microscope text-primary" style="font-size: 2.5rem;"></i>
                     </div>
                   </div>
                 </div>
@@ -153,119 +187,144 @@
             </div>
           </div>
 
-          <div class="mb-4">
-            <h5 class="fw-bold text-dark mb-3">Quick Actions</h5>
+          <div class="mb-5">
+            <h5 class="fw-bold text-dark mb-3.5 tracking-tight">Quick Actions</h5>
             
-            <div class="row g-3 mb-4">
+            <div class="row g-3 mb-5">
               <div class="col-6 col-lg-3">
-                <a href="{% url 'booking' %}" class="card h-100 border border-light-subtle rounded-4 p-3 shadow-sm interactive-card bg-white">
-                  <div class="d-flex align-items-center justify-content-center rounded-3 mb-3" style="width: 44px; height: 44px; background-color: #eff6ff; color: #2563eb;">
+                <a href="{% url 'booking' %}" class="card h-100 rounded-4 p-3.5 shadow-sm interactive-card bg-white">
+                  <div class="d-flex align-items-center justify-content-center rounded-3 mb-3 icon-box" style="width: 46px; height: 46px; background-color: #eff6ff; color: #2563eb;">
                     <i class="fa-solid fa-file-medical fs-5"></i>
-                  </div>
-                  <h6 class="fw-bold mb-1 text-dark">Book a Test</h6>
-                  <p class="text-muted small mb-0 d-none d-sm-block">Schedule diagnostic appointments seamlessly.</p>
+                </div>
+                  <h6 class="fw-bold mb-1 text-dark fs-6">Book a Test</h6>
+                  <p class="text-muted small mb-0 d-none d-sm-block style-desc" style="line-height: 1.4;">Schedule diagnostic appointments seamlessly.</p>
                 </a>
               </div>
 
               <div class="col-6 col-lg-3">
-                <a href="#my-bookings" class="card h-100 border border-light-subtle rounded-4 p-3 shadow-sm interactive-card bg-white">
-                  <div class="d-flex align-items-center justify-content-center rounded-3 mb-3" style="width: 44px; height: 44px; background-color: #f0fdf4; color: #16a34a;">
+                <a href="#my-bookings" class="card h-100 rounded-4 p-3.5 shadow-sm interactive-card bg-white">
+                  <div class="d-flex align-items-center justify-content-center rounded-3 mb-3 icon-box" style="width: 46px; height: 46px; background-color: #f0fdf4; color: #16a34a;">
                     <i class="fa-solid fa-calendar-days fs-5"></i>
                   </div>
-                  <h6 class="fw-bold mb-1 text-dark">Bookings Status</h6>
-                  <p class="text-muted small mb-0 d-none d-sm-block">Track status adjustments and history logs.</p>
+                  <h6 class="fw-bold mb-1 text-dark fs-6">Bookings Status</h6>
+                  <p class="text-muted small mb-0 d-none d-sm-block style-desc" style="line-height: 1.4;">Track status adjustments and history logs.</p>
                 </a>
               </div>
 
               <div class="col-6 col-lg-3">
-                <a href="#" class="card h-100 border border-light-subtle rounded-4 p-3 shadow-sm interactive-card bg-white">
-                  <div class="d-flex align-items-center justify-content-center rounded-3 mb-3" style="width: 44px; height: 44px; background-color: #f3e8ff; color: #7c3aed;">
+                <a href="#" class="card h-100 rounded-4 p-3.5 shadow-sm interactive-card bg-white">
+                  <div class="d-flex align-items-center justify-content-center rounded-3 mb-3 icon-box" style="width: 46px; height: 46px; background-color: #f3e8ff; color: #7c3aed;">
                     <i class="fa-solid fa-receipt fs-5"></i>
                   </div>
-                  <h6 class="fw-bold mb-1 text-dark">My Reports</h6>
-                  <p class="text-muted small mb-0 d-none d-sm-block">Download certified clinical PDF structures.</p>
+                  <h6 class="fw-bold mb-1 text-dark fs-6">My Reports</h6>
+                  <p class="text-muted small mb-0 d-none d-sm-block style-desc" style="line-height: 1.4;">Download certified clinical PDF structures.</p>
                 </a>
               </div>
 
               <div class="col-6 col-lg-3">
-                <a href="#" class="card h-100 border border-light-subtle rounded-4 p-3 shadow-sm interactive-card bg-white">
-                  <div class="d-flex align-items-center justify-content-center rounded-3 mb-3" style="width: 44px; height: 44px; background-color: #fff7ed; color: #ea580c;">
+                <a href="#" class="card h-100 rounded-4 p-3.5 shadow-sm interactive-card bg-white">
+                  <div class="d-flex align-items-center justify-content-center rounded-3 mb-3 icon-box" style="width: 46px; height: 46px; background-color: #fff7ed; color: #ea580c;">
                     <i class="fa-solid fa-sliders fs-5"></i>
                   </div>
-                  <h6 class="fw-bold mb-1 text-dark">Settings</h6>
-                  <p class="text-muted small mb-0 d-none d-sm-block">Manage your core layout profiles securely.</p>
+                  <h6 class="fw-bold mb-1 text-dark fs-6">Settings</h6>
+                  <p class="text-muted small mb-0 d-none d-sm-block style-desc" style="line-height: 1.4;">Manage your core layout profiles securely.</p>
                 </a>
               </div>
             </div>
 
             <div class="row g-4">
-              <div class="col-12 col-lg-6">
-                <div class="card h-100 border border-light-subtle rounded-4 p-4 bg-white shadow-sm d-flex flex-column justify-content-between">
-                  <div>
-                    <h5 class="fw-bold mb-3 text-dark">Recent Lab Updates</h5>
-                    
-                    {% if appointments %}
-                      {% for appointment in appointments|slice:":3" %}
-                      <div class="d-flex align-items-center justify-content-between py-3 border-bottom border-light-subtle">
-                        <div class="d-flex align-items-center gap-3">
-                          <div class="d-flex align-items-center justify-content-center rounded-circle bg-light text-primary" style="width: 40px; height: 40px;">
-                            <i class="fa-solid fa-droplet"></i>
-                          </div>
-                          <div>
-                            <h6 class="fw-bold mb-0 text-dark" style="font-size: 14px;">{{ appointment.test.test_name }}</h6>
-                            <span class="badge {% if appointment.status == 'Pending' %}bg-warning-subtle text-warning{% else %}bg-success-subtle text-success{% endif %} border rounded-pill" style="font-size: 11px;">
-                              {{ appointment.status }}
-                            </span>
-                          </div>
-                        </div>
-                        <div class="text-end">
-                          <div class="small fw-semibold text-dark">{{ appointment.appointment_date }}</div>
-                        </div>
-                      </div>
-                      {% endfor %}
-                    {% else %}
-                      <p class="text-muted small">No recent lab updates found.</p>
-                    {% endif %}
-
+              
+              <div class="col-12 col-lg-7">
+                <div class="card h-100 border-0 rounded-4 p-4 bg-white shadow-sm section-card">
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0 text-dark tracking-tight">Recent Lab Updates</h5>
+                    <span class="badge bg-light text-secondary rounded-pill px-2.5 py-1.5 fs-7 border">Live Tracker</span>
                   </div>
+                  
+                  {% if appointments %}
+                    <div class="table-responsive">
+                      <table class="table table-borderless align-middle mb-0">
+                        <thead>
+                          <tr class="text-secondary border-bottom" style="font-size: 13px;">
+                            <th class="pb-2 ps-0">TEST PARAMETER</th>
+                            <th class="pb-2">APPOINTMENT DATE</th>
+                            <th class="pb-2 text-end">STATUS</th>
+                          </tr>
+                        </thead>
+                        <tbody class="divide-y">
+                          {% for appointment in appointments|slice:":4" %}
+                          <tr class="border-bottom-dashed">
+                            <td class="py-3 ps-0">
+                              <div class="d-flex align-items-center gap-3">
+                                <div class="d-flex align-items-center justify-content-center rounded-circle bg-light text-primary flex-shrink-0 shadow-sm" style="width: 38px; height: 38px;">
+                                  <i class="fa-solid fa-droplet fs-6"></i>
+                                </div>
+                                <div>
+                                  <span class="fw-bold text-dark d-block" style="font-size: 14px;">{{ appointment.test.test_name }}</span>
+                                  <small class="text-muted" style="font-size: 11px;">ID: #LMS-00{{ appointment.id }}</small>
+                                </div>
+                              </div>
+                            </td>
+                            <td class="py-3 text-secondary small fw-medium">
+                              {{ appointment.appointment_date }}
+                            </td>
+                            <td class="py-3 text-end">
+                              <span class="badge status-pill {% if appointment.status == 'Pending' %}bg-warning-subtle text-warning border border-warning-subtle{% else %}bg-success-subtle text-success border border-success-subtle{% endif %} fs-8">
+                                {{ appointment.status }}
+                              </span>
+                            </td>
+                          </tr>
+                          {% endfor %}
+                        </tbody>
+                      </table>
+                    </div>
+                  {% else %}
+                    <div class="text-center py-5">
+                      <i class="fa-solid fa-folder-open text-muted mb-2 fs-2 d-block opacity-50"></i>
+                      <p class="text-muted small mb-0">No recent laboratory records located.</p>
+                    </div>
+                  {% endif %}
                 </div>
               </div>
 
-              <div class="col-12 col-lg-6" id="my-bookings">
-                <div class="card h-100 border border-light-subtle rounded-4 p-4 bg-white shadow-sm d-flex flex-column justify-content-between">
+              <div class="col-12 col-lg-5" id="my-bookings">
+                <div class="card h-100 border-0 rounded-4 p-4 bg-white shadow-sm section-card d-flex flex-column justify-content-between">
                   <div>
-                    <h5 class="fw-bold mb-3 text-dark">Next Scheduled Session</h5>
+                    <h5 class="fw-bold mb-3.5 text-dark tracking-tight">Next Scheduled Session</h5>
                     
                     {% if appointments %}
                       {% with next_booking=appointments.0 %}
-                      <div class="rounded-4 p-4 d-flex align-items-start gap-3" style="background: linear-gradient(135deg, #eef5fc 0%, #e2eefd 100%);">
-                        <div class="d-flex align-items-center justify-content-center rounded-3 bg-white text-primary flex-shrink-0 shadow-sm" style="width: 48px; height: 48px;">
-                          <i class="fa-solid fa-clock-rotate-left fs-4"></i>
-                        </div>
-                        
-                        <div>
-                          <h5 class="fw-bold text-dark mb-2" style="font-size: 16px;">{{ next_booking.test.test_name }}</h5>
-                          <div class="text-secondary small mb-1"><i class="fa-regular fa-calendar me-2"></i>{{ next_booking.appointment_date }}</div>
-                          <div class="text-secondary small"><i class="fa-solid fa-hospital-user me-2"></i>Status: {{ next_booking.status }}</div>
+                      <div class="rounded-4 p-4 shadow-sm border border-light-subtle position-relative overflow-hidden" style="background: linear-gradient(135deg, #eef5fc 0%, #e2eefd 100%);">
+                        <div class="d-flex align-items-start gap-3 position-relative" style="z-index: 2;">
+                          <div class="d-flex align-items-center justify-content-center rounded-3 bg-white text-primary flex-shrink-0 shadow-sm" style="width: 48px; height: 48px;">
+                            <i class="fa-solid fa-clock-rotate-left fs-4"></i>
+                          </div>
+                          
+                          <div>
+                            <h5 class="fw-bold text-dark mb-2.5" style="font-size: 16px;">{{ next_booking.test.test_name }}</h5>
+                            <div class="text-secondary small mb-1.5 fw-medium"><i class="fa-regular fa-calendar text-primary me-2"></i>{{ next_booking.appointment_date }}</div>
+                            <div class="text-secondary small fw-medium"><i class="fa-solid fa-circle-check text-primary me-2"></i>Status: <span class="text-dark font-semibold">{{ next_booking.status }}</span></div>
+                          </div>
                         </div>
                       </div>
                       {% endwith %}
                     {% else %}
-                      <div class="p-3 text-center border rounded-4 bg-light text-muted small">
-                        You have no scheduled test sessions at this time.
+                      <div class="p-4 text-center border border-dashed rounded-4 bg-light text-muted small my-auto">
+                        <i class="fa-regular fa-calendar-check d-block fs-3 mb-2 opacity-50 text-secondary"></i>
+                        You have no scheduled clinical test profiles open.
                       </div>
                     {% endif %}
                   </div>
 
                   <div class="mt-4">
-                    <a href="{% url 'booking' %}" class="btn btn-primary fw-semibold rounded-3 px-4 py-2 w-100" style="font-size: 14px;">
-                      Book New Appointment
+                    <a href="{% url 'booking' %}" class="btn btn-primary fw-semibold rounded-3 px-4 py-2.5 w-100 shadow-sm d-flex align-items-center justify-content-center gap-2" style="font-size: 14px; transition: var(--transition-smooth);">
+                      <i class="fa-solid fa-plus fs-7"></i> Book New Appointment
                     </a>
                   </div>
                 </div>
               </div>
-            </div>
 
+            </div>
           </div>
 
         </div> 

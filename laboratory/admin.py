@@ -20,7 +20,10 @@ class LabTestAdmin(admin.ModelAdmin):
     
 @admin.register(Appointment)
 class AppointmentAdmin(admin.ModelAdmin):
-    # Change 'lab_test' back to 'test' to match your models.py
+    # CHANGED: 'lab_test' changed to 'test' to match your model definition
     list_display = ('patient', 'test', 'appointment_date', 'status')
     list_filter = ('status', 'appointment_date')
-    search_fields = ('patient__username', 'test__test_name', 'doctor_name')
+    
+    # CHANGED: 'lab_test__test_name' changed to 'test__test_name' 
+    # Also removed 'doctor_name' if your model doesn't use it
+    search_fields = ('patient__username', 'test__test_name')
