@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Appointment, PatientProfile, TestCategory, LabTest, Appointment
+from .models import PatientProfile, TestCategory, LabTest, Appointment
 
 @admin.register(PatientProfile)
 class PatientProfileAdmin(admin.ModelAdmin):
@@ -18,11 +18,9 @@ class LabTestAdmin(admin.ModelAdmin):
     list_filter = ('category',)
     search_fields = ('test_name', 'category__name')
     
-# Register your existing models if they aren't already
 @admin.register(Appointment)
 class AppointmentAdmin(admin.ModelAdmin):
-    list_display = ('patient', 'test', 'appointment_date', 'appointment_time', 'status')
+    # Change 'lab_test' back to 'test' to match your models.py
+    list_display = ('patient', 'test', 'appointment_date', 'status')
     list_filter = ('status', 'appointment_date')
     search_fields = ('patient__username', 'test__test_name', 'doctor_name')
-    
-    
