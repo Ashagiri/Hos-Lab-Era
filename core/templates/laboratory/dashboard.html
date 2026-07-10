@@ -23,7 +23,6 @@
         -webkit-font-smoothing: antialiased;
       }
 
-      /* Glassmorphism Cards */
       .glass-card {
         background: rgba(255, 255, 255, 0.95) !important;
         backdrop-filter: blur(10px);
@@ -31,7 +30,6 @@
         border: 1px solid rgba(255, 255, 255, 0.8) !important;
       }
 
-      /* Sidebar Navigation Link Styling */
       .sidebar-link {
         transition: var(--transition-smooth);
         border-radius: 10px;
@@ -48,7 +46,6 @@
         box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
       }
 
-      /* Interactive Dashboard Action Grid */
       .interactive-card {
         text-decoration: none;
         color: inherit;
@@ -67,7 +64,6 @@
         transform: scale(1.1);
       }
 
-      /* Clean Pill Status Indicators */
       .status-pill {
         font-weight: 600;
         letter-spacing: 0.3px;
@@ -75,7 +71,6 @@
         border-radius: 30px;
       }
 
-      /* Notification Badge Styling */
       .badge-notify {
         position: absolute;
         top: 0px;
@@ -103,7 +98,7 @@
             
             <div class="w-100">
               <div class="d-flex align-items-center mb-0 mb-md-4 px-2 pt-2">
-                <i class="fa-solid fa-flask-vial fs-4 text-primary me-2 animate-pulse"></i>
+                <i class="fa-solid fa-flask-vial fs-4 text-primary me-2"></i>
                 <span class="fs-5 fw-bold tracking-tight d-none d-sm-inline">LabPortal</span>
               </div>
               <hr class="text-white-50 d-none d-md-block my-4">
@@ -195,9 +190,9 @@
                 <a href="{% url 'booking' %}" class="card h-100 rounded-4 p-3.5 shadow-sm interactive-card bg-white">
                   <div class="d-flex align-items-center justify-content-center rounded-3 mb-3 icon-box" style="width: 46px; height: 46px; background-color: #eff6ff; color: #2563eb;">
                     <i class="fa-solid fa-file-medical fs-5"></i>
-                </div>
+                  </div>
                   <h6 class="fw-bold mb-1 text-dark fs-6">Book a Test</h6>
-                  <p class="text-muted small mb-0 d-none d-sm-block style-desc" style="line-height: 1.4;">Schedule diagnostic appointments seamlessly.</p>
+                  <p class="text-muted small mb-0 d-none d-sm-block" style="line-height: 1.4;">Schedule diagnostic appointments seamlessly.</p>
                 </a>
               </div>
 
@@ -207,7 +202,7 @@
                     <i class="fa-solid fa-calendar-days fs-5"></i>
                   </div>
                   <h6 class="fw-bold mb-1 text-dark fs-6">Bookings Status</h6>
-                  <p class="text-muted small mb-0 d-none d-sm-block style-desc" style="line-height: 1.4;">Track status adjustments and history logs.</p>
+                  <p class="text-muted small mb-0 d-none d-sm-block" style="line-height: 1.4;">Track status adjustments and history logs.</p>
                 </a>
               </div>
 
@@ -217,7 +212,7 @@
                     <i class="fa-solid fa-receipt fs-5"></i>
                   </div>
                   <h6 class="fw-bold mb-1 text-dark fs-6">My Reports</h6>
-                  <p class="text-muted small mb-0 d-none d-sm-block style-desc" style="line-height: 1.4;">Download certified clinical PDF structures.</p>
+                  <p class="text-muted small mb-0 d-none d-sm-block" style="line-height: 1.4;">Download certified clinical PDF structures.</p>
                 </a>
               </div>
 
@@ -227,7 +222,7 @@
                     <i class="fa-solid fa-sliders fs-5"></i>
                   </div>
                   <h6 class="fw-bold mb-1 text-dark fs-6">Settings</h6>
-                  <p class="text-muted small mb-0 d-none d-sm-block style-desc" style="line-height: 1.4;">Manage your core layout profiles securely.</p>
+                  <p class="text-muted small mb-0 d-none d-sm-block" style="line-height: 1.4;">Manage your core layout profiles securely.</p>
                 </a>
               </div>
             </div>
@@ -246,21 +241,23 @@
                       <table class="table table-borderless align-middle mb-0">
                         <thead>
                           <tr class="text-secondary border-bottom" style="font-size: 13px;">
-                            <th class="pb-2 ps-0">TEST PARAMETER</th>
-                            <th class="pb-2">APPOINTMENT DATE</th>
-                            <th class="pb-2 text-end">STATUS</th>
+                            <th class="pb-2 ps-0" style="width: 45%;">TEST PARAMETER</th>
+                            <th class="pb-2" style="width: 30%;">APPOINTMENT DATE</th>
+                            <th class="pb-2 text-end" style="width: 25%;">ACTIONS</th>
                           </tr>
                         </thead>
                         <tbody class="divide-y">
                           {% for appointment in appointments|slice:":4" %}
-                          <tr class="border-bottom-dashed">
+                          <tr class="border-bottom border-light-subtle">
                             <td class="py-3 ps-0">
                               <div class="d-flex align-items-center gap-3">
                                 <div class="d-flex align-items-center justify-content-center rounded-circle bg-light text-primary flex-shrink-0 shadow-sm" style="width: 38px; height: 38px;">
                                   <i class="fa-solid fa-droplet fs-6"></i>
                                 </div>
                                 <div>
-                                  <span class="fw-bold text-dark d-block" style="font-size: 14px;">{{ appointment.test.test_name }}</span>
+                                  <a href="{% url 'download_report' appointment.id %}" class="fw-bold text-dark d-block text-decoration-none text-primary-hover" style="font-size: 14px;">
+                                    {{ appointment.test.test_name }}
+                                  </a>
                                   <small class="text-muted" style="font-size: 11px;">ID: #LMS-00{{ appointment.id }}</small>
                                 </div>
                               </div>
@@ -269,9 +266,14 @@
                               {{ appointment.appointment_date }}
                             </td>
                             <td class="py-3 text-end">
-                              <span class="badge status-pill {% if appointment.status == 'Pending' %}bg-warning-subtle text-warning border border-warning-subtle{% else %}bg-success-subtle text-success border border-success-subtle{% endif %} fs-8">
-                                {{ appointment.status }}
-                              </span>
+                              <div class="d-flex align-items-center justify-content-end gap-2">
+                                <a href="{% url 'download_report' appointment.id %}" class="btn btn-sm btn-light border rounded-pill d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 30px; height: 30px;" title="Download Certified PDF">
+                                  <i class="fa-solid fa-download text-secondary fs-7"></i>
+                                </a>
+                                <span class="badge status-pill {% if appointment.status == 'Pending' %}bg-warning-subtle text-warning border border-warning-subtle{% else %}bg-success-subtle text-success border border-success-subtle{% endif %} fs-8">
+                                  {{ appointment.status }}
+                                </span>
+                              </div>
                             </td>
                           </tr>
                           {% endfor %}
@@ -303,13 +305,13 @@
                           <div>
                             <h5 class="fw-bold text-dark mb-2.5" style="font-size: 16px;">{{ next_booking.test.test_name }}</h5>
                             <div class="text-secondary small mb-1.5 fw-medium"><i class="fa-regular fa-calendar text-primary me-2"></i>{{ next_booking.appointment_date }}</div>
-                            <div class="text-secondary small fw-medium"><i class="fa-solid fa-circle-check text-primary me-2"></i>Status: <span class="text-dark font-semibold">{{ next_booking.status }}</span></div>
+                            <div class="text-secondary small fw-medium"><i class="fa-solid fa-circle-check text-primary me-2"></i>Status: <span class="text-dark fw-bold">{{ next_booking.status }}</span></div>
                           </div>
                         </div>
                       </div>
                       {% endwith %}
                     {% else %}
-                      <div class="p-4 text-center border border-dashed rounded-4 bg-light text-muted small my-auto">
+                      <div class="p-4 text-center border border-dashed rounded-4 bg-light text-muted small my-auto w-100">
                         <i class="fa-regular fa-calendar-check d-block fs-3 mb-2 opacity-50 text-secondary"></i>
                         You have no scheduled clinical test profiles open.
                       </div>
@@ -317,7 +319,7 @@
                   </div>
 
                   <div class="mt-4">
-                    <a href="{% url 'booking' %}" class="btn btn-primary fw-semibold rounded-3 px-4 py-2.5 w-100 shadow-sm d-flex align-items-center justify-content-center gap-2" style="font-size: 14px; transition: var(--transition-smooth);">
+                    <a href="{% url 'booking' %}" class="btn btn-primary fw-semibold rounded-3 px-4 py-2.5 w-100 shadow-sm d-flex align-items-center justify-content-center gap-2" style="font-size: 14px;">
                       <i class="fa-solid fa-plus fs-7"></i> Book New Appointment
                     </a>
                   </div>

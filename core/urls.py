@@ -2,21 +2,27 @@ from django.contrib import admin
 from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
-from laboratory.views import dashboard_view, home_view, booking_view  # Keeps both views active
+
+# UPDATED: Added download_report_view to your laboratory imports
+from laboratory.views import home_view, booking_view, dashboard_view, download_report_view 
 from accounts.views import register_view, login_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     
-    # RESTORED: This puts your original welcome home page back at http://127.0.0.1:8000/
+    # Restores your original marketing welcome page back at http://127.0.0.1:8000/
     path('', home_view, name='home'),  
     
-    # This keeps your booking page over at http://127.0.0.1:8000/booking/
+    # Booking engine panel route over at http://127.0.0.1:8000/booking/
     path('booking/', booking_view, name='booking'),
     
-    # NEW: Add this line for your dashboard layout page
+    # User data summary profile panel at http://127.0.0.1:8000/dashboard/
     path('dashboard/', dashboard_view, name='dashboard'),
     
+    # NEW: Automated PDF download compiler endpoint mapping rule
+    path('dashboard/report/<int:appointment_id>/', download_report_view, name='download_report'),
+    
+    # Authentication Management Views
     path('accounts/register/', register_view, name='register'),
     path('accounts/login/', login_view, name='login'),
 ]
