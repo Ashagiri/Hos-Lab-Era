@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
-from laboratory.views import home_view, booking_view  # Keeps both views active
+from laboratory.views import dashboard_view, home_view, booking_view  # Keeps both views active
 from accounts.views import register_view, login_view
 
 urlpatterns = [
@@ -16,6 +16,8 @@ urlpatterns = [
     
     path('accounts/register/', register_view, name='register'),
     path('accounts/login/', login_view, name='login'),
+    
+    path('dashboard/', dashboard_view, name='dashboard'),
 ]
 
 if settings.DEBUG:

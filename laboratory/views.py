@@ -54,3 +54,12 @@ def booking_view(request):
     # GET request: Load real dynamic tests down into section 3 of your form
     all_tests = LabTest.objects.all().select_related('category')
     return render(request, 'laboratory/booking.html', {'tests': all_tests})
+
+@login_required
+def dashboard_view(request):
+    # Fetch the logged-in user's appointments from the database
+    user_appointments = Appointment.objects.filter(patient=request.user).order_by('-appointment_date')
+    
+    return render(request, 'laboratory/dashboard.html', {
+        'appointments': user_appointments
+    })
