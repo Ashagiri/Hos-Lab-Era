@@ -5,7 +5,7 @@ from .models import User  # Targets your custom User model
 
 def register_view(request):
     if request.method == 'POST':
-        # 1. Extract inputs matching your UI fields exactly (image_d492f4.jpg)
+        # 1. Extract inputs matching your UI fields exactly
         full_name = request.POST.get('full_name')
         dob = request.POST.get('dob')
         email = request.POST.get('email')
@@ -26,7 +26,6 @@ def register_view(request):
 
         try:
             # 3. Create the user using the email as the core username
-            # This links the registration form (image_d492f4.jpg) with the login form (image_d495e1.jpg)
             user = User.objects.create_user(
                 username=email, 
                 email=email,
@@ -56,12 +55,12 @@ def register_view(request):
 
 def login_view(request):
     if request.method == 'POST':
-        # Extracts what the user typed into the "Username" input box (image_d495e1.jpg)
-        username = request.POST.get('username') 
+        # FIXED: Changed from 'username' to 'email' to match your HTML form's input name attribute.
+        email_input = request.POST.get('email') 
         password = request.POST.get('password')
         
-        # Authenticates the credentials using the email address stored as the username property
-        user = authenticate(request, username=username, password=password)
+        # Authenticates using the email address string since it's saved in the username field
+        user = authenticate(request, username=email_input, password=password)
         
         if user is not None:
             login(request, user)
