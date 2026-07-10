@@ -7,11 +7,15 @@ from accounts.views import register_view, login_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', home_view, name='home'),
-    path('booking/', booking_view, name='booking'),  # <-- We added this booking line!
+    
+    # This empty path makes http://127.0.0.1:8000/ open the booking page instantly!
+    path('', booking_view, name='home'),  
+    
+    path('booking/', booking_view, name='booking'),
     path('accounts/register/', register_view, name='register'),
     path('accounts/login/', login_view, name='login'),
 ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
