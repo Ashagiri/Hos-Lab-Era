@@ -185,9 +185,9 @@ def download_report_view(request, appointment_id):
     """
     # Enforce basic visibility context boundaries logic check
     if request.user.role == 'admin':
-        appointment = get_object_or_get_404(Appointment, id=appointment_id)
+        appointment = get_object_or_404(Appointment, id=appointment_id)
     else:
-        appointment = get_object_or_get_404(Appointment, id=appointment_id, patient=request.user)
+        appointment = get_object_or_404(Appointment, id=appointment_id, patient=request.user)
     
     buffer = io.BytesIO()
     p = canvas.Canvas(buffer, pagesize=letter)
