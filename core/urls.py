@@ -1,10 +1,10 @@
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
 from django.conf import settings
 from django.conf.urls.static import static
 
-# UPDATED: Added download_report_view to your laboratory imports
-from laboratory.views import home_view, booking_view, dashboard_view, download_report_view 
+# UPDATED: Added settings_view alongside your other laboratory imports
+from laboratory.views import home_view, booking_view, dashboard_view, download_report_view, settings_view 
 from accounts.views import register_view, login_view
 
 urlpatterns = [
@@ -22,9 +22,13 @@ urlpatterns = [
     # NEW: Automated PDF download compiler endpoint mapping rule
     path('dashboard/report/<int:appointment_id>/', download_report_view, name='download_report'),
     
+    # NEW: Settings profile update route at http://127.0.0.1:8000/settings/
+    path('settings/', settings_view, name='settings'),
+    
     # Authentication Management Views
     path('accounts/register/', register_view, name='register'),
     path('accounts/login/', login_view, name='login'),
+    path('laboratory/', include('laboratory.urls', namespace='laboratory')),
 ]
 
 if settings.DEBUG:
