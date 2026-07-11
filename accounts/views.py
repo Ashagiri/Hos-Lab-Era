@@ -42,9 +42,9 @@ def register_view(request):
             
             user.save()
 
-            # 5. Establish user session and route to homepage
+            # 5. Establish user session and route straight to user dashboard
             login(request, user)
-            return redirect('home')
+            return redirect('dashboard')  # <-- UPDATED from 'home' to 'dashboard'
             
         except Exception as e:
             messages.error(request, f"Registration error: {str(e)}")
@@ -55,7 +55,6 @@ def register_view(request):
 
 def login_view(request):
     if request.method == 'POST':
-        # FIXED: Changed from 'username' to 'email' to match your HTML form's input name attribute.
         email_input = request.POST.get('email') 
         password = request.POST.get('password')
         
@@ -64,7 +63,7 @@ def login_view(request):
         
         if user is not None:
             login(request, user)
-            return redirect('home')
+            return redirect('dashboard')  # <-- UPDATED from 'home' to 'dashboard'
         else:
             messages.error(request, "Invalid username or password.")
             
