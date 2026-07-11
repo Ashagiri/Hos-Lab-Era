@@ -120,7 +120,7 @@
                   </a>
                 </li>
                 <li class="nav-item flex-fill flex-md-initial">
-                  <a href="{% url 'settings' %}" class="nav-link sidebar-link text-white opacity-75 py-2.5 px-3">
+                  <a href="/settings/" class="nav-link sidebar-link text-white opacity-75 py-2.5 px-3">
                     <i class="fa-solid fa-gear me-0 me-md-2"></i> <span class="d-none d-md-inline">Settings</span>
                   </a>
                 </li>
@@ -180,11 +180,7 @@
                   <div class="col-12 col-md-8 position-relative" style="z-index: 2;">
                     <h2 class="card-title fw-bold text-dark mb-2 fs-2 tracking-tight">Welcome back, {{ request.user.username }}!</h2>
                     <p class="card-text text-secondary mb-0" style="max-width: 540px; line-height: 1.6; font-size: 14px;">
-                      {% if request.user.role == 'admin' %}
-                        Administrative Portal: Process diagnostic metrics updates, log critical lab findings, and distribute official certified reports.
-                      {% else %}
-                        Easily check, filter, schedule, and track your ongoing clinical results, prescriptions, and medical reports.
-                      {% endif %}
+                      Easily check, filter, schedule, and track your ongoing clinical results, prescriptions, and medical reports.
                     </p>
                   </div>
                   <div class="col-12 col-md-4 d-none d-md-flex justify-content-end position-relative" style="z-index: 2;">
@@ -232,7 +228,7 @@
               </div>
 
               <div class="col-6 col-lg-3">
-                <a href="{% url 'settings' %}" class="card h-100 rounded-4 p-3.5 shadow-sm interactive-card bg-white">
+                <a href="/settings/" class="card h-100 rounded-4 p-3.5 shadow-sm interactive-card bg-white">
                   <div class="d-flex align-items-center justify-content-center rounded-3 mb-3 icon-box" style="width: 46px; height: 46px; background-color: #fff7ed; color: #ea580c;">
                     <i class="fa-solid fa-sliders fs-5"></i>
                   </div>
@@ -247,9 +243,7 @@
               <div class="col-12 col-lg-7">
                 <div class="card h-100 border-0 rounded-4 p-4 bg-white shadow-sm section-card">
                   <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="fw-bold mb-0 text-dark tracking-tight">
-                      {% if request.user.role == 'admin' %}Incoming Orders Workflow{% else %}Recent Lab Updates{% endif %}
-                    </h5>
+                    <h5 class="fw-bold mb-0 text-dark tracking-tight">Recent Lab Updates</h5>
                     <span class="badge bg-light text-secondary rounded-pill px-2.5 py-1.5 fs-7 border">Live Tracker</span>
                   </div>
                   
@@ -276,7 +270,7 @@
                                     {{ appointment.test.test_name }}
                                   </span>
                                   <small class="text-muted d-block" style="font-size: 11px; margin-top: 1px;">
-                                    ID: #LMS-00{{ appointment.id }} {% if request.user.role == 'admin' %}• Pat: {{ appointment.patient.username }}{% endif %}
+                                    ID: #LMS-00{{ appointment.id }}
                                   </small>
                                 </div>
                               </div>
@@ -286,17 +280,9 @@
                             </td>
                             <td class="py-3 text-end">
                               <div class="d-flex align-items-center justify-content-end gap-2">
-                                
-                                {% if request.user.role == 'admin' %}
-                                  <a href="{% url 'record_test_result' appointment.id %}" class="btn btn-sm btn-outline-primary rounded-pill px-2.5 py-1 fs-8 fw-semibold shadow-sm" title="Record Metrics Findings">
-                                    <i class="fa-solid fa-pen-to-square me-1"></i> Result
-                                  </a>
-                                {% endif %}
-
                                 <a href="{% url 'download_report' appointment.id %}" class="btn btn-sm btn-light border rounded-pill d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 30px; height: 30px;" title="Download Certified PDF Report">
                                   <i class="fa-solid fa-download text-secondary fs-7"></i>
                                 </a>
-                                
                                 <span class="badge status-pill {% if appointment.status == 'Pending' %}bg-warning-subtle text-warning border border-warning-subtle{% elif appointment.status == 'Completed' %}bg-success-subtle text-success border border-success-subtle{% else %}bg-secondary-subtle text-secondary border border-secondary-subtle{% endif %} fs-8">
                                   {{ appointment.status }}
                                 </span>
