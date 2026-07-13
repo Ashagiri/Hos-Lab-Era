@@ -265,3 +265,18 @@ def download_report_view(request, appointment_id):
     
     buffer.seek(0)
     return FileResponse(buffer, as_attachment=True, filename=f"LabReport_00{appointment.id}.pdf")
+
+
+@login_required
+def dashboard_view(request):
+    """
+    Dynamic dashboard router. Streams matching data contexts based on authenticated user roles.
+    """
+    if request.user.role == 'admin':
+        # Admin gets the professional dashboard view with all patient requests
+        appointments = Appointment.objects.all().order_by('-appointment_date')
+        return render(request, 'laboratory/admin_dashboard.html', {'appointments': appointments})
+    else:
+        # Standard patient account view gets their specific records
+        appointments = Appointment.objects.filter(patient=request.user).order_by('-appointment_date')
+        return render(request, 'laboratory/dashboard.html', {'appointments': appointments})
