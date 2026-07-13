@@ -5,9 +5,6 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
-
 # ReportLab Engine Modules
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
@@ -28,7 +25,7 @@ def home_view(request):
 
 
 # =========================================================================
-# CORE CORE DASHBOARDS & PROFILES
+# CORE DASHBOARDS & PROFILES (DYNAMIC ROUTING ENGINE)
 # =========================================================================
 
 @login_required
@@ -40,11 +37,11 @@ def dashboard_view(request):
     if request.user.role == 'admin':
         # Admin pipelines view all recent requests across standard system operations
         appointments = Appointment.objects.all().order_by('-appointment_date')
+        return render(request, 'laboratory/admin_dashboard.html', {'appointments': appointments})
     else:
         # Patients capture exclusively their own personal histories
         appointments = Appointment.objects.filter(patient=request.user).order_by('-appointment_date')
-        
-    return render(request, 'laboratory/dashboard.html', {'appointments': appointments})
+        return render(request, 'laboratory/dashboard.html', {'appointments': appointments})
 
 
 @login_required
@@ -137,14 +134,13 @@ def booking_view(request):
 @login_required
 def record_test_result(request, appointment_id):
     """
-    Replaces technical operator modules — allows Admins to directly attach 
-    observed metric attributes and textual remarks directly to explicit records.
+    Allows Admins to directly attach observed metric attributes and textual remarks 
+    directly to explicit records.
     """
     if request.user.role != 'admin':
         messages.error(request, "Access restricted to authorized management profiles.")
         return redirect('dashboard')
 
-    # FIXED: Changed from get_object_or_get_404 to get_object_or_404
     appointment = get_object_or_404(Appointment, id=appointment_id)
     existing_result = getattr(appointment, 'result', None)
 
@@ -268,18 +264,3 @@ def download_report_view(request, appointment_id):
     
     buffer.seek(0)
     return FileResponse(buffer, as_attachment=True, filename=f"LabReport_00{appointment.id}.pdf")
-
-
-@login_required
-def dashboard_view(request):
-    """
-    Dynamic dashboard router. Streams matching data contexts based on authenticated user roles.
-    """
-    if request.user.role == 'admin':
-        # Admin gets the professional dashboard view with all patient requests
-        appointments = Appointment.objects.all().order_by('-appointment_date')
-        return render(request, 'laboratory/admin_dashboard.html', {'appointments': appointments})
-    else:
-        # Standard patient account view gets their specific records
-        appointments = Appointment.objects.filter(patient=request.user).order_by('-appointment_date')
-        return render(request, 'laboratory/dashboard.html', {'appointments': appointments})
