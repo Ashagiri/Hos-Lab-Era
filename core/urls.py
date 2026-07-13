@@ -2,8 +2,9 @@ from django.contrib import admin
 from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
+from django.shortcuts import redirect  # Handles immediate routing bounces
 
-# Explicit views imports from your apps
+# Explicit views imports from your local application nodes
 from laboratory.views import (
     home_view, 
     booking_view, 
@@ -16,6 +17,9 @@ from laboratory.views import (
 from accounts.views import register_view, login_view
 
 urlpatterns = [
+    # 🔍 Bulletproof Shortcut: Bounces directly to the literal URL path string
+    path('technician/', lambda request: redirect('/accounts/login/')),
+   
     # 🛡️ Built-in Django Administrative Portal
     path('admin/', admin.site.urls),
     

@@ -54,17 +54,29 @@ def register_view(request):
 
 
 def login_view(request):
+    """
+    Handles secure user authentication and dynamic role-based dashboard deployment.
+    """
     if request.method == 'POST':
-        email_input = request.POST.get('email') 
-        password = request.POST.get('password')
+        # Grab email/username and password from request fields
+        username_input = request.POST.get('email')  # or get('username') depending on your input form name
+        password_input = request.POST.get('password')
         
-        # Authenticates using the email address string since it's saved in the username field
-        user = authenticate(request, username=email_input, password=password)
+        # Authenticate the user profile
+        user = authenticate(request, username=username_input, password=password_input)
         
         if user is not None:
             login(request, user)
-            return redirect('dashboard')  # <-- UPDATED from 'home' to 'dashboard'
+            messages.success(request, f"Welcome back, {user.username}!")
+            
+            # 🔀 DYNAMIC ROLE ROUTING SEQUENCE
+            if hasattr(user, 'role') and user.role == 'admin':
+                return redirect('admin_dashboard')  # Sends technicians straight to LABADMIN PRO
+            else:
+                return redirect('dashboard')        # Sends normal patients to the standard space
+                
         else:
-            messages.error(request, "Invalid username or password.")
+            messages.error(request, "Invalid authentication credentials. Please try again.")
+            return redirect('login')
             
     return render(request, 'accounts/login.html')
