@@ -2,7 +2,6 @@ from django.contrib import admin
 from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
-from django.shortcuts import redirect  # Handles immediate routing bounces
 
 # Explicit views imports from your local application nodes
 from laboratory.views import (
@@ -14,11 +13,11 @@ from laboratory.views import (
     settings_view,
     record_test_result  
 ) 
-from accounts.views import register_view, login_view
+from accounts.views import register_view, login_view, technician_login_view
 
 urlpatterns = [
-    # 🔍 Bulletproof Shortcut: Bounces directly to the literal URL path string
-    path('technician/', lambda request: redirect('/accounts/login/')),
+    # 💼 Dedicated Staff Portal Login View (Handles /technician/)
+    path('technician/', technician_login_view, name='technician_login'),
    
     # 🛡️ Built-in Django Administrative Portal
     path('admin/', admin.site.urls),
@@ -29,7 +28,8 @@ urlpatterns = [
     # 👤 Dedicated Patient Dashboard Route
     path('dashboard/', dashboard_view, name='dashboard'),
     
-    # 💼 Dedicated Technician Command Center Dashboard
+    # 💼 Dedicated Technician Command Center Dashboard 
+    # NOTE: Access this via http://127.0.0.1:8000/dashboard/technician/
     path('dashboard/technician/', admin_dashboard_view, name='admin_dashboard'),
     
     # 📅 Patient Scheduling Operations
