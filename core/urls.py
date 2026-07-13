@@ -47,6 +47,7 @@ urlpatterns = [
     # 🔑 Authentication Management Ecosystem
     path('accounts/register/', register_view, name='register'),
     path('accounts/login/', login_view, name='login'),
+    
 ]
 
 # Serve Static Assets During Local Development Sharding

@@ -39,31 +39,55 @@ def dashboard_view(request):
 
 
 @login_required
-def admin_dashboard_view(request):  # Or whatever your function name is
+def technician_dashboard_view(request):
     """
-    Control room view for the Technician Dashboard
+    🔧 1. TECHNICIAN DASHBOARD VIEW
+    URL Mapped: /dashboard/technician/
     """
-    # 1. Guard rail: Kick them to login if they aren't signed in at all
-    if not request.user.is_authenticated:
-        return redirect('technician_login')
+    # Authorization gate exclusively for Laboratory Technicians
+    is_tech = (hasattr(request.user, 'role') and request.user.role == 'tech') or request.user.username == 'tech'
+    if not is_tech and not request.user.is_superuser:
+        messages.error(request, "Access restricted to Laboratory Technicians.")
+        return redirect('dashboard')
 
-    # 2. 🔐 Updated Security: Allow 'tech', 'admin', or superusers through!
-    is_authorized = (
-        (hasattr(request.user, 'role') and request.user.role in ['tech', 'admin']) 
-        or request.user.username == 'tech' 
-        or request.user.is_superuser
-    )
+    appointments = Appointment.objects.all().order_by('-id')
+    context = {'appointments': appointments}
+    return render(request, 'laboratory/technician.html', context)
 
-    if not is_authorized:
+
+@login_required
+def admin_dashboard_view(request):
+    """
+    👑 2. MASTER ADMINISTRATIVE CONTROL CENTER
+    URL Mapped: /admin-dashboard/
+    """
+    # Authorization gate exclusively for Administrative Profiles or Superusers
+    is_admin = (hasattr(request.user, 'role') and request.user.role == 'admin') or request.user.is_superuser
+    if not is_admin:
         messages.error(request, "Access restricted. Authorized administrative credentials required.")
-        return redirect('dashboard')  # Kicks normal patients away to standard dashboard
+        return redirect('dashboard')
 
-    # =========================================================================
-    # 🎯 YOUR ORIGINAL DASHBOARD CODE GOES HERE
-    # (Keep whatever queries or database fetching you had below this line)
-    # =========================================================================
+    # Fetch all appointment instances ordered from newest to oldest
+    appointments = Appointment.objects.all().order_by('-id')
     
-    return render(request, 'laboratory/admin_dashboard.html')
+    # Calculate analytical card counts safely based only on existing model fields
+    total_orders = appointments.count()
+    completed_orders = appointments.filter(status='Completed').count()
+    pending_processing = appointments.filter(status='Pending').count()
+    
+    # Static placeholder safe metric for interface tracking since 'priority' is absent from schema
+    emergency_flags = 0 
+
+    # 📦 Compile data context to inject cleanly into your template grid
+    context = {
+        'appointments': appointments,
+        'total_orders': total_orders,
+        'completed_orders': completed_orders,
+        'pending_processing': pending_processing,
+        'emergency_flags': emergency_flags,
+    }
+    
+    return render(request, 'laboratory/admin_dashboard.html', context)
 
 
 # =========================================================================
@@ -154,16 +178,20 @@ def booking_view(request):
 
 
 # =========================================================================
-# DIAGNOSTIC DATA ENTRY & PROCESSING (ADMIN)
+# DIAGNOSTIC DATA ENTRY & PROCESSING (STAFF ONLY)
 # =========================================================================
 
 @login_required
 def record_test_result(request, appointment_id):
     """
-    Allows Admins to directly attach observed metric attributes and textual remarks 
-    directly to explicit records.
+    Allows Technicians and Admin users to attach metrics and remarks directly to records.
     """
-    if not hasattr(request.user, 'role') or request.user.role != 'admin':
+    is_staff = (
+        (hasattr(request.user, 'role') and request.user.role in ['admin', 'tech']) 
+        or request.user.username == 'tech' 
+        or request.user.is_superuser
+    )
+    if not is_staff:
         messages.error(request, "Access restricted to authorized management profiles.")
         return redirect('dashboard')
 
@@ -195,6 +223,10 @@ def record_test_result(request, appointment_id):
         appointment.save()
 
         messages.success(request, f"Diagnostic testing criteria recorded for {appointment.patient.username}.")
+        
+        # Route back cleanly depending on who logged it
+        if hasattr(request.user, 'role') and request.user.role == 'tech':
+            return redirect('technician_dashboard')
         return redirect('admin_dashboard')
 
     return render(request, 'laboratory/record_result.html', {'appointment': appointment, 'result': existing_result})
@@ -209,8 +241,14 @@ def download_report_view(request, appointment_id):
     """
     Assembles a certified binary PDF stream report file dynamically using ReportLab layout canvas matrices.
     """
+    is_staff = (
+        (hasattr(request.user, 'role') and request.user.role in ['admin', 'tech']) 
+        or request.user.username == 'tech' 
+        or request.user.is_superuser
+    )
+    
     # Enforce basic visibility context boundaries logic check
-    if request.user.role == 'admin':
+    if is_staff:
         appointment = get_object_or_404(Appointment, id=appointment_id)
     else:
         appointment = get_object_or_404(Appointment, id=appointment_id, patient=request.user)
