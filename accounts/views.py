@@ -44,7 +44,7 @@ def register_view(request):
 
             # 5. Establish user session and route straight to user dashboard
             login(request, user)
-            return redirect('dashboard')  # <-- UPDATED from 'home' to 'dashboard'
+            return redirect('dashboard')
             
         except Exception as e:
             messages.error(request, f"Registration error: {str(e)}")
@@ -58,11 +58,19 @@ def login_view(request):
     Handles secure user authentication and dynamic role-based dashboard deployment.
     """
     if request.method == 'POST':
-        # Grab email/username and password from request fields
-        username_input = request.POST.get('email')  # or get('username') depending on your input form name
+        # Safely grab whatever value was typed into the primary identification input field
+        username_input = request.POST.get('email') or request.POST.get('username')
         password_input = request.POST.get('password')
         
-        # Authenticate the user profile
+        # Fallback Check: If user typed their email address directly, locate the literal username field
+        if username_input and '@' in username_input:
+            try:
+                matched_user = User.objects.get(email=username_input)
+                username_input = matched_user.username
+            except User.DoesNotExist:
+                pass
+
+        # Authenticate the user profile against Django's registry engine
         user = authenticate(request, username=username_input, password=password_input)
         
         if user is not None:
