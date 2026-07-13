@@ -1,18 +1,28 @@
 class HospitalDatabaseRouter:
     """
-    A router to control all distributed database operations 
-    across the Primary cluster and Technician Replicas.
+    A router to control distributed database operations across 
+    the Core Accounts Engine and the Technician/Laboratory Engine.
     """
+    route_app_labels = {'laboratory'}
+
     def db_for_read(self, model, **hints):
-        # Route reading operations to the replica node to save bandwidth
-        return 'technician_read'
+        # Send laboratory data queries to the specialized laboratory database node
+        if model._meta.app_label in self.route_app_labels:
+            return 'lab_db'
+        return 'default'
 
     def db_for_write(self, model, **hints):
-        # All data commits (saving test entries) go exclusively to primary
+        # Direct technician and test inputs straight into laboratory storage
+        if model._meta.app_label in self.route_app_labels:
+            return 'lab_db'
         return 'default'
 
     def allow_relation(self, obj1, obj2, **hints):
+        # Allow cross-node connections between users and lab results
         return True
 
     def allow_migrate(self, db, app_label, model_name=None, **hints):
-        return True
+        # Isolate database migration states to their respective node assignments
+        if app_label in self.route_app_labels:
+            return db == 'lab_db'
+        return db == 'default'
