@@ -264,3 +264,21 @@ def download_report_view(request, appointment_id):
     
     buffer.seek(0)
     return FileResponse(buffer, as_attachment=True, filename=f"LabReport_00{appointment.id}.pdf")
+
+@login_required
+def dashboard_view(request):
+    """
+    Secure Dynamic Router. Evaluates authenticated user attributes to 
+    ensure patients only see their personal test profiles, while strictly
+    restricting the Admin Control Center to authorized management.
+    """
+    # 1. Strict Security Guard: Check if the user's role attribute is explicitly set to 'admin'
+    if hasattr(request.user, 'role') and request.user.role == 'admin':
+        # Admin Pipeline: Fetch all system wide pending requests for management
+        appointments = Appointment.objects.all().order_by('-appointment_date')
+        return render(request, 'laboratory/admin_dashboard.html', {'appointments': appointments})
+        
+    else:
+        # Patient Pipeline: Re-route normal users exclusively to their personal workspace
+        appointments = Appointment.objects.filter(patient=request.user).order_by('-appointment_date')
+        return render(request, 'laboratory/dashboard.html', {'appointments': appointments})
