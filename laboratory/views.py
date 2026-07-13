@@ -5,6 +5,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+
 # ReportLab Engine Modules
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
