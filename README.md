@@ -10,14 +10,12 @@
 * **Dynamic Patient Dashboard:** Personalized portal layout welcoming users dynamically and showing their system profiles based on live database parameters.
 * **Structured Template Architecture:** Organized frontend layout utilizing unified Django settings and custom app routing paths.
 
-hell
 ----
 
 ## 🛠️ Tech Stack Used
 * **Backend:** Python, Django 6.x
 * **Database:** SQLite3 (Environment setup configured for migration scaling)
 * **Frontend:** Clean HTML5, Modern CSS3 Flexbox/Grid
-
 
 
 ---
