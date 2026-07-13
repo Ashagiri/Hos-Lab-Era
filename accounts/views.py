@@ -91,20 +91,27 @@ def login_view(request):
 
 def technician_login_view(request):
     """
-    Dedicated login gateway exclusively for Laboratory Technicians and Admin staff.
+    Dedicated authentication gateway exclusively for Technicians and Admin staff.
     """
     if request.method == 'POST':
         username_input = request.POST.get('username')
         password_input = request.POST.get('password')
         
+        # Authenticate using the username and password provided in the form
         user = authenticate(request, username=username_input, password=password_input)
         
-        if user is not None and hasattr(user, 'role') and user.role == 'admin':
-            login(request, user)
-            messages.success(request, "Technician Command Center Activated.")
-            return redirect('admin_dashboard')
+        if user is not None:
+            # Check if the user has the 'admin' or technician role assigned
+            if hasattr(user, 'role') and user.role == 'admin':
+                login(request, user)
+                messages.success(request, "Technician Command Center Activated.")
+                return redirect('admin_dashboard')  # Redirects to /dashboard/technician/
+            else:
+                messages.error(request, "Access Denied. You do not have technician privileges.")
+                return redirect('technician_login')
         else:
-            messages.error(request, "Access Denied. Invalid Technician Credentials.")
+            messages.error(request, "Invalid username or password.")
             return redirect('technician_login')
             
     return render(request, 'accounts/technician_login.html')
+

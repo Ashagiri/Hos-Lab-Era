@@ -15,6 +15,7 @@
         font-family: system-ui, -apple-system, sans-serif;
       }
 
+      /* Background image overlay */
       .bg-overlay-wrapper {
         background-image: url("{% static 'fff.jpg' %}");
         background-size: cover;
@@ -29,24 +30,25 @@
         padding: 40px 15px;
       }
 
+      /* Clean Light-Mode Floating Card */
       .form-card {
-        background-color: rgba(33, 37, 41, 0.95); /* Dark theme to differentiate from patient login */
+        background-color: rgba(255, 255, 255, 0.96);
         border-radius: 12px;
         width: 100%;
         max-width: 480px;
         padding: 45px 40px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-        color: #ffffff;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        color: #212529;
       }
 
       .card-title-accent {
-        color: #ffc107;
+        color: #1e3d59;
         font-weight: 700;
       }
 
       .field-label {
         font-weight: 600;
-        color: #dee2e6;
+        color: #333333;
         font-size: 0.9rem;
         margin-bottom: 6px;
       }
@@ -54,20 +56,25 @@
       .input-group-custom {
         display: flex;
         align-items: center;
-        border: 1px solid #495057;
+        border: 1px solid #ced4da;
         border-radius: 6px;
-        background-color: #2b3035;
+        background-color: #f8f9fa;
         height: 44px;
         overflow: hidden;
       }
 
+      .input-group-custom:focus-within {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+      }
+
       .input-group-custom .icon-addon {
-        color: #adb5bd;
+        color: #1e3d59;
         width: 44px;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-right: 1px solid #495057;
+        border-right: 1px solid #ced4da;
       }
 
       .input-group-custom .form-control-clean {
@@ -75,7 +82,7 @@
         outline: none;
         width: 100%;
         padding: 0 12px;
-        color: #ffffff;
+        color: #212529;
         font-size: 0.95rem;
         background: transparent;
       }
@@ -83,11 +90,12 @@
       .password-eye-btn {
         background: transparent;
         border: none;
-        color: #adb5bd;
+        color: #6c757d;
         padding-right: 12px;
         cursor: pointer;
       }
 
+      /* Prominent Staff Authentication Button */
       .btn-primary-action {
         background-color: #ffc107;
         color: #212529;
@@ -101,7 +109,6 @@
 
       .btn-primary-action:hover {
         background-color: #e0a800;
-        color: #212529;
       }
     </style>
   </head>
@@ -110,11 +117,10 @@
 <div class="bg-overlay-wrapper">
   <div class="form-card">
     
-    <div class="d-flex align-items-center gap-3 mb-2">
-      <div class="fs-2 text-warning"><i class="fa-solid fa-user-shield"></i></div>
+    <div class="d-flex align-items-center gap-3 mb-4">
+      <div class="fs-2" style="color: #1e3d59;"><i class="fa-solid fa-user-shield"></i></div>
       <h3 class="m-0 card-title-accent">Staff Portal</h3>
     </div>
-    <p class="text-muted small mb-4">Laboratory Terminal Access Only</p>
 
     {% if messages %}
       {% for message in messages %}
