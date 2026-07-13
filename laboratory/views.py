@@ -265,20 +265,31 @@ def download_report_view(request, appointment_id):
     buffer.seek(0)
     return FileResponse(buffer, as_attachment=True, filename=f"LabReport_00{appointment.id}.pdf")
 
+# =========================================================================
+# SEPARATED USER & ADMINISTRATIVE DASHBOARDS
+# =========================================================================
+
 @login_required
 def dashboard_view(request):
     """
-    Secure Dynamic Router. Evaluates authenticated user attributes to 
-    ensure patients only see their personal test profiles, while strictly
-    restricting the Admin Control Center to authorized management.
+    Dedicated User/Patient Workspace Dashboard.
+    Streams exclusively the logged-in user's own test history.
     """
-    # 1. Strict Security Guard: Check if the user's role attribute is explicitly set to 'admin'
-    if hasattr(request.user, 'role') and request.user.role == 'admin':
-        # Admin Pipeline: Fetch all system wide pending requests for management
-        appointments = Appointment.objects.all().order_by('-appointment_date')
-        return render(request, 'laboratory/admin_dashboard.html', {'appointments': appointments})
+    appointments = Appointment.objects.filter(patient=request.user).order_by('-appointment_date')
+    return render(request, 'laboratory/dashboard.html', {'appointments': appointments})
+
+
+@login_required
+def admin_dashboard_view(request):
+    """
+    Dedicated Secure Admin Control Center Dashboard.
+    Only allows users with an explicit 'admin' role parameter to gain entry.
+    """
+    # Security Guard Rule: Reject non-admins
+    if not hasattr(request.user, 'role') or request.user.role != 'admin':
+        messages.error(request, "Access restricted. Only administrators are allowed here.")
+        return redirect('dashboard') # Redirect normal patients back to their own user dashboard
         
-    else:
-        # Patient Pipeline: Re-route normal users exclusively to their personal workspace
-        appointments = Appointment.objects.filter(patient=request.user).order_by('-appointment_date')
-        return render(request, 'laboratory/dashboard.html', {'appointments': appointments})
+    # Admin Data Pipeline
+    appointments = Appointment.objects.all().order_by('-appointment_date')
+    return render(request, 'laboratory/admin_dashboard.html', {'appointments': appointments})
