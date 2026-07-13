@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Record Diagnostic Result - LabAdmin</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800 antialiased">
+
+    <div class="min-h-screen flex items-center justify-center p-6">
+        <div class="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden">
+            
+            <div class="bg-slate-900 px-6 py-5 text-white flex items-center justify-between">
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight">Record Test Result</h1>
+                    <p class="text-xs text-slate-400 mt-0.5">Patient Management Pipeline</p>
+                </div>
+                <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                    ID: #LMS-00{{ appointment.id }}
+                </span>
+            </div>
+
+            <form method="POST" class="p-6 space-y-5">
+                {% csrf_token %}
+
+                <div class="bg-slate-50 rounded-xl p-4 border border-slate-200/60 space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">Patient Email:</span>
+                        <span class="font-semibold text-slate-700">{{ appointment.patient.email }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">Requested Test:</span>
+                        <span class="font-semibold text-blue-600">{{ appointment.test.test_name }}</span>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label for="result_value" class="text-xs font-bold tracking-wide uppercase text-slate-600">
+                        Observed Analytical Value *
+                    </label>
+                    <input type="text" id="result_value" name="result_value" 
+                           value="{% if result %}{{ result.result_value }}{% endif %}"
+                           placeholder="e.g., 14.2 g/dL or 98 mg/dL" required
+                           class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white transition">
+                    <p class="text-[11px] text-slate-400">Normal range for reference: <span class="font-medium text-slate-500">{{ appointment.test.normal_range }}</span></p>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label for="remarks" class="text-xs font-bold tracking-wide uppercase text-slate-600">
+                        Diagnostic Remarks / Flags
+                    </label>
+                    <textarea id="remarks" name="remarks" rows="3" 
+                              placeholder="e.g., Normal, High, Critical boundary conditions observed..."
+                              class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white transition">{% if result %}{{ result.remarks }}{% endif %}</textarea>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-2">
+                    <a href="{% url 'admin_dashboard' %}" 
+                       class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 rounded-xl hover:bg-slate-100 transition">
+                        Cancel
+                    </a>
+                    <button type="submit" 
+                            class="px-5 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-md shadow-blue-500/10 hover:shadow-blue-500/20 active:scale-[0.98] transition">
+                        Save & Commit Result
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -3,14 +3,15 @@ from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
 
-# Imports everything directly from your actual laboratory & accounts folders
+# Explicit views imports from your apps
 from laboratory.views import (
     home_view, 
     booking_view, 
     dashboard_view, 
+    admin_dashboard_view,  # Our explicit standalone admin view
     download_report_view, 
     settings_view,
-    record_test_result  # Added to support admin result entries
+    record_test_result  
 ) 
 from accounts.views import register_view, login_view
 
@@ -23,16 +24,19 @@ urlpatterns = [
     # Booking panel route (http://127.0.0.1:8000/booking/)
     path('booking/', booking_view, name='booking'),
     
-    # Dynamic Dashboard entry (http://127.0.0.1:8000/dashboard/)
+    # 👤 Dedicated Patient Dashboard Route
     path('dashboard/', dashboard_view, name='dashboard'),
     
-    # Admin Result Entry Operation Panel (http://127.0.0.1:8000/dashboard/record/.../)
+    # 💼 Dedicated Admin Control Center Route
+    path('admin-dashboard/', admin_dashboard_view, name='admin_dashboard'),
+    
+    # Admin Result Entry Operation Panel
     path('dashboard/record/<int:appointment_id>/', record_test_result, name='record_test_result'),
     
     # Automated PDF download compiler endpoint mapping rule
     path('dashboard/report/<int:appointment_id>/', download_report_view, name='download_report'),
     
-    # Settings profile update route (http://127.0.0.1:8000/settings/)
+    # Settings profile update route
     path('settings/', settings_view, name='settings'),
     
     # Authentication Management Views

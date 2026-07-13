@@ -279,17 +279,31 @@ def dashboard_view(request):
     return render(request, 'laboratory/dashboard.html', {'appointments': appointments})
 
 
+# =========================================================================
+# SEPARATED USER & ADMINISTRATIVE DASHBOARDS
+# =========================================================================
+
+@login_required
+def dashboard_view(request):
+    """
+    👤 Patient Workspace Dashboard.
+    Exclusively queries and renders the logged-in user's personal histories.
+    """
+    appointments = Appointment.objects.filter(patient=request.user).order_by('-appointment_date')
+    return render(request, 'laboratory/dashboard.html', {'appointments': appointments})
+
+
 @login_required
 def admin_dashboard_view(request):
     """
-    Dedicated Secure Admin Control Center Dashboard.
-    Only allows users with an explicit 'admin' role parameter to gain entry.
+    💼 Secure Admin Control Center.
+    Blocks normal accounts and streams system-wide analytics to authorized profiles.
     """
-    # Security Guard Rule: Reject non-admins
+    # Authorization Guard: If they are not an admin, deny access and send them away
     if not hasattr(request.user, 'role') or request.user.role != 'admin':
-        messages.error(request, "Access restricted. Only administrators are allowed here.")
-        return redirect('dashboard') # Redirect normal patients back to their own user dashboard
+        messages.error(request, "Access restricted. Authorized administrative credentials required.")
+        return redirect('dashboard') # Redirects normal users back to their patient space safely
         
-    # Admin Data Pipeline
+    # Admin System Overview Pipeline
     appointments = Appointment.objects.all().order_by('-appointment_date')
     return render(request, 'laboratory/admin_dashboard.html', {'appointments': appointments})
