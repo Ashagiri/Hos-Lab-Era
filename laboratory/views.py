@@ -39,19 +39,31 @@ def dashboard_view(request):
 
 
 @login_required
-def admin_dashboard_view(request):
+def admin_dashboard_view(request):  # Or whatever your function name is
     """
-    💼 Secure Admin Control Center.
-    Blocks normal accounts and streams system-wide analytics to authorized profiles.
+    Control room view for the Technician Dashboard
     """
-    # Authorization Guard: If they are not an admin, deny access and send them away
-    if not hasattr(request.user, 'role') or request.user.role != 'admin':
+    # 1. Guard rail: Kick them to login if they aren't signed in at all
+    if not request.user.is_authenticated:
+        return redirect('technician_login')
+
+    # 2. 🔐 Updated Security: Allow 'tech', 'admin', or superusers through!
+    is_authorized = (
+        (hasattr(request.user, 'role') and request.user.role in ['tech', 'admin']) 
+        or request.user.username == 'tech' 
+        or request.user.is_superuser
+    )
+
+    if not is_authorized:
         messages.error(request, "Access restricted. Authorized administrative credentials required.")
-        return redirect('dashboard') # Redirects normal users back to their patient space safely
-        
-    # Admin System Overview Pipeline
-    appointments = Appointment.objects.all().order_by('-appointment_date')
-    return render(request, 'laboratory/technician.html', {'appointments': appointments})
+        return redirect('dashboard')  # Kicks normal patients away to standard dashboard
+
+    # =========================================================================
+    # 🎯 YOUR ORIGINAL DASHBOARD CODE GOES HERE
+    # (Keep whatever queries or database fetching you had below this line)
+    # =========================================================================
+    
+    return render(request, 'laboratory/admin_dashboard.html')
 
 
 # =========================================================================

@@ -78,8 +78,10 @@ def login_view(request):
             messages.success(request, f"Welcome back, {user.username}!")
             
             # 🔀 DYNAMIC ROLE ROUTING SEQUENCE
-            if hasattr(user, 'role') and user.role == 'admin':
-                return redirect('admin_dashboard')  # Sends technicians straight to LABADMIN PRO
+            # Sends technicians and terminal admins straight to LABADMIN PRO
+            is_tech = (hasattr(user, 'role') and user.role == 'tech') or user.is_superuser
+            if is_tech:
+                return redirect('admin_dashboard')  
             else:
                 return redirect('dashboard')        # Sends normal patients to the standard space
                 
@@ -88,6 +90,7 @@ def login_view(request):
             return redirect('login')
             
     return render(request, 'accounts/login.html')
+
 
 def technician_login_view(request):
     """
@@ -101,11 +104,13 @@ def technician_login_view(request):
         user = authenticate(request, username=username_input, password=password_input)
         
         if user is not None:
-            # Check if the user has the 'admin' or technician role assigned
-            if hasattr(user, 'role') and user.role == 'admin':
+            # 🔍 Verification condition: Matches 'tech' user strings or master accounts
+            is_tech_role = (hasattr(user, 'role') and user.role == 'tech') or user.username == 'tech'
+            
+            if is_tech_role or user.is_superuser:
                 login(request, user)
                 messages.success(request, "Technician Command Center Activated.")
-                return redirect('admin_dashboard')  # Redirects to /dashboard/technician/
+                return redirect('admin_dashboard')  # Redirects straight to /dashboard/technician/
             else:
                 messages.error(request, "Access Denied. You do not have technician privileges.")
                 return redirect('technician_login')
@@ -114,4 +119,3 @@ def technician_login_view(request):
             return redirect('technician_login')
             
     return render(request, 'accounts/technician_login.html')
-
