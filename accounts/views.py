@@ -81,7 +81,7 @@ def login_view(request):
             # Sends technicians and terminal admins straight to LABADMIN PRO
             is_tech = (hasattr(user, 'role') and user.role == 'tech') or user.is_superuser
             if is_tech:
-                return redirect('admin_dashboard')  
+                return redirect('technician_dashboard')  
             else:
                 return redirect('dashboard')        # Sends normal patients to the standard space
                 

@@ -40,53 +40,14 @@ def dashboard_view(request):
 
 @login_required
 def technician_dashboard_view(request):
-    """
-    TECHNICIAN DASHBOARD VIEW
-    URL Mapped: /dashboard/technician/
-    """
-    # Authorization gate exclusively for Laboratory Technicians
-    is_tech = (hasattr(request.user, 'role') and request.user.role == 'tech') or request.user.username == 'tech'
-    if not is_tech and not request.user.is_superuser:
-        messages.error(request, "Access restricted to Laboratory Technicians.")
-        return redirect('dashboard')
-
-    appointments = Appointment.objects.all().order_by('-id')
-    context = {'appointments': appointments}
-    return render(request, 'laboratory/technician.html', context)
-
-
-@login_required
-def admin_dashboard_view(request):
-    """
-    MASTER ADMINISTRATIVE CONTROL CENTER
-    URL Mapped: /admin-dashboard/
-    """
-    # Authorization gate exclusively for Administrative Profiles or Superusers
-    is_admin = (hasattr(request.user, 'role') and request.user.role == 'admin') or request.user.is_superuser
-    if not is_admin:
-        messages.error(request, "Access restricted. Authorized administrative credentials required.")
-        return redirect('dashboard')
-
-    # Fetch all appointment instances ordered from newest to oldest
-    appointments = Appointment.objects.all().order_by('-id')
-
-    # Calculate analytical card counts safely based only on existing model fields
-    total_orders = appointments.count()
-    completed_orders = appointments.filter(status='Completed').count()
-    pending_processing = appointments.filter(status='Pending').count()
-
-    # Static placeholder safe metric for interface tracking since 'priority' is absent from schema
-    emergency_flags = 0
-
-    context = {
-        'appointments': appointments,
-        'total_orders': total_orders,
-        'completed_orders': completed_orders,
-        'pending_processing': pending_processing,
-        'emergency_flags': emergency_flags,
-    }
-
-    return render(request, 'laboratory/admin_dashboard.html', context)
+    is_tech = (
+        (hasattr(request.user, 'role') and request.user.role == 'tech')
+        or request.user.username == 'tech'
+        or request.user.is_superuser
+    )
+    if not is_tech:
+        return redirect('login')
+    return render(request, 'laboratory/technician.html')
 
 
 # =========================================================================
@@ -229,10 +190,9 @@ def record_test_result(request, appointment_id):
 
         messages.success(request, f"Diagnostic testing criteria recorded for {appointment.patient.username}.")
 
-        # Route back cleanly depending on who logged it
-        if hasattr(request.user, 'role') and request.user.role == 'tech':
-            return redirect('technician_dashboard')
-        return redirect('admin_dashboard')
+        # FIX: 'admin_dashboard' URL does not exist in urls.py -> caused NoReverseMatch.
+        # is_staff was already verified above, so route everyone back to the technician dashboard.
+        return redirect('technician_dashboard')
 
     return render(request, 'laboratory/record_result.html', {'appointment': appointment, 'result': existing_result})
 
