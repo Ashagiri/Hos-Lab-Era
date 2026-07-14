@@ -8,10 +8,10 @@ from laboratory.views import (
     home_view, 
     booking_view, 
     dashboard_view, 
-    admin_dashboard_view, 
+    technician_dashboard_view,
     download_report_view, 
     settings_view,
-    record_test_result  
+    record_test_result,
 ) 
 from accounts.views import register_view, login_view, technician_login_view
 
@@ -29,8 +29,7 @@ urlpatterns = [
     path('dashboard/', dashboard_view, name='dashboard'),
     
     # 💼 Dedicated Technician Command Center Dashboard 
-    # NOTE: Access this via http://127.0.0.1:8000/dashboard/technician/
-    path('dashboard/technician/', admin_dashboard_view, name='admin_dashboard'),
+    path('dashboard/technician/', technician_dashboard_view, name='technician_dashboard'),
     
     # 📅 Patient Scheduling Operations
     path('booking/', booking_view, name='booking'),

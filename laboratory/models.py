@@ -42,6 +42,7 @@ class Appointment(models.Model):
     patient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='appointments')
     test = models.ForeignKey(LabTest, on_delete=models.PROTECT)
     appointment_date = models.DateTimeField()
+    appointment_time = models.CharField(max_length=50, blank=True, null=True)  # ADD THIS LINE
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
     created_at = models.DateTimeField(auto_now_add=True)
 
