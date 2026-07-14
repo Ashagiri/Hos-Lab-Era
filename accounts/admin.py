@@ -3,11 +3,11 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import User
 
 class CustomUserAdmin(BaseUserAdmin):
-    # 1. CHANGED: Swap out the raw database 'role' field for our smart method 'assigned_role'
+    # 1. Clean column layout using our safe custom field
     list_display = (
         'username', 
         'full_name', 
-        'assigned_role',  # Evaluates and shows the real role type cleanly
+        'assigned_role',  # Displays the clean dash layout safely
         'phone', 
         'email', 
         'gender', 
@@ -16,16 +16,16 @@ class CustomUserAdmin(BaseUserAdmin):
         'date_joined'    
     )
     
-    # 2. CHRONOLOGICAL REVERSE ORDERING (Newest registered users at the top)
+    # 2. Chronological reverse ordering (Newest users on top)
     ordering = ('-date_joined',)
     
-    # 3. Interactive Sidebar Filters
+    # 3. Interactive sidebar filters
     list_filter = ('role', 'gender', 'is_staff', 'date_joined')
     
-    # 4. Global Search Fields
+    # 4. Search capabilities
     search_fields = ('username', 'email', 'full_name', 'phone')
 
-    # 5. Form editing layout rules
+    # 5. Form editing layout structures
     fieldsets = BaseUserAdmin.fieldsets + (
         ('Custom Profile Fields', {'fields': ('role', 'phone', 'full_name', 'dob', 'age', 'gender')}),
     )
@@ -33,17 +33,19 @@ class CustomUserAdmin(BaseUserAdmin):
         ('Custom Profile Fields', {'fields': ('role', 'phone', 'full_name', 'dob', 'age', 'gender')}),
     )
 
-    # 💡 Smart Role Evaluator: Fixes the '123 showing as patient' issue automatically
+    # 💡 Safe Role Evaluator (No complex overrides to break the routing)
     @admin.display(description='Role', ordering='role')
     def assigned_role(self, obj):
-        # Rule A: If they have admin rights, they are an Admin (regardless of what the text field says)
+        # Rule A: If user has administrator flags, show Admin
         if obj.is_superuser or obj.is_staff or str(obj.role).lower() == 'admin':
             return 'Admin'
-        # Rule B: If their username contains 'tech' or their role is 'tech', they are a Technician
-        elif 'tech' in obj.username.lower() or str(obj.role).lower() == 'tech':
+        
+        # Rule B: If user is a technician staff member, show Technician
+        elif str(obj.role).lower() == 'tech' or 'tech' in obj.username.lower():
             return 'Technician'
-        # Rule C: Default fallback for actual registered hospital clients
-        return 'Patient'
+        
+        # Rule C: Keep everything else looking spotless with a clean dash
+        return '-'
 
-# Register the stable configuration
+# Register the model cleanly back into the system
 admin.site.register(User, CustomUserAdmin)
