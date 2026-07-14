@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login, authenticate
 from django.contrib import messages
 from .models import User  # Targets your custom User model
+from laboratory.models import PatientProfile  # needed to create the profile row
+
 
 def register_view(request):
     if request.method == 'POST':
@@ -26,12 +28,13 @@ def register_view(request):
 
         try:
             # 3. Create the user using the email as the core username
+            # role must match ROLE_CHOICES exactly -> lowercase 'patient'
             user = User.objects.create_user(
                 username=email, 
                 email=email,
                 phone=phone, 
                 password=password, 
-                role='Patient'
+                role='patient'
             )
             
             # 4. Save your application's extra custom fields dynamically
@@ -42,7 +45,18 @@ def register_view(request):
             
             user.save()
 
-            # 5. Establish user session and route straight to user dashboard
+            # 5. Create the linked PatientProfile row so it shows up under
+            # Laboratory > Patient profiles in the admin.
+            # PatientProfile.gender only accepts 'M' / 'F' / 'O', so map
+            # whatever the form sends (e.g. "Male") down to that.
+            gender_map = {'male': 'M', 'female': 'F', 'other': 'O'}
+            PatientProfile.objects.create(
+                user=user,
+                age=int(age) if age else 0,
+                gender=gender_map.get((gender or '').lower(), 'O'),
+            )
+
+            # 6. Establish user session and route straight to user dashboard
             login(request, user)
             return redirect('dashboard')
             
@@ -77,9 +91,14 @@ def login_view(request):
             login(request, user)
             messages.success(request, f"Welcome back, {user.username}!")
             
-            # 🔀 DYNAMIC ROLE ROUTING SEQUENCE
-            # Sends technicians and terminal admins straight to LABADMIN PRO
-            is_tech = (hasattr(user, 'role') and user.role == 'tech') or user.is_superuser
+            # DYNAMIC ROLE ROUTING SEQUENCE
+            # Sends technicians and superusers straight to the technician dashboard
+            # FIX: ROLE_CHOICES value is 'technician', not 'tech'
+            is_tech = (
+                (hasattr(user, 'role') and user.role == 'technician')
+                or user.username == 'tech'
+                or user.is_superuser
+            )
             if is_tech:
                 return redirect('technician_dashboard')  
             else:
@@ -104,8 +123,12 @@ def technician_login_view(request):
         user = authenticate(request, username=username_input, password=password_input)
         
         if user is not None:
-            # 🔍 Verification condition: Matches 'tech' user strings or master accounts
-            is_tech_role = (hasattr(user, 'role') and user.role == 'tech') or user.username == 'tech'
+            # Verification condition: Matches technician role or master accounts
+            # FIX: ROLE_CHOICES value is 'technician', not 'tech'
+            is_tech_role = (
+                (hasattr(user, 'role') and user.role == 'technician')
+                or user.username == 'tech'
+            )
             
             if is_tech_role or user.is_superuser:
                 login(request, user)

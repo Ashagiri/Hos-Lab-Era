@@ -7,7 +7,7 @@ from django.conf.urls.static import static
 from laboratory.views import (
     home_view, 
     booking_view, 
-    dashboard_view, 
+    dashboard_view,
     technician_dashboard_view,
     download_report_view, 
     settings_view,
@@ -16,34 +16,34 @@ from laboratory.views import (
 from accounts.views import register_view, login_view, technician_login_view
 
 urlpatterns = [
-    # 💼 Dedicated Staff Portal Login View (Handles /technician/)
+    # Dedicated Staff Portal Login View (Handles /technician/)
     path('technician/', technician_login_view, name='technician_login'),
    
-    # 🛡️ Built-in Django Administrative Portal
+    # Built-in Django Administrative Portal
     path('admin/', admin.site.urls),
     
-    # 🏠 Public Marketing Welcome Homepage
+    # Public Marketing Welcome Homepage
     path('', home_view, name='home'),  
     
-    # 👤 Dedicated Patient Dashboard Route
+    # Dedicated Patient Dashboard Route
     path('dashboard/', dashboard_view, name='dashboard'),
     
-    # 💼 Dedicated Technician Command Center Dashboard 
+    # Dedicated Technician Command Center Dashboard 
     path('dashboard/technician/', technician_dashboard_view, name='technician_dashboard'),
     
-    # 📅 Patient Scheduling Operations
+    # Patient Scheduling Operations
     path('booking/', booking_view, name='booking'),
     
-    # ⚙️ Settings Profile Update Registry
+    # Settings Profile Update Registry
     path('settings/', settings_view, name='settings'),
     
-    # 🧪 Distributed Diagnostic Processing (The "Process" Button Action)
+    # Distributed Diagnostic Processing (The "Process" Button Action)
     path('dashboard/technician/process/<int:appointment_id>/', record_test_result, name='record_test_result'),
     
-    # 📄 Automated Certified PDF Report Downloader 
+    # Automated Certified PDF Report Downloader 
     path('report/download/<int:appointment_id>/', download_report_view, name='download_report'),
     
-    # 🔑 Authentication Management Ecosystem
+    # Authentication Management Ecosystem
     path('accounts/register/', register_view, name='register'),
     path('accounts/login/', login_view, name='login'),
     
