@@ -110,7 +110,7 @@ def technician_login_view(request):
             if is_tech_role or user.is_superuser:
                 login(request, user)
                 messages.success(request, "Technician Command Center Activated.")
-                return redirect('admin_dashboard')  # Redirects straight to /dashboard/technician/
+                return redirect('technician_dashboard')  # Redirects straight to /dashboard/technician/
             else:
                 messages.error(request, "Access Denied. You do not have technician privileges.")
                 return redirect('technician_login')

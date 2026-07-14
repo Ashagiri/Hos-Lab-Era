@@ -30,7 +30,7 @@ urlpatterns = [
     
     # 💼 Dedicated Technician Command Center Dashboard 
     # NOTE: Access this via http://127.0.0.1:8000/dashboard/technician/
-    path('dashboard/technician/', admin_dashboard_view, name='admin_dashboard'),
+    path('dashboard/technician/', dashboard_view, name='technician_dashboard'),
     
     # 📅 Patient Scheduling Operations
     path('booking/', booking_view, name='booking'),
