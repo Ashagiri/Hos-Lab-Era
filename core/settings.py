@@ -133,3 +133,15 @@ STATICFILES_DIRS = [
 
 # Custom Auth Configuration
 AUTH_USER_MODEL = 'accounts.User'
+
+
+
+from django.contrib.messages import constants as messages
+
+MESSAGE_TAGS = {
+    messages.DEBUG: 'secondary',
+    messages.INFO: 'info',
+    messages.SUCCESS: 'success',
+    messages.WARNING: 'warning',
+    messages.ERROR: 'danger',
+}
