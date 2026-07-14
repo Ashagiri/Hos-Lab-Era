@@ -11,7 +11,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 
 # Database App Entities
-from .models import LabTest, Appointment, TestResult, PatientProfile
+from .models import LabTest, Appointment, TestResult
 
 # =========================================================================
 # SYSTEM MARKETING ENTRY VIEW
@@ -136,63 +136,45 @@ def settings_view(request):
 
 @login_required
 def booking_view(request):
+    """
+    Handles diagnostic test booking creation forms via POST data pipelines,
+    and streams database available test sets via GET requests.
+    """
     if request.method == 'POST':
-        # 1. Grab personal data out of your HTML text inputs
-        age_input = request.POST.get('age')
-        gender_input = request.POST.get('gender')
-        address = request.POST.get('address')
-        id_number = request.POST.get('id_number') # Kept but unused since it's not in your models.py PatientProfile
-
-        # --- CORRECTED DATABASE CONVERSIONS ---
-        # Map frontend "Male"/"Female"/"Other" to database model values "M"/"F"/"O" (max_length=1)
-        gender_map = {'Male': 'M', 'Female': 'F', 'Other': 'O', 'M': 'M', 'F': 'F', 'O': 'O'}
-        db_gender = gender_map.get(gender_input, 'M')
-
-        # Convert age input safely to an integer to prevent crash on empty/invalid inputs
-        try:
-            db_age = int(age_input) if age_input else 0
-        except ValueError:
-            db_age = 0
-
-        # 2. Sync or update the logged-in user's Patient Profile properties
-        profile, created = PatientProfile.objects.get_or_create(
-            user=request.user,
-            defaults={'age': db_age, 'gender': db_gender}
-        )
-        if not created:
-            profile.age = db_age
-            profile.gender = db_gender
-            
-        profile.address = address
-        profile.save()
-
-        # 3. Read the array list of selected checkbox test values
-        selected_test_ids = request.POST.getlist('tests') 
+        # 1. Capture schedule timelines from client form elements
         appointment_date = request.POST.get('appointment_date')
-
-        if not selected_test_ids:
-            messages.error(request, "Please select at least one laboratory test.")
+        appointment_time = request.POST.get('appointment_time')
+        
+        # 2. Extract selected test primary keys array list
+        selected_test_ids = request.POST.getlist('tests[]')
+        
+        # Input guard validations
+        if not selected_test_ids or not appointment_date or not appointment_time:
+            messages.error(request, "Please select at least one test, date, and time slot.")
             return redirect('booking')
 
-        # 4. Loop through each checked test and write it to your Appointment table row
-        for test_id in selected_test_ids:
-            test_obj = LabTest.objects.get(id=test_id)
+        try:
+            # 3. Generate records independently for each checked parameter
+            for test_id in selected_test_ids:
+                test_instance = LabTest.objects.get(id=test_id)
+                
+                Appointment.objects.create(
+                    patient=request.user,
+                    test=test_instance,
+                    appointment_date=appointment_date,
+                    status='Pending'
+                )
+                
+            messages.success(request, "Your laboratory test session has been booked successfully!")
+            return redirect('dashboard')
             
-            Appointment.objects.create(
-                patient=request.user,
-                test=test_obj,
-                appointment_date=appointment_date,
-                status='Pending'
-            )
+        except Exception as e:
+            messages.error(request, f"Error while writing booking to database: {str(e)}")
+            return redirect('booking')
 
-        messages.success(request, "Your booking was successfully processed!")
-        return redirect('/admin/laboratory/appointment/') # Redirect straight to dashboard to test!
-
-    # GET request: load the rest of your form view template logic below
-    tests = LabTest.objects.all()
-    
-    # Render with exact template name configured in your settings
-    return render(request, 'booking.html', {'tests': tests})
+    # GET Workflow processing
+    all_tests = LabTest.objects.all().select_related('category')
+    return render(request, 'laboratory/booking.html', {'tests': all_tests})
 
 
 # =========================================================================
