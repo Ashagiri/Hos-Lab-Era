@@ -33,10 +33,13 @@ class CustomUserAdmin(BaseUserAdmin):
         ('Custom Profile Fields', {'fields': ('role', 'phone', 'full_name', 'dob')}),
     )
 
-    # FIX: defer to the model's own choice-label lookup instead of
-    # reimplementing role logic that never had a 'patient' branch.
+    # Superusers/staff show as Admin regardless of the raw role field
+    # (createsuperuser never touches role, so it sits at the 'patient' default).
+    # Everyone else falls back to whatever role is actually set.
     @admin.display(description='Role', ordering='role')
     def assigned_role(self, obj):
+        if obj.is_superuser or obj.is_staff:
+            return 'Admin'
         return obj.get_role_display()
 
     # FIX: related_name on PatientProfile.user is 'patient_profile'
