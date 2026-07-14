@@ -63,15 +63,33 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
-# Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
+# =========================================================================
+# DISTRIBUTED DATABASE ENGINE CONFIGURATION
+# =========================================================================
+# We break our database into a distributed multi-node architecture layout:
+# 1. 'default': Stores users, auth sessions, accounts profiles data.
+# 2. 'lab_db': Stores appointments, tests, medical results (for technician.html).
+# Look for DATABASES in your project's settings.py
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+    },
+    'lab_db': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db_laboratory.sqlite3',
+        # ADD THIS OPTIONS BLOCK TO DISABLE CROSS-DB CONTRAINT ENFORCEMENT ON SQLITE:
+        'OPTIONS': {
+            'timeout': 20,
+            'init_command': 'PRAGMA foreign_keys = OFF;',
+        }
     }
 }
+
+# Distributed Data Router Middleware Pipeline Mapping
+DATABASE_ROUTERS = ['core.routers.HospitalDatabaseRouter']
+
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -97,7 +115,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Kathmandu'
 
 USE_I18N = True
 
