@@ -9,6 +9,10 @@ class PatientProfileAdmin(admin.ModelAdmin):
     # Traverses through the OneToOneField relationship to query the User model attributes safely
     search_fields = ('user__username', 'user__email', 'address')
 
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related(None)  # prevent cross-db JOIN
+
 
 @admin.register(TestCategory)
 class TestCategoryAdmin(admin.ModelAdmin):
