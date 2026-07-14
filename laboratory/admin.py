@@ -22,12 +22,33 @@ class LabTestAdmin(admin.ModelAdmin):
     list_filter = ('category',)
     search_fields = ('test_name', 'category__name')
 
+try:
+    admin.site.unregister(Appointment)
+except admin.sites.NotRegistered:
+    pass
 
 @admin.register(Appointment)
 class AppointmentAdmin(admin.ModelAdmin):
-    list_display = ('patient', 'test', 'appointment_date', 'status')
-    list_filter = ('status', 'appointment_date')
+    # These create the actual table column headers
+    list_display = [
+        'patient', 
+        'get_patient_age', 
+        'get_patient_gender', 
+        'test', 
+        'appointment_date', 
+        'status'
+    ]
     
-    # In your models.py, patient points directly to settings.AUTH_USER_MODEL.
-    # Therefore, we jump directly to the user fields here without going through a profile proxy!
-    search_fields = ('patient__username', 'test__test_name')
+    list_filter = ('status', 'appointment_date')
+    search_fields = ('patient__username', 'patient__email', 'test__test_name')
+
+    # Custom column data methods
+    def get_patient_age(self, obj):
+        profile = PatientProfile.objects.filter(user=obj.patient).first()
+        return profile.age if profile else "—"
+    get_patient_age.short_description = 'Age'  # Sets the header text
+
+    def get_patient_gender(self, obj):
+        profile = PatientProfile.objects.filter(user=obj.patient).first()
+        return profile.gender if profile else "—"
+    get_patient_gender.short_description = 'Gender'

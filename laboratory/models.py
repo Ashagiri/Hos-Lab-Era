@@ -39,14 +39,13 @@ class Appointment(models.Model):
         ('Completed', 'Completed'),
         ('Cancelled', 'Cancelled'),
     )
-    patient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='appointments')
-    test = models.ForeignKey(LabTest, on_delete=models.PROTECT)
-    appointment_date = models.DateTimeField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
-    created_at = models.DateTimeField(auto_now_add=True)
+    patient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    test = models.ForeignKey('LabTest', on_delete=models.CASCADE)
+    appointment_date = models.DateField()
+    status = models.CharField(max_length=20, default='Pending')
 
     def __str__(self):
-        return f"{self.patient.username} - {self.test.test_name} on {self.appointment_date.date()}"
+        return f"Appointment for {self.patient.username} - {self.appointment_date}"
 
 # Model for the Admin to record test outcomes directly linked to appointments
 class TestResult(models.Model):

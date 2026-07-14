@@ -70,6 +70,7 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # We break our database into a distributed multi-node architecture layout:
 # 1. 'default': Stores users, auth sessions, accounts profiles data.
 # 2. 'lab_db': Stores appointments, tests, medical results (for technician.html).
+# Look for DATABASES in your project's settings.py
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -78,6 +79,11 @@ DATABASES = {
     'lab_db': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db_laboratory.sqlite3',
+        # ADD THIS OPTIONS BLOCK TO DISABLE CROSS-DB CONTRAINT ENFORCEMENT ON SQLITE:
+        'OPTIONS': {
+            'timeout': 20,
+            'init_command': 'PRAGMA foreign_keys = OFF;',
+        }
     }
 }
 
