@@ -40,14 +40,21 @@ def dashboard_view(request):
 
 @login_required
 def technician_dashboard_view(request):
+    # FIX: ROLE_CHOICES value is 'technician', not 'tech'.
     is_tech = (
-        (hasattr(request.user, 'role') and request.user.role == 'tech')
+        (hasattr(request.user, 'role') and request.user.role == 'technician')
         or request.user.username == 'tech'
         or request.user.is_superuser
     )
     if not is_tech:
         return redirect('login')
-    return render(request, 'laboratory/technician.html')
+
+    # FIX: this view previously passed no context at all, so any appointments
+    # table in technician.html had nothing to loop over. Technicians should
+    # see every appointment (not filtered to a single patient) so they can
+    # process results.
+    appointments = Appointment.objects.all().order_by('-appointment_date')
+    return render(request, 'laboratory/technician.html', {'appointments': appointments})
 
 
 # =========================================================================
@@ -152,8 +159,9 @@ def record_test_result(request, appointment_id):
     """
     Allows Technicians and Admin users to attach metrics and remarks directly to records.
     """
+    # FIX: ROLE_CHOICES value is 'technician', not 'tech'.
     is_staff = (
-        (hasattr(request.user, 'role') and request.user.role in ['admin', 'tech'])
+        (hasattr(request.user, 'role') and request.user.role in ['admin', 'technician'])
         or request.user.username == 'tech'
         or request.user.is_superuser
     )
@@ -206,8 +214,9 @@ def download_report_view(request, appointment_id):
     """
     Assembles a certified binary PDF stream report file dynamically using ReportLab layout canvas matrices.
     """
+    # FIX: ROLE_CHOICES value is 'technician', not 'tech'.
     is_staff = (
-        (hasattr(request.user, 'role') and request.user.role in ['admin', 'tech'])
+        (hasattr(request.user, 'role') and request.user.role in ['admin', 'technician'])
         or request.user.username == 'tech'
         or request.user.is_superuser
     )
