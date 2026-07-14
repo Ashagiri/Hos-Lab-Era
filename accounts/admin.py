@@ -10,8 +10,8 @@ class CustomUserAdmin(BaseUserAdmin):
         'assigned_role',  
         'phone', 
         'email', 
-        'patient_gender',  # Use the safe relative property method below
-        'patient_age',     # Use the safe relative property method below
+        'patient_gender',
+        'patient_age',
         'last_login',    
         'date_joined'    
     )
@@ -33,27 +33,24 @@ class CustomUserAdmin(BaseUserAdmin):
         ('Custom Profile Fields', {'fields': ('role', 'phone', 'full_name', 'dob')}),
     )
 
-    # 💡 Safe Role Evaluator
+    # FIX: defer to the model's own choice-label lookup instead of
+    # reimplementing role logic that never had a 'patient' branch.
     @admin.display(description='Role', ordering='role')
     def assigned_role(self, obj):
-        if obj.is_superuser or obj.is_staff or str(obj.role).lower() == 'admin':
-            return 'Admin'
-        elif str(obj.role).lower() == 'tech' or 'tech' in obj.username.lower():
-            return 'Technician'
-        return '-'
+        return obj.get_role_display()
 
-    # 💡 Safe Patient Data Cross-Reference Accessors
+    # FIX: related_name on PatientProfile.user is 'patient_profile'
+    # (with underscore) -- hasattr(obj, 'patientprofile') never matched.
     @admin.display(description='Gender')
     def patient_gender(self, obj):
-        # Checks if a patient profile linked to this user exists safely across apps
-        if hasattr(obj, 'patientprofile'):
-            return obj.patientprofile.gender
+        if hasattr(obj, 'patient_profile'):
+            return obj.patient_profile.get_gender_display()
         return '-'
 
     @admin.display(description='Age')
     def patient_age(self, obj):
-        if hasattr(obj, 'patientprofile'):
-            return obj.patientprofile.age
+        if hasattr(obj, 'patient_profile'):
+            return obj.patient_profile.age
         return '-'
 
 # Register the model cleanly back into the system
