@@ -138,24 +138,35 @@ def settings_view(request):
 def booking_view(request):
     if request.method == 'POST':
         # 1. Grab personal data out of your HTML text inputs
-        age = request.POST.get('age')
-        gender = request.POST.get('gender')
+        age_input = request.POST.get('age')
+        gender_input = request.POST.get('gender')
         address = request.POST.get('address')
-        # Note: id_number is ignored for now because it is not inside your models.py PatientProfile
-        
-        # 2. Fix the Gender Mismatch: Map "Male" to "M", "Female" to "F", "Other" to "O"
-        gender_map = {'Male': 'M', 'Female': 'F', 'Other': 'O'}
-        clean_gender = gender_map.get(gender, 'M') # Default to 'M' if something goes wrong
+        id_number = request.POST.get('id_number') # Kept but unused since it's not in your models.py PatientProfile
 
-        # 3. Sync or update the logged-in user's Patient Profile properties safely
-        profile, created = PatientProfile.objects.get_or_create(user=request.user, defaults={'age': age or 0, 'gender': clean_gender})
+        # --- CORRECTED DATABASE CONVERSIONS ---
+        # Map frontend "Male"/"Female"/"Other" to database model values "M"/"F"/"O" (max_length=1)
+        gender_map = {'Male': 'M', 'Female': 'F', 'Other': 'O', 'M': 'M', 'F': 'F', 'O': 'O'}
+        db_gender = gender_map.get(gender_input, 'M')
+
+        # Convert age input safely to an integer to prevent crash on empty/invalid inputs
+        try:
+            db_age = int(age_input) if age_input else 0
+        except ValueError:
+            db_age = 0
+
+        # 2. Sync or update the logged-in user's Patient Profile properties
+        profile, created = PatientProfile.objects.get_or_create(
+            user=request.user,
+            defaults={'age': db_age, 'gender': db_gender}
+        )
         if not created:
-            profile.age = age or 0
-            profile.gender = clean_gender
+            profile.age = db_age
+            profile.gender = db_gender
+            
         profile.address = address
         profile.save()
 
-        # 4. Read the array list of selected checkbox test values
+        # 3. Read the array list of selected checkbox test values
         selected_test_ids = request.POST.getlist('tests') 
         appointment_date = request.POST.get('appointment_date')
 
@@ -163,7 +174,7 @@ def booking_view(request):
             messages.error(request, "Please select at least one laboratory test.")
             return redirect('booking')
 
-        # 5. Loop through each checked test and write it to your Appointment table row
+        # 4. Loop through each checked test and write it to your Appointment table row
         for test_id in selected_test_ids:
             test_obj = LabTest.objects.get(id=test_id)
             
@@ -175,10 +186,12 @@ def booking_view(request):
             )
 
         messages.success(request, "Your booking was successfully processed!")
-        return redirect('/admin/laboratory/appointment/') # Redirects straight to your dashboard!
+        return redirect('/admin/laboratory/appointment/') # Redirect straight to dashboard to test!
 
     # GET request: load the rest of your form view template logic below
     tests = LabTest.objects.all()
+    
+    # Render with exact template name configured in your settings
     return render(request, 'booking.html', {'tests': tests})
 
 
