@@ -21,6 +21,7 @@ class LabTestAdmin(admin.ModelAdmin):
     list_display = ('test_name', 'category', 'price', 'normal_range', 'unit')
     list_filter = ('category',)
     search_fields = ('test_name', 'category__name')
+    
 @admin.register(Appointment)
 class AppointmentAdmin(admin.ModelAdmin):
     # Displays fields that exist exactly inside your models.py 
