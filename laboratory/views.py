@@ -19,7 +19,8 @@ from .models import LabTest, Appointment, TestResult
 # =========================================================================
 
 # Max number of distinct patients allowed per date + time slot.
-SLOT_CAPACITY = 10
+# FIX: was 10 -> should be 5 per spec ("only 5 users able to book in 7-8am").
+SLOT_CAPACITY = 5
 
 # Must match the <option> values in booking.html's Time Slot dropdown exactly.
 TIME_SLOTS = [
@@ -46,6 +47,23 @@ def _slot_patient_count(appointment_date, appointment_time, exclude_patient_id=N
     if exclude_patient_id is not None:
         qs = qs.exclude(patient_id=exclude_patient_id)
     return qs.values('patient_id').distinct().count()
+
+
+def _next_available_slot(appointment_date, requested_slot, exclude_patient_id):
+    """
+    Looks at the slots that come AFTER requested_slot in TIME_SLOTS order
+    (same date) and returns the first one that still has room.
+    Returns None if every later slot that day is also full.
+    """
+    try:
+        start_index = TIME_SLOTS.index(requested_slot)
+    except ValueError:
+        start_index = -1  # unrecognized slot value -> just scan from the top
+
+    for slot in TIME_SLOTS[start_index + 1:]:
+        if _slot_patient_count(appointment_date, slot, exclude_patient_id) < SLOT_CAPACITY:
+            return slot
+    return None
 
 
 # =========================================================================
@@ -90,7 +108,6 @@ def dashboard_view(request):
 
 @login_required
 def technician_dashboard_view(request):
-    # FIX: ROLE_CHOICES value is 'technician', not 'tech'.
     is_tech = (
         (hasattr(request.user, 'role') and request.user.role == 'technician')
         or request.user.username == 'tech'
@@ -99,10 +116,6 @@ def technician_dashboard_view(request):
     if not is_tech:
         return redirect('login')
 
-    # FIX: this view previously passed no context at all, so any appointments
-    # table in technician.html had nothing to loop over. Technicians should
-    # see every appointment (not filtered to a single patient) so they can
-    # process results.
     appointments = Appointment.objects.all().order_by('-appointment_date')
     return render(request, 'laboratory/technician.html', {'appointments': appointments})
 
@@ -184,11 +197,20 @@ def booking_view(request):
             parsed_date, appointment_time, exclude_patient_id=request.user.id
         )
         if existing_patient_count >= SLOT_CAPACITY:
-            messages.error(
-                request,
-                f"The {appointment_time} slot on {parsed_date.strftime('%B %d, %Y')} is full. "
-                "Please select another slot."
-            )
+            suggested_slot = _next_available_slot(parsed_date, appointment_time, request.user.id)
+            if suggested_slot:
+                messages.error(
+                    request,
+                    f"The {appointment_time} slot on {parsed_date.strftime('%B %d, %Y')} is full "
+                    f"({SLOT_CAPACITY}/{SLOT_CAPACITY} booked). "
+                    f"Please select {suggested_slot} instead."
+                )
+            else:
+                messages.error(
+                    request,
+                    f"The {appointment_time} slot on {parsed_date.strftime('%B %d, %Y')} is full, "
+                    "and no later slots are available that day. Please choose a different date."
+                )
             return redirect('booking')
 
         try:
@@ -260,7 +282,6 @@ def record_test_result(request, appointment_id):
     """
     Allows Technicians and Admin users to attach metrics and remarks directly to records.
     """
-    # FIX: ROLE_CHOICES value is 'technician', not 'tech'.
     is_staff = (
         (hasattr(request.user, 'role') and request.user.role in ['admin', 'technician'])
         or request.user.username == 'tech'
@@ -298,9 +319,6 @@ def record_test_result(request, appointment_id):
         appointment.save()
 
         messages.success(request, f"Diagnostic testing criteria recorded for {appointment.patient.username}.")
-
-        # FIX: 'admin_dashboard' URL does not exist in urls.py -> caused NoReverseMatch.
-        # is_staff was already verified above, so route everyone back to the technician dashboard.
         return redirect('technician_dashboard')
 
     return render(request, 'laboratory/record_result.html', {'appointment': appointment, 'result': existing_result})
@@ -315,14 +333,12 @@ def download_report_view(request, appointment_id):
     """
     Assembles a certified binary PDF stream report file dynamically using ReportLab layout canvas matrices.
     """
-    # FIX: ROLE_CHOICES value is 'technician', not 'tech'.
     is_staff = (
         (hasattr(request.user, 'role') and request.user.role in ['admin', 'technician'])
         or request.user.username == 'tech'
         or request.user.is_superuser
     )
 
-    # Enforce basic visibility context boundaries logic check
     if is_staff:
         appointment = get_object_or_404(Appointment, id=appointment_id)
     else:
@@ -331,7 +347,6 @@ def download_report_view(request, appointment_id):
     buffer = io.BytesIO()
     p = canvas.Canvas(buffer, pagesize=letter)
 
-    # --- PDF HEADER BANNER LAYOUT ---
     p.setFillColor(colors.HexColor("#1a233a"))
     p.rect(0, 720, 612, 100, fill=1, stroke=0)
 
@@ -341,7 +356,6 @@ def download_report_view(request, appointment_id):
     p.setFont("Helvetica", 10)
     p.drawString(40, 740, "Certified Clinical Laboratory Report - Official Copy")
 
-    # --- PATIENT DETAIL CARDS ---
     p.setFillColor(colors.HexColor("#f8fafc"))
     p.rect(40, 580, 532, 110, fill=1, stroke=1)
 
@@ -358,7 +372,6 @@ def download_report_view(request, appointment_id):
     p.drawString(320, 665, f"Date Compiled: {formatted_date}")
     p.drawString(320, 645, f"Status: {appointment.status}")
 
-    # --- MEDICAL PARAMETER DATA TABLE ---
     p.setFillColor(colors.HexColor("#2563eb"))
     p.rect(40, 520, 532, 25, fill=1, stroke=0)
     p.setFillColor(colors.white)
@@ -368,18 +381,15 @@ def download_report_view(request, appointment_id):
     p.drawString(380, 528, "NORMAL RANGE")
     p.drawString(490, 528, "FLAG")
 
-    # Row Data Values
     p.setFillColor(colors.black)
     p.setFont("Helvetica", 11)
     p.drawString(50, 490, f"{appointment.test.test_name}")
 
-    # Extract structural analytical evaluation criteria dynamically if verified data models exist
     try:
         live_result = appointment.result
         display_val = live_result.result_value
         display_remarks = live_result.remarks or "NORMAL"
     except (TestResult.DoesNotExist, AttributeError):
-        # Fallback tracking if results aren't recorded in detail model segments yet
         display_val = "14.2 g/dL" if "blood" in appointment.test.test_name.lower() else "98 mg/dL"
         display_remarks = "NORMAL"
 
@@ -392,7 +402,6 @@ def download_report_view(request, appointment_id):
     p.setLineWidth(1)
     p.line(40, 475, 572, 475)
 
-    # --- FOOTER METADATA ---
     p.setFillColor(colors.HexColor("#64748b"))
     p.setFont("Helvetica-Oblique", 9)
     p.drawString(40, 100, "* This is a digitally verified laboratory report generated by LabPortal.")
