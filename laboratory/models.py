@@ -57,5 +57,14 @@ class TestResult(models.Model):
     updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, limit_choices_to={'role': 'admin'})
     updated_at = models.DateTimeField(auto_now=True)
 
+    # Verification workflow: a result can be entered/edited, then separately verified.
+    # Editing an already-verified result clears verification (enforced in the view).
+    verified = models.BooleanField(default=False)
+    verified_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='verified_results'
+    )
+    verified_at = models.DateTimeField(null=True, blank=True)
+
     def __str__(self):
         return f"Result for {self.appointment}"

@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.utils.dateparse import parse_date
+from django.utils import timezone
 
 # ReportLab Engine Modules
 from reportlab.pdfgen import canvas
@@ -117,7 +118,23 @@ def technician_dashboard_view(request):
         return redirect('login')
 
     appointments = Appointment.objects.all().order_by('-appointment_date')
-    return render(request, 'laboratory/technician.html', {'appointments': appointments})
+
+    status_filter = request.GET.get('status', '').strip()
+    search_query = request.GET.get('q', '').strip()
+
+    if status_filter in ('Pending', 'Completed', 'Cancelled'):
+        appointments = appointments.filter(status=status_filter)
+
+    if search_query:
+        appointments = appointments.filter(patient__username__icontains=search_query)
+
+    return render(request, 'laboratory/technician.html', {
+        'appointments': appointments,
+        'pending_count': Appointment.objects.filter(status='Pending').count(),
+        'completed_count': Appointment.objects.filter(status='Completed').count(),
+        'status_filter': status_filter,
+        'search_query': search_query,
+    })
 
 
 # =========================================================================
@@ -322,6 +339,74 @@ def record_test_result(request, appointment_id):
         return redirect('technician_dashboard')
 
     return render(request, 'laboratory/record_result.html', {'appointment': appointment, 'result': existing_result})
+
+
+@login_required
+def generate_report_view(request, appointment_id):
+    """
+    Report workspace: Edit result, Verify result, then Upload/Download the
+    final PDF (reuses the existing download_report_view for the actual file).
+    """
+    is_staff = (
+        (hasattr(request.user, 'role') and request.user.role in ['admin', 'technician'])
+        or request.user.username == 'tech'
+        or request.user.is_superuser
+    )
+    if not is_staff:
+        messages.error(request, "Access restricted to authorized management profiles.")
+        return redirect('dashboard')
+
+    appointment = get_object_or_404(Appointment, id=appointment_id)
+    result = getattr(appointment, 'result', None)
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'edit':
+            result_value = request.POST.get('result_value')
+            remarks = request.POST.get('remarks')
+
+            if not result_value:
+                messages.error(request, "Result value cannot be empty.")
+                return redirect('generate_report', appointment_id=appointment.id)
+
+            if result:
+                result.result_value = result_value
+                result.remarks = remarks
+                result.updated_by = request.user
+                # Editing an already-verified result invalidates that verification.
+                result.verified = False
+                result.verified_by = None
+                result.verified_at = None
+                result.save()
+            else:
+                result = TestResult.objects.create(
+                    appointment=appointment,
+                    result_value=result_value,
+                    remarks=remarks,
+                    updated_by=request.user,
+                )
+
+            appointment.status = 'Completed'
+            appointment.save()
+            messages.success(request, "Result saved. Please verify before uploading the final report.")
+
+        elif action == 'verify':
+            if not result:
+                messages.error(request, "Cannot verify -- no result has been entered yet.")
+            else:
+                result.verified = True
+                result.verified_by = request.user
+                result.verified_at = timezone.now()
+                result.save()
+                messages.success(request, "Result marked as verified.")
+
+        return redirect('generate_report', appointment_id=appointment.id)
+
+    return render(request, 'laboratory/generate_report.html', {
+        'appointment': appointment,
+        'result': result,
+    })
 
 
 # =========================================================================
