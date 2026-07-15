@@ -51,6 +51,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
    # This matches {% url 'technician' %}
    path('technician/', account_views.technician_login_view, name='technician'),
+   
     
 ]
 
