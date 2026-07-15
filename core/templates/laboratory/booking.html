@@ -156,7 +156,7 @@
                     {% for test in tests %}
                     <label class="list-group-item d-flex align-items-center justify-content-between p-3 border-bottom border-light-subtle">
                         <div class="d-flex align-items-center gap-3">
-                            <input class="form-check-input flex-shrink-0 m-0 border-secondary-subtle fs-5" type="checkbox" name="tests" value="{{ test.id }}">
+                            <input class="form-check-input flex-shrink-0 m-0 border-secondary-subtle fs-5 test-checkbox" type="checkbox" name="tests" value="{{ test.id }}" data-price="{{ test.price }}">
                             <div class="fs-4 px-2 py-1 rounded bg-info-subtle">{{ test.icon }}</div>
                             <div>
                                 <h6 class="mb-0 fw-bold text-dark fs-6">{{ test.test_name }}</h6>
@@ -215,8 +215,13 @@
                         </div>
                     </div>
 
+                    <div class="d-flex justify-content-between align-items-center bg-light rounded-3 p-3 mb-4 border">
+                        <span class="fw-semibold text-dark">Total Amount <span id="selectedCount" class="text-muted small">(0 test selected)</span></span>
+                        <span class="fw-bold text-primary fs-4">Rs. <span id="totalPrice">0.00</span></span>
+                    </div>
+
                     <div class="text-center pt-2">
-                        <button type="submit" class="btn btn-warning text-dark fw-bold btn-lg rounded-3 px-5 py-2.5 shadow-sm d-inline-flex align-items-center gap-2 border-0">
+                        <button type="submit" id="confirmBookBtn" class="btn btn-warning text-dark fw-bold btn-lg rounded-3 px-5 py-2.5 shadow-sm d-inline-flex align-items-center gap-2 border-0" disabled>
                             CONFIRM & BOOK NOW
                         </button>
                     </div>
@@ -226,6 +231,36 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+      const testCheckboxes = document.querySelectorAll('.test-checkbox');
+      const totalPriceEl = document.getElementById('totalPrice');
+      const selectedCountEl = document.getElementById('selectedCount');
+      const confirmBtn = document.getElementById('confirmBookBtn');
+
+      function updateTotal() {
+        let total = 0;
+        let count = 0;
+
+        testCheckboxes.forEach(function (checkbox) {
+          if (checkbox.checked) {
+            total += parseFloat(checkbox.dataset.price) || 0;
+            count += 1;
+          }
+        });
+
+        totalPriceEl.textContent = total.toFixed(2);
+        selectedCountEl.textContent = '(' + count + ' test' + (count === 1 ? '' : 's') + ' selected)';
+        confirmBtn.disabled = count === 0;
+      }
+
+      testCheckboxes.forEach(function (checkbox) {
+        checkbox.addEventListener('change', updateTotal);
+      });
+
+      // Run once on load in case the browser restores checked state on refresh
+      updateTotal();
+    </script>
 
 </body>
 </html>
