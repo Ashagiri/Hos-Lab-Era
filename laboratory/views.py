@@ -14,6 +14,21 @@ from reportlab.lib import colors
 from .models import LabTest, Appointment, TestResult
 
 # =========================================================================
+# STATIC DISPLAY METADATA (icons/descriptions not stored in the DB)
+# =========================================================================
+
+TEST_DISPLAY_INFO = {
+    "Complete Blood Count (CBC)": {"icon": "🩸", "desc": "Measures different components of your blood"},
+    "Dengue NS1 Antigen": {"icon": "🦟", "desc": "Detects active dengue virus or immune response antibodies"},
+    "Tuberculosis (TB)": {"icon": "🫁", "desc": "Detects exposure, latent infection, or active immune response to TB bacteria"},
+    "X-Ray": {"icon": "☠️", "desc": "Advanced digital imaging for internal bone structures and chest analysis"},
+    "Video X-Ray": {"icon": "☠️", "desc": "Advanced digital imaging for internal bone structures and chest analysis"},
+    "Vitamin B12 Test": {"icon": "💊", "desc": "Measures Vitamin B12 levels to check for deficiencies or anemia flags"},
+    "Urinalysis & Stool Examination": {"icon": "🧪", "desc": "Complete chemical, physical, and microscopic evaluation for metabolic or infection markers"},
+    "Cancer Test": {"icon": "🧪", "desc": "Complete chemical, physical, and microscopic evaluation for metabolic or infection markers"},
+}
+
+# =========================================================================
 # SYSTEM MARKETING ENTRY VIEW
 # =========================================================================
 
@@ -147,6 +162,13 @@ def booking_view(request):
 
     # GET Workflow processing
     all_tests = LabTest.objects.all().select_related('category')
+
+    # Attach display-only icon + description metadata (not persisted to DB)
+    for test in all_tests:
+        info = TEST_DISPLAY_INFO.get(test.test_name, {"icon": "🧪", "desc": ""})
+        test.icon = info["icon"]
+        test.display_desc = info["desc"]
+
     return render(request, 'laboratory/booking.html', {'tests': all_tests})
 
 

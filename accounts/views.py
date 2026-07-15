@@ -27,8 +27,6 @@ def register_view(request):
             return render(request, 'accounts/register.html')
 
         try:
-            # 3. Create the user using the email as the core username
-            # role must match ROLE_CHOICES exactly -> lowercase 'patient'
             user = User.objects.create_user(
                 username=email, 
                 email=email,
@@ -37,7 +35,6 @@ def register_view(request):
                 role='patient'
             )
             
-            # 4. Save your application's extra custom fields dynamically
             if hasattr(user, 'full_name'): user.full_name = full_name
             if hasattr(user, 'dob') and dob: user.dob = dob
             if hasattr(user, 'age') and age: user.age = int(age)
@@ -45,10 +42,6 @@ def register_view(request):
             
             user.save()
 
-            # 5. Create the linked PatientProfile row so it shows up under
-            # Laboratory > Patient profiles in the admin.
-            # PatientProfile.gender only accepts 'M' / 'F' / 'O', so map
-            # whatever the form sends (e.g. "Male") down to that.
             gender_map = {'male': 'M', 'female': 'F', 'other': 'O'}
             PatientProfile.objects.create(
                 user=user,
@@ -56,9 +49,9 @@ def register_view(request):
                 gender=gender_map.get((gender or '').lower(), 'O'),
             )
 
-            # 6. Establish user session and route straight to user dashboard
-            login(request, user)
-            return redirect('dashboard')
+            # 6. Registration complete — send them to login instead of auto-logging in
+            messages.success(request, "Account created successfully! Please log in.")
+            return redirect('login')
             
         except Exception as e:
             messages.error(request, f"Registration error: {str(e)}")
@@ -72,44 +65,56 @@ def login_view(request):
     Handles secure user authentication and dynamic role-based dashboard deployment.
     """
     if request.method == 'POST':
-        # Safely grab whatever value was typed into the primary identification input field
         username_input = request.POST.get('email') or request.POST.get('username')
         password_input = request.POST.get('password')
-        
-        # Fallback Check: If user typed their email address directly, locate the literal username field
-        if username_input and '@' in username_input:
+
+        if not username_input or not password_input:
+            messages.error(request, "Please enter both email/username and password.")
+            return redirect('login')
+
+        # Resolve email -> username if the user typed an email address
+        lookup_input = username_input
+        if '@' in username_input:
             try:
                 matched_user = User.objects.get(email=username_input)
-                username_input = matched_user.username
+                lookup_input = matched_user.username
             except User.DoesNotExist:
-                pass
+                # No account with this email at all
+                messages.error(
+                    request,
+                    "No account found with that email. Please create an account first."
+                )
+                return redirect('login')
+        else:
+            # Typed a username directly — check it exists before authenticating
+            if not User.objects.filter(username=username_input).exists():
+                messages.error(
+                    request,
+                    "No account found with that username. Please create an account first."
+                )
+                return redirect('login')
 
-        # Authenticate the user profile against Django's registry engine
-        user = authenticate(request, username=username_input, password=password_input)
-        
+        # Account exists — now check the password
+        user = authenticate(request, username=lookup_input, password=password_input)
+
         if user is not None:
             login(request, user)
             messages.success(request, f"Welcome back, {user.username}!")
-            
-            # DYNAMIC ROLE ROUTING SEQUENCE
-            # Sends technicians and superusers straight to the technician dashboard
-            # FIX: ROLE_CHOICES value is 'technician', not 'tech'
+
             is_tech = (
                 (hasattr(user, 'role') and user.role == 'technician')
                 or user.username == 'tech'
                 or user.is_superuser
             )
             if is_tech:
-                return redirect('technician_dashboard')  
+                return redirect('technician_dashboard')
             else:
-                return redirect('dashboard')        # Sends normal patients to the standard space
-                
+                return redirect('dashboard')
         else:
-            messages.error(request, "Invalid authentication credentials. Please try again.")
+            messages.error(request, "Incorrect password. Please try again.")
             return redirect('login')
-            
-    return render(request, 'accounts/login.html')
 
+    return render(request, 'accounts/login.html')
 
 def technician_login_view(request):
     """
