@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
+from accounts import views as account_views
 
 # Explicit views imports from your local application nodes
 from laboratory.views import (
@@ -46,6 +47,10 @@ urlpatterns = [
     # Authentication Management Ecosystem
     path('accounts/register/', register_view, name='register'),
     path('accounts/login/', login_view, name='login'),
+    
+    path('admin/', admin.site.urls),
+   # This matches {% url 'technician' %}
+   path('technician/', account_views.technician_login_view, name='technician'),
     
 ]
 
