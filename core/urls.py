@@ -2,57 +2,60 @@ from django.contrib import admin
 from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
-from accounts import views as account_views
+from django.contrib.auth.views import LogoutView
 
 # Explicit views imports from your local application nodes
 from laboratory.views import (
-    home_view, 
-    booking_view, 
+    home_view,
+    booking_view,
     dashboard_view,
     technician_dashboard_view,
-    download_report_view, 
+    download_report_view,
     settings_view,
     record_test_result,
-) 
+    check_slot_availability,
+)
 from accounts.views import register_view, login_view, technician_login_view
 
 urlpatterns = [
-    # Dedicated Staff Portal Login View (Handles /technician/)
-    path('technician/', technician_login_view, name='technician_login'),
-   
     # Built-in Django Administrative Portal
     path('admin/', admin.site.urls),
-    
+
     # Public Marketing Welcome Homepage
-    path('', home_view, name='home'),  
-    
+    path('', home_view, name='home'),
+
     # Dedicated Patient Dashboard Route
     path('dashboard/', dashboard_view, name='dashboard'),
-    
-    # Dedicated Technician Command Center Dashboard 
+
+    # Dedicated Technician Command Center Dashboard
     path('dashboard/technician/', technician_dashboard_view, name='technician_dashboard'),
-    
+
     # Patient Scheduling Operations
     path('booking/', booking_view, name='booking'),
-    
+
+    # AJAX endpoint: checks how many patients already booked each time slot
+    # for a given date, so the booking form can grey out full slots.
+    path('booking/check-slots/', check_slot_availability, name='check_slot_availability'),
+
     # Settings Profile Update Registry
     path('settings/', settings_view, name='settings'),
-    
+
     # Distributed Diagnostic Processing (The "Process" Button Action)
     path('dashboard/technician/process/<int:appointment_id>/', record_test_result, name='record_test_result'),
-    
-    # Automated Certified PDF Report Downloader 
+
+    # Automated Certified PDF Report Downloader
     path('report/download/<int:appointment_id>/', download_report_view, name='download_report'),
-    
+
     # Authentication Management Ecosystem
     path('accounts/register/', register_view, name='register'),
     path('accounts/login/', login_view, name='login'),
-    
-    path('admin/', admin.site.urls),
-   # This matches {% url 'technician' %}
-   path('technician/', account_views.technician_login_view, name='technician'),
-   
-    
+    path('accounts/logout/', LogoutView.as_view(), name='logout'),
+
+    # Dedicated Staff Portal Login View (Handles /technician/)
+    # NOTE: this single name ('technician_login') is used everywhere -
+    # both in templates ({% url 'technician_login' %}) and internally by
+    # technician_login_view's own redirect('technician_login') on failed auth.
+    path('technician/', technician_login_view, name='technician_login'),
 ]
 
 # Serve Static Assets During Local Development Sharding

@@ -1,9 +1,10 @@
 import io
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import FileResponse
+from django.http import FileResponse, JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
+from django.utils.dateparse import parse_date
 
 # ReportLab Engine Modules
 from reportlab.pdfgen import canvas
@@ -12,6 +13,40 @@ from reportlab.lib import colors
 
 # Database App Entities
 from .models import LabTest, Appointment, TestResult
+
+# =========================================================================
+# APPOINTMENT SLOT CAPACITY CONFIG
+# =========================================================================
+
+# Max number of distinct patients allowed per date + time slot.
+SLOT_CAPACITY = 10
+
+# Must match the <option> values in booking.html's Time Slot dropdown exactly.
+TIME_SLOTS = [
+    "07:00 AM - 08:00 AM",
+    "09:00 AM - 10:00 AM",
+    "01:00 PM - 02:00 PM",
+    "02:00 PM - 03:00 PM",
+    "03:00 PM - 04:00 PM",
+    "04:00 PM - 05:00 PM",
+]
+
+
+def _slot_patient_count(appointment_date, appointment_time, exclude_patient_id=None):
+    """
+    Counts how many DISTINCT patients already hold an active (Pending/Completed)
+    appointment for the given date + time slot. A patient booking multiple
+    tests in the same slot only counts once.
+    """
+    qs = Appointment.objects.filter(
+        appointment_date__date=appointment_date,
+        appointment_time=appointment_time,
+        status__in=['Pending', 'Completed'],
+    )
+    if exclude_patient_id is not None:
+        qs = qs.exclude(patient_id=exclude_patient_id)
+    return qs.values('patient_id').distinct().count()
+
 
 # =========================================================================
 # STATIC DISPLAY METADATA (icons/descriptions not stored in the DB)
@@ -137,6 +172,25 @@ def booking_view(request):
             messages.error(request, "Please select at least one test, date, and time slot.")
             return redirect('booking')
 
+        # 2.5 Enforce slot capacity: reject if this date+time slot is already full
+        # for OTHER patients. If this patient already has a booking in this slot
+        # (e.g. adding more tests), that doesn't count against the cap.
+        parsed_date = parse_date(appointment_date)
+        if parsed_date is None:
+            messages.error(request, "Invalid appointment date. Please try again.")
+            return redirect('booking')
+
+        existing_patient_count = _slot_patient_count(
+            parsed_date, appointment_time, exclude_patient_id=request.user.id
+        )
+        if existing_patient_count >= SLOT_CAPACITY:
+            messages.error(
+                request,
+                f"The {appointment_time} slot on {parsed_date.strftime('%B %d, %Y')} is full. "
+                "Please select another slot."
+            )
+            return redirect('booking')
+
         try:
             # 3. Generate records independently for each checked parameter
             for test_id in selected_test_ids:
@@ -170,6 +224,31 @@ def booking_view(request):
         test.display_desc = info["desc"]
 
     return render(request, 'laboratory/booking.html', {'tests': all_tests})
+
+
+@login_required
+def check_slot_availability(request):
+    """
+    GET /booking/check-slots/?date=YYYY-MM-DD
+    Returns JSON with each time slot's booked count and whether it's full,
+    so the booking form can grey out full slots before the patient submits.
+    """
+    date_str = request.GET.get('date')
+    parsed_date = parse_date(date_str) if date_str else None
+
+    if parsed_date is None:
+        return JsonResponse({'error': 'A valid date query parameter is required.'}, status=400)
+
+    slots = {}
+    for slot in TIME_SLOTS:
+        booked = _slot_patient_count(parsed_date, slot, exclude_patient_id=request.user.id)
+        slots[slot] = {
+            'booked': booked,
+            'capacity': SLOT_CAPACITY,
+            'full': booked >= SLOT_CAPACITY,
+        }
+
+    return JsonResponse({'date': date_str, 'slots': slots})
 
 
 # =========================================================================
