@@ -164,7 +164,7 @@
   <a href="#" class="nav-link">
     <i class="bi bi-droplet-half"></i> <span>View Test Requests</span>
   </a>
-  <a href="generate_report.html" class="nav-link">
+  <a href="{% url 'reports_list' %}" class="nav-link">
     <i class="bi bi-file-earmark-check-fill"></i> <span>Generate Reports</span>
   </a>
   <a href="{% url 'settings' %}" class="nav-link">
@@ -330,20 +330,20 @@
               <div class="mb-4 p-3 border rounded-3 bg-slate-50">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                   <span class="small fw-bold text-slate-700">Biochemistry Node V4</span>
-                  <span class="badge bg-warning-subtle text-warning-dominant border border-warning-subtle rounded-pill px-2" style="color: #b45309;">Refill Warning</span>
+                  <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-2">Refill Warning</span>
                 </div>
                 <div class="progress rounded-pill" style="height: 7px;">
                   <div class="progress-bar bg-warning" role="progressbar" style="width: 22%"></div>
                 </div>
                 <div class="d-flex justify-content-between text-muted mt-1.5" style="font-size: 11px;">
                   <span>Reagent Remaining</span>
-                  <span class="fw-bold text-amber-700">22%</span>
+                  <span class="fw-bold text-warning">22%</span>
                 </div>
               </div>
 
               <div class="mt-4 pt-2">
                 <h6 class="small text-uppercase text-slate-400 fw-bold tracking-wider mb-2.5">Router Messages</h6>
-                <div class="p-3 bg-blue-50 text-blue-700 rounded-3 small border border-blue-100 style="background-color: #eff6ff; color: #1d4ed8;">
+                <div class="p-3 rounded-3 small border" style="background-color: #eff6ff; color: #1d4ed8; border-color: #bfdbfe;">
                   <i class="bi bi-hdd-network-fill me-2"></i>Database router is actively separating transaction isolation layers smoothly.
                 </div>
               </div>

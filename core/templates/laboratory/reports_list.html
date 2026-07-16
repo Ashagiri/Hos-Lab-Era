@@ -1,0 +1,103 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LabAdmin - Reports</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+      /* paste the same :root vars + .sidebar/.panel-card/.custom-table/.action-btn rules from your dashboard template here */
+    </style>
+  </head>
+  <body>
+    <div class="app-container">
+      <div class="sidebar d-flex flex-column">
+        <div class="brand d-flex align-items-center">
+          <i class="bi bi-shield-plus text-info me-2 fs-4"></i>
+          <span>TECHDASH</span>
+        </div>
+        <nav class="nav flex-column mt-4 flex-grow-1">
+          <a href="{% url 'technician_dashboard' %}" class="nav-link">
+            <i class="bi bi-grid-1x2-fill"></i> <span>Dashboard</span>
+          </a>
+          <a href="#" class="nav-link">
+            <i class="bi bi-droplet-half"></i> <span>View Test Requests</span>
+          </a>
+          <a href="{% url 'reports_list' %}" class="nav-link active">
+            <i class="bi bi-file-earmark-check-fill"></i> <span>Generate Reports</span>
+          </a>
+          <a href="{% url 'settings' %}" class="nav-link">
+            <i class="bi bi-sliders2"></i> <span>System Settings</span>
+          </a>
+          <div class="mt-0 mt-md-auto pt-2 w-100 d-none d-md-block">
+            <hr class="text-white-50 my-4">
+            <a href="{% url 'home' %}" class="nav-link sidebar-link text-danger py-2.5 px-3 d-flex align-items-center">
+              <i class="fa-solid fa-right-from-bracket me-2"></i> <span>Back to Main</span>
+            </a>
+          </div>
+        </nav>
+        <div class="mt-auto p-3 border-top border-dark user-profile-box">
+          <div class="d-flex align-items-center bg-dark bg-opacity-40 p-2.5 rounded-3">
+            <i class="bi bi-person-badge text-info fs-4 me-2.5"></i>
+            <div>
+              <div class="text-white small fw-bold leading-none">{{ request.user.username }}</div>
+              <small class="text-muted" style="font-size: 11px;">Technician Node</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <main class="main-content">
+        <div class="d-flex justify-content-between align-items-center mb-5">
+          <div>
+            <h1 class="h3 mb-1 text-slate-900 fw-bold">Report Archive</h1>
+            <p class="text-muted small mb-0">Select an appointment to generate or view its report.</p>
+          </div>
+        </div>
+
+        <div class="panel-card p-4">
+          <div class="table-responsive">
+            <table class="table custom-table align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>Barcode ID</th>
+                  <th>Patient Profile</th>
+                  <th>Target Metric</th>
+                  <th>Registered Timestamp</th>
+                  <th class="text-end">Report</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for appt in appointments %}
+                <tr>
+                  <td><span class="badge bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-1.5 font-monospace fs-7">LMS-00{{ appt.id }}</span></td>
+                  <td>
+                    <div class="fw-bold text-slate-800 mb-0.5">{{ appt.patient.username }}</div>
+                    <div class="text-muted small font-monospace" style="font-size: 11px;">{{ appt.patient.email }}</div>
+                  </td>
+                  <td><span class="text-primary fw-bold">{{ appt.test.test_name }}</span></td>
+                  <td class="text-secondary small">{{ appt.appointment_date|date:"M d, Y · H:i" }}</td>
+                  <td class="text-end">
+                    <a href="{% url 'generate_report' appt.id %}" class="btn action-btn shadow-sm">
+                      <i class="bi bi-file-earmark-check-fill me-1"></i>View Report
+                    </a>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="5" class="text-center text-muted py-5">
+                    <i class="bi bi-clipboard-x text-slate-300 fs-1 d-block mb-2"></i> No appointments available for reporting.
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

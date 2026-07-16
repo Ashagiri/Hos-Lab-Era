@@ -15,6 +15,7 @@ from reportlab.lib import colors
 # Database App Entities
 from .models import LabTest, Appointment, TestResult
 
+
 # =========================================================================
 # APPOINTMENT SLOT CAPACITY CONFIG
 # =========================================================================

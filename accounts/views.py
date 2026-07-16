@@ -3,6 +3,7 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from .models import User  # Targets your custom User model
 from laboratory.models import PatientProfile  # needed to create the profile row
+from laboratory.models import Appointment  # adjust import to your actual model location
 
 
 def register_view(request):
@@ -157,3 +158,8 @@ def logout_view(request):
     logout(request)
     messages.success(request, "You have been logged out successfully.")
     return redirect('home')
+
+@login_required
+def reports_list_view(request):
+    appointments = Appointment.objects.select_related('patient', 'test').order_by('-appointment_date')
+    return render(request, 'laboratory/reports_list.html', {'appointments': appointments})
