@@ -159,7 +159,6 @@ def logout_view(request):
     messages.success(request, "You have been logged out successfully.")
     return redirect('home')
 
-@login_required
 def reports_list_view(request):
     appointments = Appointment.objects.select_related('patient', 'test').order_by('-appointment_date')
-    return render(request, 'laboratory/reports_list.html', {'appointments': appointments})
+    return render(request, 'laboratory/reports_list_view.html', {'appointments': appointments})

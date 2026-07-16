@@ -498,3 +498,9 @@ def download_report_view(request, appointment_id):
 
     buffer.seek(0)
     return FileResponse(buffer, as_attachment=True, filename=f"LabReport_00{appointment.id}.pdf")
+
+
+
+def reports_list_view(request):
+    appointments = Appointment.objects.select_related('patient', 'test').order_by('-appointment_date')
+    return render(request, 'laboratory/reports_list_view.html', {'appointments': appointments})
