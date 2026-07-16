@@ -1,9 +1,11 @@
 import io
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import FileResponse
+from django.http import FileResponse, JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
+from django.utils.dateparse import parse_date
+from django.utils import timezone
 
 # ReportLab Engine Modules
 from reportlab.pdfgen import canvas
@@ -12,6 +14,74 @@ from reportlab.lib import colors
 
 # Database App Entities
 from .models import LabTest, Appointment, TestResult
+
+
+# =========================================================================
+# APPOINTMENT SLOT CAPACITY CONFIG
+# =========================================================================
+
+# Max number of distinct patients allowed per date + time slot.
+# FIX: was 10 -> should be 5 per spec ("only 5 users able to book in 7-8am").
+SLOT_CAPACITY = 5
+
+# Must match the <option> values in booking.html's Time Slot dropdown exactly.
+TIME_SLOTS = [
+    "07:00 AM - 08:00 AM",
+    "09:00 AM - 10:00 AM",
+    "01:00 PM - 02:00 PM",
+    "02:00 PM - 03:00 PM",
+    "03:00 PM - 04:00 PM",
+    "04:00 PM - 05:00 PM",
+]
+
+
+def _slot_patient_count(appointment_date, appointment_time, exclude_patient_id=None):
+    """
+    Counts how many DISTINCT patients already hold an active (Pending/Completed)
+    appointment for the given date + time slot. A patient booking multiple
+    tests in the same slot only counts once.
+    """
+    qs = Appointment.objects.filter(
+        appointment_date__date=appointment_date,
+        appointment_time=appointment_time,
+        status__in=['Pending', 'Completed'],
+    )
+    if exclude_patient_id is not None:
+        qs = qs.exclude(patient_id=exclude_patient_id)
+    return qs.values('patient_id').distinct().count()
+
+
+def _next_available_slot(appointment_date, requested_slot, exclude_patient_id):
+    """
+    Looks at the slots that come AFTER requested_slot in TIME_SLOTS order
+    (same date) and returns the first one that still has room.
+    Returns None if every later slot that day is also full.
+    """
+    try:
+        start_index = TIME_SLOTS.index(requested_slot)
+    except ValueError:
+        start_index = -1  # unrecognized slot value -> just scan from the top
+
+    for slot in TIME_SLOTS[start_index + 1:]:
+        if _slot_patient_count(appointment_date, slot, exclude_patient_id) < SLOT_CAPACITY:
+            return slot
+    return None
+
+
+# =========================================================================
+# STATIC DISPLAY METADATA (icons/descriptions not stored in the DB)
+# =========================================================================
+
+TEST_DISPLAY_INFO = {
+    "Complete Blood Count (CBC)": {"icon": "🩸", "desc": "Measures different components of your blood"},
+    "Dengue NS1 Antigen": {"icon": "🦟", "desc": "Detects active dengue virus or immune response antibodies"},
+    "Tuberculosis (TB)": {"icon": "🫁", "desc": "Detects exposure, latent infection, or active immune response to TB bacteria"},
+    "X-Ray": {"icon": "☠️", "desc": "Advanced digital imaging for internal bone structures and chest analysis"},
+    "Video X-Ray": {"icon": "☠️", "desc": "Advanced digital imaging for internal bone structures and chest analysis"},
+    "Vitamin B12 Test": {"icon": "💊", "desc": "Measures Vitamin B12 levels to check for deficiencies or anemia flags"},
+    "Urinalysis & Stool Examination": {"icon": "🧪", "desc": "Complete chemical, physical, and microscopic evaluation for metabolic or infection markers"},
+    "Cancer Test": {"icon": "🧪", "desc": "Complete chemical, physical, and microscopic evaluation for metabolic or infection markers"},
+}
 
 # =========================================================================
 # SYSTEM MARKETING ENTRY VIEW
@@ -40,7 +110,6 @@ def dashboard_view(request):
 
 @login_required
 def technician_dashboard_view(request):
-    # FIX: ROLE_CHOICES value is 'technician', not 'tech'.
     is_tech = (
         (hasattr(request.user, 'role') and request.user.role == 'technician')
         or request.user.username == 'tech'
@@ -49,12 +118,24 @@ def technician_dashboard_view(request):
     if not is_tech:
         return redirect('login')
 
-    # FIX: this view previously passed no context at all, so any appointments
-    # table in technician.html had nothing to loop over. Technicians should
-    # see every appointment (not filtered to a single patient) so they can
-    # process results.
     appointments = Appointment.objects.all().order_by('-appointment_date')
-    return render(request, 'laboratory/technician.html', {'appointments': appointments})
+
+    status_filter = request.GET.get('status', '').strip()
+    search_query = request.GET.get('q', '').strip()
+
+    if status_filter in ('Pending', 'Completed', 'Cancelled'):
+        appointments = appointments.filter(status=status_filter)
+
+    if search_query:
+        appointments = appointments.filter(patient__username__icontains=search_query)
+
+    return render(request, 'laboratory/technician.html', {
+        'appointments': appointments,
+        'pending_count': Appointment.objects.filter(status='Pending').count(),
+        'completed_count': Appointment.objects.filter(status='Completed').count(),
+        'status_filter': status_filter,
+        'search_query': search_query,
+    })
 
 
 # =========================================================================
@@ -122,6 +203,34 @@ def booking_view(request):
             messages.error(request, "Please select at least one test, date, and time slot.")
             return redirect('booking')
 
+        # 2.5 Enforce slot capacity: reject if this date+time slot is already full
+        # for OTHER patients. If this patient already has a booking in this slot
+        # (e.g. adding more tests), that doesn't count against the cap.
+        parsed_date = parse_date(appointment_date)
+        if parsed_date is None:
+            messages.error(request, "Invalid appointment date. Please try again.")
+            return redirect('booking')
+
+        existing_patient_count = _slot_patient_count(
+            parsed_date, appointment_time, exclude_patient_id=request.user.id
+        )
+        if existing_patient_count >= SLOT_CAPACITY:
+            suggested_slot = _next_available_slot(parsed_date, appointment_time, request.user.id)
+            if suggested_slot:
+                messages.error(
+                    request,
+                    f"The {appointment_time} slot on {parsed_date.strftime('%B %d, %Y')} is full "
+                    f"({SLOT_CAPACITY}/{SLOT_CAPACITY} booked). "
+                    f"Please select {suggested_slot} instead."
+                )
+            else:
+                messages.error(
+                    request,
+                    f"The {appointment_time} slot on {parsed_date.strftime('%B %d, %Y')} is full, "
+                    "and no later slots are available that day. Please choose a different date."
+                )
+            return redirect('booking')
+
         try:
             # 3. Generate records independently for each checked parameter
             for test_id in selected_test_ids:
@@ -147,7 +256,39 @@ def booking_view(request):
 
     # GET Workflow processing
     all_tests = LabTest.objects.all().select_related('category')
+
+    # Attach display-only icon + description metadata (not persisted to DB)
+    for test in all_tests:
+        info = TEST_DISPLAY_INFO.get(test.test_name, {"icon": "🧪", "desc": ""})
+        test.icon = info["icon"]
+        test.display_desc = info["desc"]
+
     return render(request, 'laboratory/booking.html', {'tests': all_tests})
+
+
+@login_required
+def check_slot_availability(request):
+    """
+    GET /booking/check-slots/?date=YYYY-MM-DD
+    Returns JSON with each time slot's booked count and whether it's full,
+    so the booking form can grey out full slots before the patient submits.
+    """
+    date_str = request.GET.get('date')
+    parsed_date = parse_date(date_str) if date_str else None
+
+    if parsed_date is None:
+        return JsonResponse({'error': 'A valid date query parameter is required.'}, status=400)
+
+    slots = {}
+    for slot in TIME_SLOTS:
+        booked = _slot_patient_count(parsed_date, slot, exclude_patient_id=request.user.id)
+        slots[slot] = {
+            'booked': booked,
+            'capacity': SLOT_CAPACITY,
+            'full': booked >= SLOT_CAPACITY,
+        }
+
+    return JsonResponse({'date': date_str, 'slots': slots})
 
 
 # =========================================================================
@@ -159,7 +300,6 @@ def record_test_result(request, appointment_id):
     """
     Allows Technicians and Admin users to attach metrics and remarks directly to records.
     """
-    # FIX: ROLE_CHOICES value is 'technician', not 'tech'.
     is_staff = (
         (hasattr(request.user, 'role') and request.user.role in ['admin', 'technician'])
         or request.user.username == 'tech'
@@ -197,12 +337,77 @@ def record_test_result(request, appointment_id):
         appointment.save()
 
         messages.success(request, f"Diagnostic testing criteria recorded for {appointment.patient.username}.")
-
-        # FIX: 'admin_dashboard' URL does not exist in urls.py -> caused NoReverseMatch.
-        # is_staff was already verified above, so route everyone back to the technician dashboard.
         return redirect('technician_dashboard')
 
     return render(request, 'laboratory/record_result.html', {'appointment': appointment, 'result': existing_result})
+
+
+@login_required
+def generate_report_view(request, appointment_id):
+    """
+    Report workspace: Edit result, Verify result, then Upload/Download the
+    final PDF (reuses the existing download_report_view for the actual file).
+    """
+    is_staff = (
+        (hasattr(request.user, 'role') and request.user.role in ['admin', 'technician'])
+        or request.user.username == 'tech'
+        or request.user.is_superuser
+    )
+    if not is_staff:
+        messages.error(request, "Access restricted to authorized management profiles.")
+        return redirect('dashboard')
+
+    appointment = get_object_or_404(Appointment, id=appointment_id)
+    result = getattr(appointment, 'result', None)
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'edit':
+            result_value = request.POST.get('result_value')
+            remarks = request.POST.get('remarks')
+
+            if not result_value:
+                messages.error(request, "Result value cannot be empty.")
+                return redirect('generate_report', appointment_id=appointment.id)
+
+            if result:
+                result.result_value = result_value
+                result.remarks = remarks
+                result.updated_by = request.user
+                # Editing an already-verified result invalidates that verification.
+                result.verified = False
+                result.verified_by = None
+                result.verified_at = None
+                result.save()
+            else:
+                result = TestResult.objects.create(
+                    appointment=appointment,
+                    result_value=result_value,
+                    remarks=remarks,
+                    updated_by=request.user,
+                )
+
+            appointment.status = 'Completed'
+            appointment.save()
+            messages.success(request, "Result saved. Please verify before uploading the final report.")
+
+        elif action == 'verify':
+            if not result:
+                messages.error(request, "Cannot verify -- no result has been entered yet.")
+            else:
+                result.verified = True
+                result.verified_by = request.user
+                result.verified_at = timezone.now()
+                result.save()
+                messages.success(request, "Result marked as verified.")
+
+        return redirect('generate_report', appointment_id=appointment.id)
+
+    return render(request, 'laboratory/generate_report.html', {
+        'appointment': appointment,
+        'result': result,
+    })
 
 
 # =========================================================================
@@ -214,14 +419,12 @@ def download_report_view(request, appointment_id):
     """
     Assembles a certified binary PDF stream report file dynamically using ReportLab layout canvas matrices.
     """
-    # FIX: ROLE_CHOICES value is 'technician', not 'tech'.
     is_staff = (
         (hasattr(request.user, 'role') and request.user.role in ['admin', 'technician'])
         or request.user.username == 'tech'
         or request.user.is_superuser
     )
 
-    # Enforce basic visibility context boundaries logic check
     if is_staff:
         appointment = get_object_or_404(Appointment, id=appointment_id)
     else:
@@ -230,7 +433,6 @@ def download_report_view(request, appointment_id):
     buffer = io.BytesIO()
     p = canvas.Canvas(buffer, pagesize=letter)
 
-    # --- PDF HEADER BANNER LAYOUT ---
     p.setFillColor(colors.HexColor("#1a233a"))
     p.rect(0, 720, 612, 100, fill=1, stroke=0)
 
@@ -240,7 +442,6 @@ def download_report_view(request, appointment_id):
     p.setFont("Helvetica", 10)
     p.drawString(40, 740, "Certified Clinical Laboratory Report - Official Copy")
 
-    # --- PATIENT DETAIL CARDS ---
     p.setFillColor(colors.HexColor("#f8fafc"))
     p.rect(40, 580, 532, 110, fill=1, stroke=1)
 
@@ -257,7 +458,6 @@ def download_report_view(request, appointment_id):
     p.drawString(320, 665, f"Date Compiled: {formatted_date}")
     p.drawString(320, 645, f"Status: {appointment.status}")
 
-    # --- MEDICAL PARAMETER DATA TABLE ---
     p.setFillColor(colors.HexColor("#2563eb"))
     p.rect(40, 520, 532, 25, fill=1, stroke=0)
     p.setFillColor(colors.white)
@@ -267,18 +467,15 @@ def download_report_view(request, appointment_id):
     p.drawString(380, 528, "NORMAL RANGE")
     p.drawString(490, 528, "FLAG")
 
-    # Row Data Values
     p.setFillColor(colors.black)
     p.setFont("Helvetica", 11)
     p.drawString(50, 490, f"{appointment.test.test_name}")
 
-    # Extract structural analytical evaluation criteria dynamically if verified data models exist
     try:
         live_result = appointment.result
         display_val = live_result.result_value
         display_remarks = live_result.remarks or "NORMAL"
     except (TestResult.DoesNotExist, AttributeError):
-        # Fallback tracking if results aren't recorded in detail model segments yet
         display_val = "14.2 g/dL" if "blood" in appointment.test.test_name.lower() else "98 mg/dL"
         display_remarks = "NORMAL"
 
@@ -291,7 +488,6 @@ def download_report_view(request, appointment_id):
     p.setLineWidth(1)
     p.line(40, 475, 572, 475)
 
-    # --- FOOTER METADATA ---
     p.setFillColor(colors.HexColor("#64748b"))
     p.setFont("Helvetica-Oblique", 9)
     p.drawString(40, 100, "* This is a digitally verified laboratory report generated by LabPortal.")
@@ -302,3 +498,9 @@ def download_report_view(request, appointment_id):
 
     buffer.seek(0)
     return FileResponse(buffer, as_attachment=True, filename=f"LabReport_00{appointment.id}.pdf")
+
+
+
+def reports_list_view(request):
+    appointments = Appointment.objects.select_related('patient', 'test').order_by('-appointment_date')
+    return render(request, 'laboratory/reports_list_view.html', {'appointments': appointments})
