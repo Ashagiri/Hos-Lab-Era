@@ -13,8 +13,9 @@ from laboratory.views import (
     settings_view,
     record_test_result,
     check_slot_availability,
+    generate_report_view,
 ) 
-from accounts.views import register_view, login_view, technician_login_view
+from accounts.views import register_view, login_view, technician_login_view, logout_view
 
 urlpatterns = [
     # Dedicated Staff Portal Login View (Handles /technician/)
@@ -41,6 +42,9 @@ urlpatterns = [
     
     # Distributed Diagnostic Processing (The "Process" Button Action)
     path('dashboard/technician/process/<int:appointment_id>/', record_test_result, name='record_test_result'),
+    path('dashboard/technician/report/<int:appointment_id>/', generate_report_view, name='generate_report'),
+   
+    
     
     # Automated Certified PDF Report Downloader 
     path('report/download/<int:appointment_id>/', download_report_view, name='download_report'),
@@ -48,6 +52,8 @@ urlpatterns = [
     # Authentication Management Ecosystem
     path('accounts/register/', register_view, name='register'),
     path('accounts/login/', login_view, name='login'),
+    path('accounts/logout/', logout_view, name='logout'),
+    
     
 ]
 

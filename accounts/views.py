@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from .models import User  # Targets your custom User model
 from laboratory.models import PatientProfile  # needed to create the profile row
@@ -147,3 +147,13 @@ def technician_login_view(request):
             return redirect('technician_login')
             
     return render(request, 'accounts/technician_login.html')
+
+def logout_view(request):
+    """
+    Was referenced as /accounts/logout/ in booking.html and technician.html
+    but never actually registered -- every logout link 404'd until this
+    view + its URL route were added.
+    """
+    logout(request)
+    messages.success(request, "You have been logged out successfully.")
+    return redirect('home')
