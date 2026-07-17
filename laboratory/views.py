@@ -530,50 +530,31 @@ def view_test_requests(request):
     
 @login_required
 def reports_list(request):
-    # Route data read queries explicitly to your laboratory node
+    # This queries all completed rows and renders the queue table list
     appointments = Appointment.objects.using('lab_db').filter(status='Completed').order_by('-appointment_date')
     return render(request, 'laboratory/report_list.html', {'appointments': appointments})
 
 @login_required
 def generate_report_view(request, appointment_id):
-    # 1. Fetch the single appointment from your lab_db routing database
+    # This targets the specific unique item context
     appointment = get_object_or_404(Appointment.objects.using('lab_db'), id=appointment_id)
     
-    # 2. Safely grab or instantiate an outcome record profile from lab_db
     try:
         result = TestResult.objects.using('lab_db').get(appointment=appointment)
     except TestResult.DoesNotExist:
         result = TestResult(appointment=appointment)
 
     if request.method == 'POST':
-        # Grab values from the template form submission
         result.result_value = request.POST.get('result_value')
         result.remarks = request.POST.get('remarks')
-        result.updated_by = request.user
-        
-        # Check verification authorization flags
         if request.POST.get('verifyCheck') == 'on':
             result.verified = True
-            result.verified_by = request.user
-            from django.utils import timezone
-            result.verified_at = timezone.now()
-            
         result.save(using='lab_db')
-
-        # Synchronize appointment state
-        appointment.status = request.POST.get('status', 'Completed')
-        appointment.save(using='lab_db')
-
         return redirect('reports_list')
-
-    # Try to grab patient profile securely across relations to auto-populate age/gender
-    patient_profile = getattr(appointment.patient, 'patient_profile', None)
 
     context = {
         'appointment': appointment,
         'result': result,
-        'patient_profile': patient_profile,
     }
-    
-    # FIXED: This now properly renders the layout form instead of reloading the list
-    return render(request, 'laboratory/test_requests.html', context)
+    # Rendering the new single entry sheet view
+    return render(request, 'laboratory/generate_report.html', context)
