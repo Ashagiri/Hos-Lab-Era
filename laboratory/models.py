@@ -31,7 +31,7 @@ class LabTest(models.Model):
     unit = models.CharField(max_length=30, help_text="e.g., mg/dL, g/dL")
 
     def __str__(self):
-        return f"{self.test_name} ({self.category.name})"
+        return f"{self.patient.email} - {self.test_name}"
     
 class Appointment(models.Model):
     STATUS_CHOICES = (
@@ -67,5 +67,4 @@ class TestResult(models.Model):
     verified_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        return f"Result for {self.appointment}"
-
+        return f"Result for Appointment {self.appointment_id}"

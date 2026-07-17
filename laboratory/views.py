@@ -322,50 +322,44 @@ def check_slot_availability(request):
 
 @login_required
 def record_test_result(request, appointment_id):
-    """
-    Allows Technicians and Admin users to attach metrics and remarks directly to records.
-    """
-    is_staff = (
-        (hasattr(request.user, 'role') and request.user.role in ['admin', 'technician'])
-        or request.user.username == 'tech'
-        or request.user.is_superuser
-    )
-    if not is_staff:
-        messages.error(request, "Access restricted to authorized management profiles.")
-        return redirect('dashboard')
-
-    appointment = get_object_or_404(Appointment, id=appointment_id)
+    # 1. Fetch the target appointment mapping
+    appointment = get_object_or_404(Appointment.objects.using('lab_db'), id=appointment_id)
+    
+    # 2. Check if a laboratory report entry already exists for this appointment
     existing_result = getattr(appointment, 'result', None)
 
+    # 3. Handle Form Submission
     if request.method == 'POST':
         result_value = request.POST.get('result_value')
         remarks = request.POST.get('remarks')
 
-        if not result_value:
-            messages.error(request, "Observed analytical value fields cannot match empty strings.")
-            return redirect('record_test_result', appointment_id=appointment.id)
-
         if existing_result:
+            # Update existing lab record entry
             existing_result.result_value = result_value
             existing_result.remarks = remarks
             existing_result.updated_by = request.user
-            existing_result.save()
+            existing_result.save(using='lab_db')
+            messages.success(request, "Laboratory test result updated successfully.")
         else:
-            TestResult.objects.create(
+            # Create a brand new report entry from scratch
+            new_result = TestResult(
                 appointment=appointment,
                 result_value=result_value,
                 remarks=remarks,
                 updated_by=request.user
             )
+            new_result.save(using='lab_db')
+            messages.success(request, "Laboratory test result submitted successfully.")
 
-        appointment.status = 'Completed'
-        appointment.save()
+        # Fallback redirect: Replace 'technician_requests' with your actual queue dashboard name
+        return redirect(request.META.get('HTTP_REFERER', '/dashboard/technician/requests/'))
 
-        messages.success(request, f"Diagnostic testing criteria recorded for {appointment.patient.username}.")
-        return redirect('technician_dashboard')
-
-    return render(request, 'laboratory/record_result.html', {'appointment': appointment, 'result': existing_result})
-
+    # 4. Render Layout (GET Request Handling)
+    context = {
+        'appointment': appointment,
+        'result': existing_result
+    }
+    return render(request, 'laboratory/record_result.html', context)
 
 @login_required
 def generate_report_view(request, appointment_id):

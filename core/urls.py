@@ -14,7 +14,7 @@ from laboratory.views import (
     record_test_result,  
     check_slot_availability,
     generate_report_view,
-    reports_list,       # <-- CHANGED FROM reports_list_view TO MATCH THE ACTUAL FUNCTION
+    reports_list,       
     view_test_requests,
 ) 
 from accounts.views import register_view, login_view, technician_login_view, logout_view
@@ -46,11 +46,11 @@ urlpatterns = [
     path('settings/', settings_view, name='settings'),
 
     # Reports: list/picker page, then per-appointment generate view
-    path('dashboard/technician/reports/', reports_list, name='reports_list'), # <-- UPDATED HERE
+    path('dashboard/technician/reports/', reports_list, name='reports_list'), 
     path('dashboard/technician/reports/<int:appointment_id>/', generate_report_view, name='generate_reports'),
     
-    # Distributed Diagnostic Processing
-    path('dashboard/technician/process/<int:appointment_id>/', record_test_result, name='record_result'),
+    # Distributed Diagnostic Processing (Unified Single Clean Endpoint)
+    path('dashboard/technician/process/<int:appointment_id>/', record_test_result, name='record_test_result'),
 
     # Automated Certified PDF Report Downloader
     path('report/download/<int:appointment_id>/', download_report_view, name='download_report'),
