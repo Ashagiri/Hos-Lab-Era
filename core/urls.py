@@ -3,6 +3,8 @@ from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
 
+app_name = 'laboratory' 
+
 # Explicit views imports from your local application nodes
 from laboratory.views import (
     home_view, 
@@ -11,9 +13,9 @@ from laboratory.views import (
     technician_dashboard_view,
     download_report_view, 
     settings_view,
-    record_test_result,  # This is the view we will point to!
+    record_test_result,  
     check_slot_availability,
-    generate_report_view,
+    generate_report_view, # <-- Imported here
     reports_list_view, 
     view_test_requests,
 ) 
@@ -47,10 +49,10 @@ urlpatterns = [
 
     # Reports: list/picker page, then per-appointment generate view
     path('dashboard/technician/reports/', reports_list_view, name='reports_list'),
-    path('dashboard/technician/report/<int:appointment_id>/', generate_report_view, name='generate_report'),
-
+    
+    # FIX: Point directly to the imported function 'generate_report_view'
+    path('generate-reports/<int:appointment_id>/', generate_report_view, name='generate_reports'),
     # Distributed Diagnostic Processing (The "Process Result" Row Button Action)
-    # This points the name 'record_result' to your actual view function 'record_test_result'
     path('dashboard/technician/process/<int:appointment_id>/', record_test_result, name='record_result'),
 
     # Automated Certified PDF Report Downloader

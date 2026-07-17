@@ -14,6 +14,7 @@ from reportlab.lib import colors
 
 # Database App Entities
 from .models import LabTest, Appointment, TestResult 
+from laboratory import views
 
 
 # =========================================================================
