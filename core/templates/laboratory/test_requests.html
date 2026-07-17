@@ -18,8 +18,7 @@
 
       body {
         min-height: 100vh;
-        background: linear-gradient(rgba(240, 244, 248, 0.85), rgba(240, 244, 248, 0.85)), 
-                    url('https://images.unsplash.com/photo-1579154204601-01588f351167?q=80&w=2070&auto=format&fit=crop') no-repeat center center fixed;
+        background: url('https://seemafinechem.com/wp-content/uploads/2024/11/CT-Research-1688467791.jpg') no-repeat center center fixed;
         background-size: cover;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       }
@@ -167,8 +166,8 @@
             <table class="table table-hover align-middle mb-0">
               <thead class="table-light">
                 <tr>
-                  <th>Booking Date</th>
-                  <th>Patient ID</th>
+                  <th>Appointment Date</th>
+                  <th>Appointment ID</th>
                   <th>Patient Information</th>
                   <th>Requested Profiling</th>
                   <th>Workflow Status</th>
@@ -176,52 +175,56 @@
                 </tr>
               </thead>
               <tbody>
-                <!-- Row 1 (Pending Case Template Match) -->
-                <tr>
-                  <td class="small">2026-07-07</td>
-                  <td>
-                    <div class="fw-bold text-primary">#123</div>
-                  </td>
-                  <td>
-                    <div class="fw-semibold">Komal Basnet</div>
-                    <small class="text-muted">Female, 23 Yrs</small>
-                  </td>
-                  <td>
-                    <span class="badge bg-light text-dark border">Dengue</span>
-                    <span class="badge bg-light text-dark border">CBC</span>
-                  </td>
-                  <td class="status-cell">
-                    <span class="d-flex align-items-center gap-2">
-                      <span class="spinner-grow spinner-grow-sm text-warning" role="status"></span>
-                      <small class="fw-medium text-warning">Pending</small>
-                    </span>
-                  </td>
-                  <td class="text-end execution-cell">
-                    <button class="btn btn-sm btn-primary btn-confirm-booking">Confirm Booking</button>
-                  </td>
-                </tr>
-
-                <!-- Row 2 (Confirmed Case Example using record_result routing parameters) -->
-                <tr>
-                  <td class="small">2026-05-23</td>
-                  <td>
-                    <div class="fw-bold text-primary">#456</div>
-                  </td>
-                  <td>
-                    <div class="fw-semibold">Asha Giri</div>
-                    <small class="text-muted">Female, 21 Yrs</small>
-                  </td>
-                  <td>
-                    <span class="badge bg-light text-dark border">X-ray</span>
-                  </td>
-                  <td>
-                    <span class="badge bg-success text-white fw-medium"><i class="bi bi-check-circle-fill me-1"></i>Confirmed</span>
-                  </td>
-                  <td class="text-end">
-                    <!-- Dynamic URL connection routing using sample ID 456 as parameter placeholder -->
-                    <a href="{% url 'record_result' appointment_id=456 %}" class="btn btn-sm btn-outline-secondary">Input Results</a>
-                  </td>
-                </tr>
+                {% for request in test_requests %}
+                  <tr>
+                    <!-- Aligned to Appointment Model date field layout -->
+                    <td class="small">{{ request.appointment_date|date:"Y-m-d" }}</td>
+                    
+                    <td>
+                      <div class="fw-bold text-primary">#{{ request.id }}</div>
+                    </td>
+                    
+                    <td>
+                      <div class="fw-semibold">{{ request.patient.name }}</div>
+                      <small class="text-muted">
+                        {{ request.patient.gender|title }}, {{ request.patient.age }} Yrs
+                      </small>
+                    </td>
+                    
+                    <!-- Aligned to your explicit 'test' relation naming node -->
+                    <td>
+                      <span class="badge bg-light text-dark border">{{ request.test }}</span>
+                    </td>
+                    
+                    <td class="status-cell">
+                      {% if request.status|lower == 'pending' %}
+                        <span class="d-flex align-items-center gap-2">
+                          <span class="spinner-grow spinner-grow-sm text-warning" role="status"></span>
+                          <small class="fw-medium text-warning">Pending</small>
+                        </span>
+                      {% else %}
+                        <span class="badge bg-success text-white fw-medium">
+                          <i class="bi bi-check-circle-fill me-1"></i>{{ request.status|title }}
+                        </span>
+                      {% endif %}
+                    </td>
+                    
+                    <td class="text-end execution-cell">
+                      {% if request.status|lower == 'pending' %}
+                        <button class="btn btn-sm btn-primary btn-confirm-booking" data-id="{{ request.id }}">Confirm Booking</button>
+                      {% else %}
+                        <a href="{% url 'record_result' appointment_id=request.id %}" class="btn btn-sm btn-outline-secondary">Input Results</a>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% empty %}
+                  <!-- Empty Array fallback node screen -->
+                  <tr>
+                    <td colspan="6" class="text-center py-4 text-muted">
+                      <i class="bi bi-inbox fs-3 d-block mb-2"></i> No active test requests found.
+                    </td>
+                  </tr>
+                {% endfor %}
               </tbody>
             </table>
           </div>
@@ -236,27 +239,31 @@
     <!-- Interactive Status Logic Script -->
     <script>
       document.addEventListener('DOMContentLoaded', function() {
-        const confirmBtn = document.querySelector('.btn-confirm-booking');
+        const confirmButtons = document.querySelectorAll('.btn-confirm-booking');
         
-        if (confirmBtn) {
-          confirmBtn.addEventListener('click', function() {
+        confirmButtons.forEach(button => {
+          button.addEventListener('click', function() {
+            const appointmentId = this.getAttribute('data-id');
             const row = this.closest('tr');
             const statusCell = row.querySelector('.status-cell');
             const executionCell = row.querySelector('.execution-cell');
             
-            // 1. Update the Status to Confirmed Badge
+            // 1. Instantly update the UI layout state context to Confirmed
             statusCell.innerHTML = `
               <span class="badge bg-success text-white fw-medium">
                 <i class="bi bi-check-circle-fill me-1"></i>Confirmed
               </span>
             `;
             
-            // 2. Change execution cell to dynamic record input screen URL (using sample ID 123)
+            // 2. Generate destination link pointing to the correct dynamic route structure
+            const destinationUrl = "{% url 'record_result' appointment_id=0 %}".replace('0', appointmentId);
+            
+            // 3. Swap out execution cell nodes
             executionCell.innerHTML = `
-              <a href="{% url 'record_result' appointment_id=123 %}" class="btn btn-sm btn-outline-secondary">Input Results</a>
+              <a href="${destinationUrl}" class="btn btn-sm btn-outline-secondary">Input Results</a>
             `;
           });
-        }
+        });
       });
     </script>
   </body>

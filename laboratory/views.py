@@ -17,6 +17,7 @@ from .models import LabTest, Appointment, TestResult
 from laboratory import views
 
 
+
 # =========================================================================
 # APPOINTMENT SLOT CAPACITY CONFIG
 # =========================================================================
@@ -521,7 +522,14 @@ def download_report_view(request, appointment_id):
     buffer.seek(0)
     return FileResponse(buffer, as_attachment=True, filename=f"LabReport_00{appointment.id}.pdf")
 
+def reports_list(request):
+    # Temporary placeholder until you build your reports database query loop
+    return render(request, 'laboratory/reports_list.html')
 
-def reports_list_view(request):
-    appointments = Appointment.objects.select_related('patient', 'test').order_by('-appointment_date')
-    return render(request, 'laboratory/reports_list_view.html', {'appointments': appointments})
+def view_test_requests(request):
+    # Fixed: Using the actual field 'appointment_date' for database ordering
+    test_requests = Appointment.objects.all().order_by('-appointment_date')
+    
+    return render(request, 'laboratory/test_requests.html', {
+        'test_requests': test_requests
+    })

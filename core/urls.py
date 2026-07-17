@@ -3,8 +3,6 @@ from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
 
-app_name = 'laboratory' 
-
 # Explicit views imports from your local application nodes
 from laboratory.views import (
     home_view, 
@@ -15,8 +13,8 @@ from laboratory.views import (
     settings_view,
     record_test_result,  
     check_slot_availability,
-    generate_report_view, # <-- Imported here
-    reports_list_view, 
+    generate_report_view,
+    reports_list,       # <-- CHANGED FROM reports_list_view TO MATCH THE ACTUAL FUNCTION
     view_test_requests,
 ) 
 from accounts.views import register_view, login_view, technician_login_view, logout_view
@@ -37,7 +35,7 @@ urlpatterns = [
     # Dedicated Technician Command Center Dashboard
     path('dashboard/technician/', technician_dashboard_view, name='technician_dashboard'),
 
-    # Dedicated standalone "View Test Requests" page (own URL, own template)
+    # Dedicated standalone "View Test Requests" page
     path('dashboard/technician/requests/', view_test_requests, name='view_test_requests'),
 
     # Patient Scheduling Operations
@@ -48,11 +46,10 @@ urlpatterns = [
     path('settings/', settings_view, name='settings'),
 
     # Reports: list/picker page, then per-appointment generate view
-    path('dashboard/technician/reports/', reports_list_view, name='reports_list'),
-    
-    # FIX: Point directly to the imported function 'generate_report_view'
+    path('dashboard/technician/reports/', reports_list, name='reports_list'), # <-- UPDATED HERE
     path('generate-reports/<int:appointment_id>/', generate_report_view, name='generate_reports'),
-    # Distributed Diagnostic Processing (The "Process Result" Row Button Action)
+    
+    # Distributed Diagnostic Processing
     path('dashboard/technician/process/<int:appointment_id>/', record_test_result, name='record_result'),
 
     # Automated Certified PDF Report Downloader
