@@ -68,3 +68,4 @@ class TestResult(models.Model):
 
     def __str__(self):
         return f"Result for {self.appointment}"
+
