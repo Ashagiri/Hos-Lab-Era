@@ -31,7 +31,7 @@ class LabTest(models.Model):
     unit = models.CharField(max_length=30, help_text="e.g., mg/dL, g/dL")
 
     def __str__(self):
-        return f"{self.patient.email} - {self.test_name}"
+        return f"{self.test_name} ({self.category.name})"
     
 class Appointment(models.Model):
     STATUS_CHOICES = (
@@ -49,16 +49,13 @@ class Appointment(models.Model):
     def __str__(self):
         return f"{self.patient.username} - {self.test.test_name} on {self.appointment_date.date()}"
 
-# Model for the Admin to record test outcomes directly linked to appointments
 class TestResult(models.Model):
     appointment = models.OneToOneField(Appointment, on_delete=models.CASCADE, related_name='result')
     result_value = models.CharField(max_length=100, help_text="The actual test outcome value recorded by admin")
     remarks = models.TextField(blank=True, null=True, help_text="Any diagnostic notes or remarks")
-    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, limit_choices_to={'role': 'admin'})
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    # Verification workflow: a result can be entered/edited, then separately verified.
-    # Editing an already-verified result clears verification (enforced in the view).
     verified = models.BooleanField(default=False)
     verified_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
@@ -66,5 +63,6 @@ class TestResult(models.Model):
     )
     verified_at = models.DateTimeField(null=True, blank=True)
 
+    # FIXED INDENTATION HERE
     def __str__(self):
         return f"Result for Appointment {self.appointment_id}"

@@ -322,26 +322,26 @@ def check_slot_availability(request):
 
 @login_required
 def record_test_result(request, appointment_id):
-    # 1. Fetch the target appointment mapping
+    # Fetch from your secondary routed laboratory database context
     appointment = get_object_or_404(Appointment.objects.using('lab_db'), id=appointment_id)
-    
-    # 2. Check if a laboratory report entry already exists for this appointment
     existing_result = getattr(appointment, 'result', None)
 
-    # 3. Handle Form Submission
     if request.method == 'POST':
         result_value = request.POST.get('result_value')
         remarks = request.POST.get('remarks')
 
         if existing_result:
-            # Update existing lab record entry
+            # Update existing record and clear verification as specified in model notes
             existing_result.result_value = result_value
             existing_result.remarks = remarks
             existing_result.updated_by = request.user
+            existing_result.verified = False
+            existing_result.verified_by = None
+            existing_result.verified_at = None
             existing_result.save(using='lab_db')
-            messages.success(request, "Laboratory test result updated successfully.")
+            messages.success(request, "Test result updated. Verification reset pending review.")
         else:
-            # Create a brand new report entry from scratch
+            # Create a completely new result tracking profile
             new_result = TestResult(
                 appointment=appointment,
                 result_value=result_value,
@@ -349,12 +349,14 @@ def record_test_result(request, appointment_id):
                 updated_by=request.user
             )
             new_result.save(using='lab_db')
-            messages.success(request, "Laboratory test result submitted successfully.")
+            
+            # Update parent appointment state cleanly
+            appointment.status = 'Completed'
+            appointment.save(using='lab_db')
+            messages.success(request, "New laboratory test result submitted successfully.")
 
-        # Fallback redirect: Replace 'technician_requests' with your actual queue dashboard name
-        return redirect(request.META.get('HTTP_REFERER', '/dashboard/technician/requests/'))
+        return redirect('view_test_requests')
 
-    # 4. Render Layout (GET Request Handling)
     context = {
         'appointment': appointment,
         'result': existing_result
