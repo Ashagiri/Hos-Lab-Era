@@ -49,8 +49,8 @@ urlpatterns = [
     path('dashboard/technician/reports/', reports_list, name='reports_list'), 
     path('dashboard/technician/reports/<int:appointment_id>/', generate_report_view, name='generate_reports'),
     
-    # Distributed Diagnostic Processing (Unified Single Clean Endpoint)
-    path('dashboard/technician/process/<int:appointment_id>/', record_test_result, name='record_test_result'),
+    # Distributed Diagnostic Processing (Unified Single Clean Endpoint matched to 'record_result')
+    path('dashboard/technician/process/<int:appointment_id>/', record_test_result, name='record_result'),
 
     # Automated Certified PDF Report Downloader
     path('report/download/<int:appointment_id>/', download_report_view, name='download_report'),

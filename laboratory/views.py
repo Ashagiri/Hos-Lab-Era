@@ -157,7 +157,8 @@ def view_test_requests(request):
 
     search_query = request.GET.get('q', '').strip()
 
-    appointments = Appointment.objects.filter(status='Pending').order_by('-appointment_date')
+    # UPDATED HERE: Added .using('lab_db') to sync with your actual lab records database
+    appointments = Appointment.objects.using('lab_db').filter(status='Pending').order_by('-appointment_date')
 
     if search_query:
         appointments = appointments.filter(patient__username__icontains=search_query)
@@ -166,7 +167,6 @@ def view_test_requests(request):
         'appointments': appointments,
         'search_query': search_query,
     })
-
 
 # =========================================================================
 # PROFILE CONFIGURATIONS & SETTINGS MANAGEMENT
@@ -331,7 +331,7 @@ def record_test_result(request, appointment_id):
         remarks = request.POST.get('remarks')
 
         if existing_result:
-            # Update existing record and clear verification as specified in model notes
+            # Update existing record and clear verification metrics
             existing_result.result_value = result_value
             existing_result.remarks = remarks
             existing_result.updated_by = request.user
@@ -355,6 +355,7 @@ def record_test_result(request, appointment_id):
             appointment.save(using='lab_db')
             messages.success(request, "New laboratory test result submitted successfully.")
 
+        # THIS REDIRECTS YOU STRAIGHT BACK TO THE REQUESTS LIST
         return redirect('view_test_requests')
 
     context = {
@@ -527,37 +528,52 @@ def view_test_requests(request):
         'test_requests': test_requests
     })
     
+@login_required
 def reports_list(request):
-    appointments = Appointment.objects.all().order_by('-appointment_date')
+    # Route data read queries explicitly to your laboratory node
+    appointments = Appointment.objects.using('lab_db').filter(status='Completed').order_by('-appointment_date')
     return render(request, 'laboratory/report_list.html', {'appointments': appointments})
 
+@login_required
 def generate_report_view(request, appointment_id):
-    # Fetch the appointment by its dynamic URL ID
-    appointment = get_object_or_404(Appointment, id=appointment_id)
+    # 1. Fetch the single appointment from your lab_db routing database
+    appointment = get_object_or_404(Appointment.objects.using('lab_db'), id=appointment_id)
     
-    # Check if a test result entry already exists for this appointment, or create a blank tracking state
-    result, created = TestResult.objects.get_or_create(appointment=appointment)
+    # 2. Safely grab or instantiate an outcome record profile from lab_db
+    try:
+        result = TestResult.objects.using('lab_db').get(appointment=appointment)
+    except TestResult.DoesNotExist:
+        result = TestResult(appointment=appointment)
 
     if request.method == 'POST':
-        # 1. Grab values from the template form submission
+        # Grab values from the template form submission
         result.result_value = request.POST.get('result_value')
         result.remarks = request.POST.get('remarks')
+        result.updated_by = request.user
         
-        # 2. Check the verification checkmark state
+        # Check verification authorization flags
         if request.POST.get('verifyCheck') == 'on':
             result.verified = True
             result.verified_by = request.user
+            from django.utils import timezone
+            result.verified_at = timezone.now()
             
-        result.save()
+        result.save(using='lab_db')
 
-        # 3. Synchronize global workflow state on the parent appointment
-        appointment.status = request.POST.get('status', 'Pending')
-        appointment.save()
+        # Synchronize appointment state
+        appointment.status = request.POST.get('status', 'Completed')
+        appointment.save(using='lab_db')
 
-        return redirect('view_test_requests') # Return back to requests list
+        return redirect('reports_list')
+
+    # Try to grab patient profile securely across relations to auto-populate age/gender
+    patient_profile = getattr(appointment.patient, 'patient_profile', None)
 
     context = {
         'appointment': appointment,
         'result': result,
+        'patient_profile': patient_profile,
     }
-    return render(request, 'laboratory/report_list.html', context)
+    
+    # FIXED: This now properly renders the layout form instead of reloading the list
+    return render(request, 'laboratory/test_requests.html', context)
