@@ -47,7 +47,7 @@ urlpatterns = [
 
     # Reports: list/picker page, then per-appointment generate view
     path('dashboard/technician/reports/', reports_list, name='reports_list'), # <-- UPDATED HERE
-    path('generate-reports/<int:appointment_id>/', generate_report_view, name='generate_reports'),
+    path('dashboard/technician/reports/<int:appointment_id>/', generate_report_view, name='generate_reports'),
     
     # Distributed Diagnostic Processing
     path('dashboard/technician/process/<int:appointment_id>/', record_test_result, name='record_result'),

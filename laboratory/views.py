@@ -522,9 +522,6 @@ def download_report_view(request, appointment_id):
     buffer.seek(0)
     return FileResponse(buffer, as_attachment=True, filename=f"LabReport_00{appointment.id}.pdf")
 
-def reports_list(request):
-    # Temporary placeholder until you build your reports database query loop
-    return render(request, 'laboratory/reports_list.html')
 
 def view_test_requests(request):
     # Fixed: Using the actual field 'appointment_date' for database ordering
@@ -533,3 +530,38 @@ def view_test_requests(request):
     return render(request, 'laboratory/test_requests.html', {
         'test_requests': test_requests
     })
+    
+def reports_list(request):
+    appointments = Appointment.objects.all().order_by('-appointment_date')
+    return render(request, 'laboratory/report_list.html', {'appointments': appointments})
+
+def generate_report_view(request, appointment_id):
+    # Fetch the appointment by its dynamic URL ID
+    appointment = get_object_or_404(Appointment, id=appointment_id)
+    
+    # Check if a test result entry already exists for this appointment, or create a blank tracking state
+    result, created = TestResult.objects.get_or_create(appointment=appointment)
+
+    if request.method == 'POST':
+        # 1. Grab values from the template form submission
+        result.result_value = request.POST.get('result_value')
+        result.remarks = request.POST.get('remarks')
+        
+        # 2. Check the verification checkmark state
+        if request.POST.get('verifyCheck') == 'on':
+            result.verified = True
+            result.verified_by = request.user
+            
+        result.save()
+
+        # 3. Synchronize global workflow state on the parent appointment
+        appointment.status = request.POST.get('status', 'Pending')
+        appointment.save()
+
+        return redirect('view_test_requests') # Return back to requests list
+
+    context = {
+        'appointment': appointment,
+        'result': result,
+    }
+    return render(request, 'laboratory/report_list.html', context)

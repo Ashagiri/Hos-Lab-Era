@@ -185,15 +185,17 @@
                     </td>
                     
                     <td>
-                      <div class="fw-semibold">{{ request.patient.name }}</div>
-                      <small class="text-muted">
-                        {{ request.patient.gender|title }}, {{ request.patient.age }} Yrs
+                      <!-- Corrected to query Built-in User methods and fallback fields -->
+                      <div class="fw-semibold text-dark">{{ request.patient.get_full_name|default:request.patient.username }}</div>
+                      <!-- Traverses patient_profile relation safely -->
+                      <small class="text-muted d-block">
+                        {{ request.patient.patient_profile.get_gender_display }}, {{ request.patient.patient_profile.age }} Yrs
                       </small>
                     </td>
                     
-                    <!-- Aligned to your explicit 'test' relation naming node -->
+                    <!-- Aligned to explicit 'test' relation naming node -->
                     <td>
-                      <span class="badge bg-light text-dark border">{{ request.test }}</span>
+                      <span class="badge bg-light text-dark border">{{ request.test.test_name }}</span>
                     </td>
                     
                     <td class="status-cell">
