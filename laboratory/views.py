@@ -13,7 +13,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 
 # Database App Entities
-from .models import LabTest, Appointment, TestResult
+from .models import LabTest, Appointment, TestResult 
 
 
 # =========================================================================
@@ -21,7 +21,6 @@ from .models import LabTest, Appointment, TestResult
 # =========================================================================
 
 # Max number of distinct patients allowed per date + time slot.
-# FIX: was 10 -> should be 5 per spec ("only 5 users able to book in 7-8am").
 SLOT_CAPACITY = 5
 
 # Must match the <option> values in booking.html's Time Slot dropdown exactly.
@@ -138,6 +137,35 @@ def technician_dashboard_view(request):
     })
 
 
+@login_required
+def view_test_requests(request):
+    """
+    Dedicated standalone page (own URL) listing all pending test requests
+    for technicians/admins to pick up and process, separate from the
+    main dashboard.
+    """
+    is_tech = (
+        (hasattr(request.user, 'role') and request.user.role in ['admin', 'technician'])
+        or request.user.username == 'tech'
+        or request.user.is_superuser
+    )
+    if not is_tech:
+        messages.error(request, "Access restricted to authorized management profiles.")
+        return redirect('dashboard')
+
+    search_query = request.GET.get('q', '').strip()
+
+    appointments = Appointment.objects.filter(status='Pending').order_by('-appointment_date')
+
+    if search_query:
+        appointments = appointments.filter(patient__username__icontains=search_query)
+
+    return render(request, 'laboratory/test_requests.html', {
+        'appointments': appointments,
+        'search_query': search_query,
+    })
+
+
 # =========================================================================
 # PROFILE CONFIGURATIONS & SETTINGS MANAGEMENT
 # =========================================================================
@@ -195,7 +223,6 @@ def booking_view(request):
         appointment_time = request.POST.get('appointment_time')
 
         # 2. Extract selected test primary keys array list
-        # NOTE: checkbox in booking.html is name="tests" (no brackets) -> use getlist('tests')
         selected_test_ids = request.POST.getlist('tests')
 
         # Input guard validations
@@ -203,9 +230,6 @@ def booking_view(request):
             messages.error(request, "Please select at least one test, date, and time slot.")
             return redirect('booking')
 
-        # 2.5 Enforce slot capacity: reject if this date+time slot is already full
-        # for OTHER patients. If this patient already has a booking in this slot
-        # (e.g. adding more tests), that doesn't count against the cap.
         parsed_date = parse_date(appointment_date)
         if parsed_date is None:
             messages.error(request, "Invalid appointment date. Please try again.")
@@ -270,8 +294,7 @@ def booking_view(request):
 def check_slot_availability(request):
     """
     GET /booking/check-slots/?date=YYYY-MM-DD
-    Returns JSON with each time slot's booked count and whether it's full,
-    so the booking form can grey out full slots before the patient submits.
+    Returns JSON with each time slot's booked count and whether it's full.
     """
     date_str = request.GET.get('date')
     parsed_date = parse_date(date_str) if date_str else None
@@ -345,8 +368,7 @@ def record_test_result(request, appointment_id):
 @login_required
 def generate_report_view(request, appointment_id):
     """
-    Report workspace: Edit result, Verify result, then Upload/Download the
-    final PDF (reuses the existing download_report_view for the actual file).
+    Report workspace: Edit result, Verify result, then Upload/Download the final PDF.
     """
     is_staff = (
         (hasattr(request.user, 'role') and request.user.role in ['admin', 'technician'])
@@ -375,7 +397,6 @@ def generate_report_view(request, appointment_id):
                 result.result_value = result_value
                 result.remarks = remarks
                 result.updated_by = request.user
-                # Editing an already-verified result invalidates that verification.
                 result.verified = False
                 result.verified_by = None
                 result.verified_at = None
@@ -417,7 +438,7 @@ def generate_report_view(request, appointment_id):
 @login_required
 def download_report_view(request, appointment_id):
     """
-    Assembles a certified binary PDF stream report file dynamically using ReportLab layout canvas matrices.
+    Assembles a certified binary PDF stream report file dynamically using ReportLab layouts.
     """
     is_staff = (
         (hasattr(request.user, 'role') and request.user.role in ['admin', 'technician'])
@@ -498,7 +519,6 @@ def download_report_view(request, appointment_id):
 
     buffer.seek(0)
     return FileResponse(buffer, as_attachment=True, filename=f"LabReport_00{appointment.id}.pdf")
-
 
 
 def reports_list_view(request):

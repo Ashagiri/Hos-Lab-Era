@@ -11,10 +11,11 @@ from laboratory.views import (
     technician_dashboard_view,
     download_report_view, 
     settings_view,
-    record_test_result,
+    record_test_result,  # This is the view we will point to!
     check_slot_availability,
     generate_report_view,
     reports_list_view, 
+    view_test_requests,
 ) 
 from accounts.views import register_view, login_view, technician_login_view, logout_view
 
@@ -34,6 +35,9 @@ urlpatterns = [
     # Dedicated Technician Command Center Dashboard
     path('dashboard/technician/', technician_dashboard_view, name='technician_dashboard'),
 
+    # Dedicated standalone "View Test Requests" page (own URL, own template)
+    path('dashboard/technician/requests/', view_test_requests, name='view_test_requests'),
+
     # Patient Scheduling Operations
     path('booking/', booking_view, name='booking'),
     path('booking/check-slots/', check_slot_availability, name='check_slot_availability'),
@@ -45,8 +49,9 @@ urlpatterns = [
     path('dashboard/technician/reports/', reports_list_view, name='reports_list'),
     path('dashboard/technician/report/<int:appointment_id>/', generate_report_view, name='generate_report'),
 
-    # Distributed Diagnostic Processing (The "Process" Button Action)
-    path('dashboard/technician/process/<int:appointment_id>/', record_test_result, name='record_test_result'),
+    # Distributed Diagnostic Processing (The "Process Result" Row Button Action)
+    # This points the name 'record_result' to your actual view function 'record_test_result'
+    path('dashboard/technician/process/<int:appointment_id>/', record_test_result, name='record_result'),
 
     # Automated Certified PDF Report Downloader
     path('report/download/<int:appointment_id>/', download_report_view, name='download_report'),

@@ -158,25 +158,26 @@
         </div>
         
         <nav class="nav flex-column mt-4 flex-grow-1">
-  <a href="{% url 'technician_dashboard' %}" class="nav-link active">
-    <i class="bi bi-grid-1x2-fill"></i> <span>Dashboard</span>
-  </a>
-  <a href="#" class="nav-link">
-    <i class="bi bi-droplet-half"></i> <span>View Test Requests</span>
-  </a>
-  <a href="{% url 'reports_list' %}" class="nav-link">
-    <i class="bi bi-file-earmark-check-fill"></i> <span>Generate Reports</span>
-  </a>
-  <a href="{% url 'settings' %}" class="nav-link">
-    <i class="bi bi-sliders2"></i> <span>System Settings</span>
-  </a>
-  <div class="mt-0 mt-md-auto pt-2 w-100 d-none d-md-block">
-              <hr class="text-white-50 my-4">
-              <a href="{% url 'home' %}" class="nav-link sidebar-link text-danger py-2.5 px-3 d-flex align-items-center">
-                <i class="fa-solid fa-right-from-bracket me-2"></i> <span>Back to Main</span>
-              </a>
-            </div>
-</nav>
+          <a href="{% url 'technician_dashboard' %}" class="nav-link active">
+            <i class="bi bi-grid-1x2-fill"></i> <span>Dashboard</span>
+          </a>
+          <!-- Points to a dedicated standalone page listing pending test requests -->
+          <a href="{% url 'view_test_requests' %}" class="nav-link">
+            <i class="bi bi-droplet-half"></i> <span>View Test Requests</span>
+          </a>
+          <a href="{% url 'reports_list' %}" class="nav-link">
+            <i class="bi bi-file-earmark-check-fill"></i> <span>Generate Reports</span>
+          </a>
+          <a href="{% url 'settings' %}" class="nav-link">
+            <i class="bi bi-sliders2"></i> <span>System Settings</span>
+          </a>
+          <div class="mt-0 mt-md-auto pt-2 w-100 d-none d-md-block">
+            <hr class="text-white-50 my-4">
+            <a href="{% url 'home' %}" class="nav-link sidebar-link text-danger py-2.5 px-3 d-flex align-items-center">
+              <i class="fa-solid fa-right-from-bracket me-2"></i> <span>Back to Main</span>
+            </a>
+          </div>
+        </nav>
 
         
         <div class="mt-auto p-3 border-top border-dark user-profile-box">
@@ -264,7 +265,7 @@
 
         <div class="row g-4">
           <div class="col-12 col-xl-8">
-            <div class="panel-card p-4">
+            <div class="panel-card p-4" id="test-stream-section">
               <div class="d-flex justify-content-between align-items-center mb-4">
                 <h5 class="mb-0 fw-bold text-slate-900">Active Test Stream</h5>
                 <button class="btn btn-sm btn-light border small text-secondary fw-semibold"><i class="bi bi-funnel me-1"></i>Filter Shard</button>
@@ -291,7 +292,7 @@
                       <td><span class="text-primary fw-bold">{{ appt.test.test_name }}</span></td>
                       <td class="text-secondary small">{{ appt.appointment_date|date:"M d, Y · H:i" }}</td>
                       <td class="text-end">
-                        <a href="{% url 'record_test_result' appt.id %}" class="btn action-btn shadow-sm">
+                        <a href="{% url 'record_result' appt.id %}" class="btn action-btn shadow-sm">
                           <i class="bi bi-prescription2 me-1"></i>Process Result
                         </a>
                       </td>
