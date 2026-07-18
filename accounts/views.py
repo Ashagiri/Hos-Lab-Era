@@ -1,9 +1,10 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth import login, authenticate, logout, get_user_model
 from django.contrib import messages
-from .models import User  # Targets your custom User model
-from laboratory.models import PatientProfile  # needed to create the profile row
-from laboratory.models import Appointment  # adjust import to your actual model location
+from laboratory.models import PatientProfile, Appointment  # Adjust to your exact model package locations
+
+# Initialize the dynamic model lookup handle for your custom accounts.User swap
+User = get_user_model()
 
 
 def register_view(request):
@@ -50,7 +51,7 @@ def register_view(request):
                 gender=gender_map.get((gender or '').lower(), 'O'),
             )
 
-            # 6. Registration complete — send them to login instead of auto-logging in
+            # Registration complete — send them to login instead of auto-logging in
             messages.success(request, "Account created successfully! Please log in.")
             return redirect('login')
             
@@ -64,6 +65,7 @@ def register_view(request):
 def login_view(request):
     """
     Handles secure user authentication and dynamic role-based dashboard deployment.
+    Flushes pre-existing global dashboard or workflow messages on GET to keep the page contextual.
     """
     if request.method == 'POST':
         username_input = request.POST.get('email') or request.POST.get('username')
@@ -115,7 +117,15 @@ def login_view(request):
             messages.error(request, "Incorrect password. Please try again.")
             return redirect('login')
 
+    # ---> GET Request Handling: Clear out lingering background messages from other roles
+    else:
+        existing_messages = messages.get_messages(request)
+        for _ in existing_messages:
+            pass  # Iterating marks them all as seen
+        existing_messages.used = True  # Flushes them completely out of storage
+
     return render(request, 'accounts/login.html')
+
 
 def technician_login_view(request):
     """
@@ -129,8 +139,6 @@ def technician_login_view(request):
         user = authenticate(request, username=username_input, password=password_input)
         
         if user is not None:
-            # Verification condition: Matches technician role or master accounts
-            # FIX: ROLE_CHOICES value is 'technician', not 'tech'
             is_tech_role = (
                 (hasattr(user, 'role') and user.role == 'technician')
                 or user.username == 'tech'
@@ -139,7 +147,7 @@ def technician_login_view(request):
             if is_tech_role or user.is_superuser:
                 login(request, user)
                 messages.success(request, "Technician Command Center Activated.")
-                return redirect('technician_dashboard')  # Redirects straight to /dashboard/technician/
+                return redirect('technician_dashboard')
             else:
                 messages.error(request, "Access Denied. You do not have technician privileges.")
                 return redirect('technician_login')
@@ -149,15 +157,15 @@ def technician_login_view(request):
             
     return render(request, 'accounts/technician_login.html')
 
+
 def logout_view(request):
     """
-    Was referenced as /accounts/logout/ in booking.html and technician.html
-    but never actually registered -- every logout link 404'd until this
-    view + its URL route were added.
+    Terminates the user session safely and returns the client to the splash index.
     """
     logout(request)
     messages.success(request, "You have been logged out successfully.")
     return redirect('home')
+
 
 def reports_list_view(request):
     appointments = Appointment.objects.select_related('patient', 'test').order_by('-appointment_date')

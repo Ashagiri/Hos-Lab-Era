@@ -1,0 +1,272 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Lab Management System - Test Orders</title>
+    <!-- Bootstrap 5.3.3 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    
+    <style>
+      :root {
+        --sidebar-bg: rgba(15, 23, 42, 0.95);
+        --card-bg: rgba(255, 255, 255, 0.92);
+      }
+
+      body {
+        min-height: 100vh;
+        background: url('https://seemafinechem.com/wp-content/uploads/2024/11/CT-Research-1688467791.jpg') no-repeat center center fixed;
+        background-size: cover;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      .app-container {
+        display: flex;
+        min-height: 100vh;
+      }
+
+      /* Sidebar Navigation Styling */
+      .sidebar {
+        width: 260px;
+        background-color: var(--sidebar-bg);
+        backdrop-filter: blur(10px);
+        min-height: 100vh;
+        position: fixed;
+        z-index: 100;
+      }
+
+      .sidebar .brand {
+        padding: 1.5rem;
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        color: #fff;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .sidebar .nav-link {
+        color: #94a3b8;
+        padding: 0.8rem 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        transition: all 0.2s ease;
+      }
+
+      .sidebar .nav-link:hover {
+        color: #ffffff;
+        background-color: rgba(255, 255, 255, 0.05);
+      }
+
+      .sidebar .nav-link.active {
+        color: #38bdf8;
+        background-color: rgba(56, 189, 248, 0.1);
+        border-left: 4px solid #38bdf8;
+      }
+
+      /* Viewport Wrapper */
+      .main-content {
+        margin-left: 260px;
+        flex-grow: 1;
+        padding: 2rem;
+      }
+
+      /* Content Cards */
+      .order-card {
+        background: var(--card-bg);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        backdrop-filter: blur(5px);
+      }
+
+      @media (max-width: 768px) {
+        .sidebar { width: 70px; }
+        .sidebar .brand span, .sidebar .nav-link span, .sidebar .user-details { display: none; }
+        .main-content { margin-left: 70px; }
+      }
+    </style>
+  </head>
+  <body>
+
+    <div class="app-container">
+      
+      <!-- SIDEBAR -->
+      <div class="sidebar d-flex flex-column">
+        <div class="brand">
+          <i class="bi bi-hospital text-info me-2"></i>
+          <span>LAB TECHNICIAN</span>
+        </div>
+        
+        <nav class="nav flex-column mt-3">
+          <a href="{% url 'technician_dashboard' %}" class="nav-link">
+            <i class="bi bi-speedometer2"></i> <span>Dashboard</span>
+          </a>
+          <a href="{% url 'view_test_requests' %}" class="nav-link active">
+            <i class="bi bi-clipboard2-pulse"></i> <span>View Test Requests</span>
+          </a>
+          <a href="{% url 'reports_list' %}" class="nav-link">
+            <i class="bi bi-bar-chart-line"></i> <span>Generate Reports</span>
+          </a>
+          <a href="{% url 'settings' %}" class="nav-link">
+            <i class="bi bi-gear"></i> <span>Settings</span>
+          </a>
+          <a href="{% url 'logout' %}" class="nav-link text-danger mt-2">
+            <i class="bi bi-box-arrow-right"></i> <span>Logout</span>
+          </a>
+        </nav>
+        
+        <div class="mt-auto p-3 border-top border-secondary border-opacity-25">
+          <div class="d-flex align-items-center text-white-50" style="font-size:.8rem;">
+            <i class="bi bi-person-circle me-2 fs-5 text-white"></i>
+            <div class="user-details">
+              <div class="text-white fw-bold">{{ request.user.username }}</div>
+              <div>Lab Technician</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+     
+      <main class="main-content">
+        
+        <!-- TOP SECTION BAR -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+          <div>
+            <h1 class="h3 mb-0 text-dark fw-bold">Test Request Management</h1>
+            <p class="text-muted small mb-0">Track, confirm, and organize incoming laboratory testing requisitions.</p>
+          </div>
+        </div>
+
+       
+        <div class="order-card p-3 mb-4">
+          <form class="row g-2">
+            <div class="col-12 col-md-4">
+              <div class="input-group">
+                <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control border-start-0" placeholder="Search Patient or Patient ID...">
+              </div>
+            </div>
+            <div class="col-6 col-md-2">
+              <select class="form-select">
+                <option selected>All Statuses</option>
+                <option>Pending</option>
+                <option>Confirmed</option>
+              </select>
+            </div>
+          </form>
+        </div>
+
+        
+        <div class="order-card p-4">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Appointment Date</th>
+                  <th>Appointment ID</th>
+                  <th>Patient Information</th>
+                  <th>Requested Profiling</th>
+                  <th>Workflow Status</th>
+                  <th class="text-end">Execution</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for request in test_requests %}
+                  <tr>
+                    <!-- Aligned to Appointment Model date field layout -->
+                    <td class="small">{{ request.appointment_date|date:"Y-m-d" }}</td>
+                    
+                    <td>
+                      <div class="fw-bold text-primary">#{{ request.id }}</div>
+                    </td>
+                    
+                    <td>
+                      <!-- Corrected to query Built-in User methods and fallback fields -->
+                      <div class="fw-semibold text-dark">{{ request.patient.get_full_name|default:request.patient.username }}</div>
+                      <!-- Traverses patient_profile relation safely -->
+                      <small class="text-muted d-block">
+                        {{ request.patient.patient_profile.get_gender_display }}, {{ request.patient.patient_profile.age }} Yrs
+                      </small>
+                    </td>
+                    
+                    <!-- Aligned to explicit 'test' relation naming node -->
+                    <td>
+                      <span class="badge bg-light text-dark border">{{ request.test.test_name }}</span>
+                    </td>
+                    
+                    <td class="status-cell">
+                      {% if request.status|lower == 'pending' %}
+                        <span class="d-flex align-items-center gap-2">
+                          <span class="spinner-grow spinner-grow-sm text-warning" role="status"></span>
+                          <small class="fw-medium text-warning">Pending</small>
+                        </span>
+                      {% else %}
+                        <span class="badge bg-success text-white fw-medium">
+                          <i class="bi bi-check-circle-fill me-1"></i>{{ request.status|title }}
+                        </span>
+                      {% endif %}
+                    </td>
+                    
+                    <td class="text-end execution-cell">
+                      {% if request.status|lower == 'pending' %}
+                        <button class="btn btn-sm btn-primary btn-confirm-booking" data-id="{{ request.id }}">Confirm Booking</button>
+                      {% else %}
+                        <a href="{% url 'record_result' appointment_id=request.id %}" class="btn btn-sm btn-outline-secondary">Input Results</a>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% empty %}
+                  <!-- Empty Array fallback node screen -->
+                  <tr>
+                    <td colspan="6" class="text-center py-4 text-muted">
+                      <i class="bi bi-inbox fs-3 d-block mb-2"></i> No active test requests found.
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </main>
+    </div>
+
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+   
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const confirmButtons = document.querySelectorAll('.btn-confirm-booking');
+        
+        confirmButtons.forEach(button => {
+          button.addEventListener('click', function() {
+            const appointmentId = this.getAttribute('data-id');
+            const row = this.closest('tr');
+            const statusCell = row.querySelector('.status-cell');
+            const executionCell = row.querySelector('.execution-cell');
+            
+            
+            statusCell.innerHTML = `
+              <span class="badge bg-success text-white fw-medium">
+                <i class="bi bi-check-circle-fill me-1"></i>Confirmed
+              </span>
+            `;
+            
+            // 2. Generate destination link pointing to the correct dynamic route structure
+            const destinationUrl = "{% url 'record_result' appointment_id=0 %}".replace('0', appointmentId);
+            
+            // 3. Swap out execution cell nodes
+            executionCell.innerHTML = `
+              <a href="${destinationUrl}" class="btn btn-sm btn-outline-secondary">Input Results</a>
+            `;
+          });
+        });
+      });
+    </script>
+  </body>
+</html>
