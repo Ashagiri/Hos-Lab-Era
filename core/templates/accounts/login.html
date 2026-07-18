@@ -130,7 +130,7 @@
       <h3 class="m-0 card-title-accent">Patient Sign In</h3>
     </div>
 
-    <!-- STRICT WHITELIST ALERTS SYSTEM: Only renders account validation or auth-related alerts -->
+    
     {% if messages %}
       {% for message in messages %}
         {% if "account" in message.message|lower or "password" in message.message|lower or "username" in message.message|lower or "email" in message.message|lower or "welcome" in message.message|lower or "incorrect" in message.message|lower %}
