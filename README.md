@@ -2,7 +2,6 @@
 
 **Hos-Lab-Era** is a web-based Laboratory Management System developed using the Python Django framework. The platform streamlines hospital laboratory operations by allowing patients to securely register, log in, view their account status, and dynamically check their medical lab diagnostics.
 
-
 ---
 
 ## 🚀 Key Features Built So Far
