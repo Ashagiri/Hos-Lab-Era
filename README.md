@@ -9,6 +9,7 @@
 * **Role-Based Access Control (RBAC):** Custom user profiles equipped to support specialized roles (e.g., Patient, Pathologist, Admin).
 * **Dynamic Patient Dashboard:** Personalized portal layout welcoming users dynamically and showing their system profiles based on live database parameters.
 * **Structured Template Architecture:** Organized frontend layout utilizing unified Django settings and custom app routing paths.
+  
 ----
 
 ## 🛠️ Tech Stack Used
