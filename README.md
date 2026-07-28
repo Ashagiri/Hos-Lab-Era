@@ -23,6 +23,7 @@
 ---
 
 ## 📂 Project Structure
+
 ```text
 Hos-Lab-Era/
 ├── core/               # Global project configuration settings & routing
