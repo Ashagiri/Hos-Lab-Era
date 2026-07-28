@@ -32,3 +32,5 @@ Hos-Lab-Era/
 ├── manage.py           # Django command-line execution utility
 └── db.sqlite3          # Local database storage
 
+
+
