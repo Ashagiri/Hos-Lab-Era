@@ -19,6 +19,7 @@
 * **Backend:** Python, Django 6.x
 * **Database:** SQLite3 (Environment setup configured for migration scaling)
 * **Frontend:** Clean HTML5, Modern CSS3 Flexbox/Grid
+
   
 ---
 
