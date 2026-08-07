@@ -17,6 +17,21 @@
         background-attachment: fixed;
         font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       }
+
+      /* Segmented Toggle Styling for Section 2 */
+      .btn-check:checked + .btn-toggle {
+          background-color: #0d6efd !important;
+          color: #ffffff !important;
+          box-shadow: 0 2px 6px rgba(13, 110, 253, 0.25);
+      }
+      .btn-toggle {
+          color: #6c757d;
+          transition: all 0.2s ease-in-out;
+          cursor: pointer;
+      }
+      .btn-toggle:hover {
+          color: #0d6efd;
+      }
     </style>
 </head>
 <body class="bg-light">
@@ -154,29 +169,58 @@
             </div>
 
             <div class="card shadow-sm border-0 rounded-4 mb-4 bg-white">
-              <div class="card-body p-4 border-bottom border-light-subtle">
-                 <h2 class="h5 fw-bold text-primary mb-0">2. Preferred Doctor</h2>
-             </div>
+                <div class="card-body p-4 border-bottom border-light-subtle d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="bg-primary-subtle text-primary p-2 rounded-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            <i class="fa-solid fa-user-check fs-5"></i>
+                        </div>
+                        <h2 class="h5 fw-bold text-dark mb-0">2. Referred By</h2>
+                    </div>
 
-             <div class="card-body p-4">
-               <div class="row g-4">
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Referred By (Doctor Name)</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fa-solid fa-user-doctor text-muted"></i></span>
-                        <input type="text" name="doctor_name" class="form-control" placeholder="Enter doctor's name">
+                    <!-- Segmented Control Buttons -->
+                    <div class="btn-group bg-light p-1 rounded-pill border" role="group" aria-label="Referred By Toggle">
+                        <input type="radio" class="btn-check" name="referral_type" id="ref_self" value="self" checked autocomplete="off">
+                        <label class="btn btn-sm rounded-pill px-4 fw-semibold border-0 btn-toggle" for="ref_self">
+                            <i class="fa-solid fa-user me-1"></i> Self
+                        </label>
+
+                        <input type="radio" class="btn-check" name="referral_type" id="ref_doctor" value="doctor" autocomplete="off">
+                        <label class="btn btn-sm rounded-pill px-4 fw-semibold border-0 btn-toggle" for="ref_doctor">
+                            <i class="fa-solid fa-user-doctor me-1"></i> Doctor
+                        </label>
                     </div>
                 </div>
 
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Doctor ID</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fa-solid fa-file-medical text-muted"></i></span>
-                        <input type="text" name="doctor_id" class="form-control" placeholder="Enter Doctor ID (e.g., DOC123)">
+                <div class="card-body p-4">
+                    <!-- Message displayed when Self is selected -->
+                    <div id="self_info_message" class="text-muted fst-italic py-2 d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-circle-info text-primary"></i>
+                        <span>Self-referral selected. No external doctor details required.</span>
+                    </div>
+
+                    <!-- Doctor details section (hidden when Self is active) -->
+                    <div id="doctor_fields" class="row g-4 d-none">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-secondary small">Doctor Name <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0">
+                                    <i class="fa-solid fa-user-doctor text-muted"></i>
+                                </span>
+                                <input type="text" id="doctor_name" name="doctor_name" class="form-control border-start-0 ps-0" placeholder="e.g. Dr. John Smith">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-secondary small">Doctor ID <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0">
+                                    <i class="fa-solid fa-file-medical text-muted"></i>
+                                </span>
+                                <input type="text" id="doctor_id" name="doctor_id" class="form-control border-start-0 ps-0" placeholder="e.g. DOC123">
+                            </div>
+                        </div>
                     </div>
                 </div>
-               </div>
-             </div>
             </div>
 
             <div class="card shadow-sm border-0 rounded-4 mb-4 bg-white">
@@ -299,6 +343,35 @@
           const today = new Date().toISOString().split('T')[0];
           appointmentDate.setAttribute('min', today);
         }
+      });
+
+      // Preferred Doctor / Referral toggle (Self vs Doctor)
+      document.addEventListener('DOMContentLoaded', function () {
+          const refSelf = document.getElementById('ref_self');
+          const refDoctor = document.getElementById('ref_doctor');
+          const doctorFields = document.getElementById('doctor_fields');
+          const selfMessage = document.getElementById('self_info_message');
+          const doctorNameInput = document.getElementById('doctor_name');
+          const doctorIdInput = document.getElementById('doctor_id');
+
+          function updateReferralView() {
+              if (refDoctor.checked) {
+                  doctorFields.classList.remove('d-none');
+                  selfMessage.classList.add('d-none');
+                  doctorNameInput.setAttribute('required', 'required');
+                  doctorIdInput.setAttribute('required', 'required');
+              } else {
+                  doctorFields.classList.add('d-none');
+                  selfMessage.classList.remove('d-none');
+                  doctorNameInput.removeAttribute('required');
+                  doctorIdInput.removeAttribute('required');
+              }
+          }
+
+          refSelf.addEventListener('change', updateReferralView);
+          refDoctor.addEventListener('change', updateReferralView);
+
+          updateReferralView();
       });
     </script>
 
