@@ -15,6 +15,12 @@
         font-family: system-ui, -apple-system, sans-serif;
       }
 
+      /* Hide browser native password reveal icons (Edge/IE) */
+      input::-ms-reveal,
+      input::-ms-clear {
+        display: none;
+      }
+
       /* Full screen background image setup matching target layout */
       .bg-overlay-wrapper {
         background-image: url("{% static 'fff.jpg' %}");
