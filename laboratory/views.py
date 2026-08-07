@@ -35,6 +35,10 @@ TIME_SLOTS = [
 
 
 def _slot_patient_count(appointment_date, appointment_time, exclude_patient_id=None):
+    """
+    Counts how many DISTINCT patients already hold an active (Pending/Completed)
+    appointment for the given date + time slot.
+    """
     qs = Appointment.objects.filter(
         appointment_date__date=appointment_date,
         appointment_time=appointment_time,
@@ -46,6 +50,10 @@ def _slot_patient_count(appointment_date, appointment_time, exclude_patient_id=N
 
 
 def _next_available_slot(appointment_date, requested_slot, exclude_patient_id):
+    """
+    Looks at the slots that come AFTER requested_slot in TIME_SLOTS order
+    and returns the first one that still has room.
+    """
     try:
         start_index = TIME_SLOTS.index(requested_slot)
     except ValueError:
@@ -78,6 +86,9 @@ TEST_DISPLAY_INFO = {
 # =========================================================================
 
 def home_view(request):
+    """
+    Renders the primary landing marketing homepage.
+    """
     return render(request, 'laboratory/home.html')
 
 
@@ -87,6 +98,9 @@ def home_view(request):
 
 @login_required
 def dashboard_view(request):
+    """
+    Patient Workspace Dashboard.
+    """
     user = request.user
     appointments = Appointment.objects.filter(patient=user).order_by('-appointment_date')
 
@@ -105,6 +119,9 @@ def dashboard_view(request):
 
 @login_required
 def technician_dashboard_view(request):
+    """
+    Technician Overview Dashboard.
+    """
     is_tech = (
         (hasattr(request.user, 'role') and request.user.role == 'technician')
         or request.user.username == 'tech'
@@ -135,6 +152,9 @@ def technician_dashboard_view(request):
 
 @login_required
 def view_test_requests(request):
+    """
+    Dedicated standalone page listing test requests for technicians/admins.
+    """
     is_tech = (
         (hasattr(request.user, 'role') and request.user.role in ['admin', 'technician'])
         or request.user.username == 'tech'
@@ -168,12 +188,18 @@ def view_test_requests(request):
 
 @login_required
 def settings_view(request):
+    """
+    Manages personal account field updates and security password resets.
+    """
     user = request.user
-    patient_prof = getattr(user, 'patient_profile', None)
+    patient_prof, _ = PatientProfile.objects.get_or_create(
+        user=user,
+        defaults={'age': 0, 'gender': 'M', 'address': ''}
+    )
 
     if request.method == 'POST':
         full_name = request.POST.get('full_name')
-        if full_name and hasattr(user, 'first_name'):
+        if full_name:
             name_parts = full_name.split(' ', 1)
             user.first_name = name_parts[0]
             user.last_name = name_parts[1] if len(name_parts) > 1 else ''
@@ -181,12 +207,19 @@ def settings_view(request):
         user.email = request.POST.get('email', user.email)
         user.save()
 
-        if patient_prof:
-            if hasattr(patient_prof, 'phone'):
-                patient_prof.phone = request.POST.get('phone', patient_prof.phone)
-            if hasattr(patient_prof, 'address'):
-                patient_prof.address = request.POST.get('address', patient_prof.address)
-            patient_prof.save()
+        address_val = request.POST.get('address')
+        if address_val is not None:
+            patient_prof.address = address_val.strip()
+
+        age_val = request.POST.get('age')
+        if age_val and str(age_val).isdigit():
+            patient_prof.age = int(age_val)
+
+        gender_val = request.POST.get('gender')
+        if gender_val in ['M', 'F', 'O']:
+            patient_prof.gender = gender_val
+
+        patient_prof.save()
 
         current_password = request.POST.get('current_password')
         new_password = request.POST.get('new_password')
@@ -216,30 +249,36 @@ def settings_view(request):
 
 @login_required
 def booking_view(request):
+    """
+    Handles diagnostic test booking creation and pre-fills user profile metadata.
+    """
     user = request.user
-    patient_prof = getattr(user, 'patient_profile', None)
+    patient_prof, _ = PatientProfile.objects.get_or_create(
+        user=user,
+        defaults={'age': 0, 'gender': 'M', 'address': ''}
+    )
 
     if request.method == 'POST':
         appointment_date = request.POST.get('appointment_date')
         appointment_time = request.POST.get('appointment_time')
         selected_test_ids = request.POST.getlist('tests')
 
-        # Safely save patient fields if they exist on model
-        if patient_prof:
-            address_input = request.POST.get('address')
-            phone_input = request.POST.get('phone')
-            age_input = request.POST.get('age')
-            gender_input = request.POST.get('gender')
+        # Extract submitted profile data and persist to PatientProfile
+        address_input = request.POST.get('address')
+        age_input = request.POST.get('age')
+        gender_input = request.POST.get('gender')
 
-            if address_input and hasattr(patient_prof, 'address'):
-                patient_prof.address = address_input
-            if phone_input and hasattr(patient_prof, 'phone'):
-                patient_prof.phone = phone_input
-            if age_input and hasattr(patient_prof, 'age'):
-                patient_prof.age = age_input
-            if gender_input and hasattr(patient_prof, 'gender'):
-                patient_prof.gender = gender_input
-            patient_prof.save()
+        if address_input is not None:
+            patient_prof.address = address_input.strip()
+
+        if age_input and str(age_input).isdigit():
+            patient_prof.age = int(age_input)
+
+        if gender_input:
+            gender_map = {'Male': 'M', 'Female': 'F', 'Other': 'O', 'M': 'M', 'F': 'F', 'O': 'O'}
+            patient_prof.gender = gender_map.get(gender_input, 'M')
+
+        patient_prof.save()
 
         if not selected_test_ids or not appointment_date or not appointment_time:
             messages.error(request, "Please select at least one test, date, and time slot.")
@@ -292,7 +331,7 @@ def booking_view(request):
             messages.error(request, f"Error while writing booking to database: {str(e)}")
             return redirect('booking')
 
-    # GET Workflow processing
+    # GET Request: Fetch laboratory test lists
     all_tests = LabTest.objects.all().select_related('category')
 
     for test in all_tests:
@@ -300,14 +339,23 @@ def booking_view(request):
         test.icon = info["icon"]
         test.display_desc = info["desc"]
 
-    # Safe attribute extraction preventing AttributeError
+    # Gender formatting for template view
+    gender_display_map = {'M': 'Male', 'F': 'Female', 'O': 'Other'}
+    formatted_gender = gender_display_map.get(patient_prof.gender, 'Male')
+
+    # Retrieve address from PatientProfile; fall back to last Appointment if empty
+    clean_address = patient_prof.address or ''
+    if not clean_address.strip() or clean_address.strip().lower() == 'none':
+        last_appt = Appointment.objects.filter(patient=user).order_by('-created_at').first()
+        if last_appt and hasattr(last_appt, 'address') and last_appt.address:
+            clean_address = last_appt.address.strip()
+
     profile_data = {
         'full_name': user.get_full_name() or user.username,
-        'email': user.email,
-        'phone': getattr(user, 'phone', getattr(patient_prof, 'phone', '')) if patient_prof else '',
-        'address': getattr(user, 'address', getattr(patient_prof, 'address', '')) if patient_prof else '',
-        'age': getattr(user, 'age', getattr(patient_prof, 'age', '')) if patient_prof else '',
-        'gender': getattr(user, 'gender', getattr(patient_prof, 'gender', '')) if patient_prof else '',
+        'email': user.email or '',
+        'address': clean_address,
+        'age': patient_prof.age if patient_prof.age is not None else 0,
+        'gender': formatted_gender,
     }
 
     return render(request, 'laboratory/booking.html', {
@@ -318,6 +366,9 @@ def booking_view(request):
 
 @login_required
 def check_slot_availability(request):
+    """
+    Returns JSON with time slots availability.
+    """
     date_str = request.GET.get('date')
     parsed_date = parse_date(date_str) if date_str else None
 

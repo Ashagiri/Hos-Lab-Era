@@ -124,13 +124,13 @@
                             <label class="form-label fw-semibold">Address <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fa-solid fa-location-dot text-muted"></i></span>
-                              <input 
+                             <input 
     type="text" 
     name="address" 
     id="address" 
     class="form-control" 
     placeholder="Enter your address" 
-    value="{{ user_info.address|default:'' }}" 
+    value="{{ user_info.address }}" 
     required
 >
                             </div>
