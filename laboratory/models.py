@@ -40,13 +40,17 @@ class LabTest(models.Model):
     def __str__(self):
         return f"{self.test_name} ({self.category.name})"
 
-
 class Appointment(models.Model):
     STATUS_CHOICES = (
         ('Pending', 'Pending'),
         ('Completed', 'Completed'),
         ('Cancelled', 'Cancelled'),
     )
+    REFERRAL_CHOICES = (
+        ('self', 'Self'),
+        ('doctor', 'Doctor'),
+    )
+
     patient = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
         on_delete=models.CASCADE, 
@@ -58,9 +62,19 @@ class Appointment(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # Referral details captured at booking time
+    referral_type = models.CharField(max_length=10, choices=REFERRAL_CHOICES, default='self')
+    doctor_name = models.CharField(max_length=150, blank=True, null=True)
+    doctor_id = models.CharField(max_length=50, blank=True, null=True)
+
+    # Snapshot of patient profile at time of booking (so later profile edits
+    # don't retroactively change what a report says)
+    patient_address = models.TextField(blank=True, null=True)
+    patient_age = models.IntegerField(blank=True, null=True)
+    patient_gender = models.CharField(max_length=1, blank=True, null=True)
+
     def __str__(self):
         return f"{self.patient.username} - {self.test.test_name} on {self.appointment_date.date()}"
-
 
 class TestResult(models.Model):
     appointment = models.OneToOneField(Appointment, on_delete=models.CASCADE, related_name='result')

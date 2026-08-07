@@ -268,6 +268,12 @@ def booking_view(request):
         age_input = request.POST.get('age')
         gender_input = request.POST.get('gender')
 
+        # Extract referral / preferred doctor data (captured but never
+        # persisted before -- now saved onto the Appointment itself)
+        referral_type = request.POST.get('referral_type', 'self')
+        doctor_name = request.POST.get('doctor_name', '').strip()
+        doctor_id = request.POST.get('doctor_id', '').strip()
+
         if address_input is not None:
             patient_prof.address = address_input.strip()
 
@@ -318,7 +324,13 @@ def booking_view(request):
                     test=test_instance,
                     appointment_date=appointment_date,
                     appointment_time=appointment_time,
-                    status='Pending'
+                    status='Pending',
+                    referral_type=referral_type,
+                    doctor_name=doctor_name if referral_type == 'doctor' else '',
+                    doctor_id=doctor_id if referral_type == 'doctor' else '',
+                    patient_address=patient_prof.address,
+                    patient_age=patient_prof.age,
+                    patient_gender=patient_prof.gender,
                 )
 
             messages.success(request, "Your laboratory test session has been booked successfully!")
