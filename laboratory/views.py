@@ -377,6 +377,33 @@ def booking_view(request):
 
 
 @login_required
+def patient_reports_view(request):
+    """
+    Dedicated, standalone "My Reports" page for patients -- lists every
+    appointment the logged-in patient has made, with the ability to
+    download a certified PDF for any completed one.
+    """
+    user = request.user
+    appointments = Appointment.objects.filter(patient=user).select_related('test').order_by('-appointment_date')
+
+    status_filter = request.GET.get('status', '').strip()
+    if status_filter in ('Pending', 'Completed', 'Cancelled'):
+        appointments = appointments.filter(status=status_filter)
+
+    total_count = Appointment.objects.filter(patient=user).count()
+    completed_count = Appointment.objects.filter(patient=user, status='Completed').count()
+    pending_count = Appointment.objects.filter(patient=user, status='Pending').count()
+
+    return render(request, 'laboratory/patient_reports.html', {
+        'appointments': appointments,
+        'status_filter': status_filter,
+        'total_count': total_count,
+        'completed_count': completed_count,
+        'pending_count': pending_count,
+    })
+
+
+@login_required
 def check_slot_availability(request):
     """
     Returns JSON with time slots availability.

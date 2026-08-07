@@ -15,6 +15,7 @@ from laboratory.views import (
     generate_report_view,
     reports_list,
     view_test_requests,
+    patient_reports_view,
 )
 from accounts.views import register_view, login_view, technician_login_view, logout_view
 
@@ -43,6 +44,9 @@ urlpatterns = [
 
     # Settings Profile Update Registry
     path('settings/', settings_view, name='settings'),
+
+    # Dedicated Patient "My Reports" Page
+    path('reports/', patient_reports_view, name='patient_reports'),
 
     # Reports: list/picker page, then per-appointment generate view.
     # This single endpoint now handles both "Input Results" (from the
