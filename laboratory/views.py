@@ -403,44 +403,27 @@ def check_slot_availability(request):
 # DIAGNOSTIC DATA ENTRY & PROCESSING (STAFF ONLY)
 # =========================================================================
 
-@login_required
-def record_test_result(request, appointment_id):
-    appointment = get_object_or_404(Appointment, id=appointment_id)
-    existing_result = getattr(appointment, 'result', None)
+def _resolve_patient_snapshot(appointment):
+    """
+    Prefer the demographic snapshot captured at booking time
+    (Appointment.patient_age / patient_gender / patient_address).
+    If that snapshot is empty (e.g. the patient booked before ever
+    filling out their profile), fall back to their current
+    PatientProfile so the page doesn't just show blanks forever.
+    """
+    profile = getattr(appointment.patient, 'patient_profile', None)
 
-    if request.method == 'POST':
-        result_value = request.POST.get('result_value')
-        remarks = request.POST.get('remarks')
+    age = appointment.patient_age or (profile.age if profile else None)
+    gender = appointment.patient_gender or (profile.gender if profile else None)
+    address = appointment.patient_address or (profile.address if profile else None)
 
-        if existing_result:
-            existing_result.result_value = result_value
-            existing_result.remarks = remarks
-            existing_result.updated_by = request.user
-            existing_result.verified = False
-            existing_result.verified_by = None
-            existing_result.verified_at = None
-            existing_result.save()
-            messages.success(request, "Test result updated. Verification reset pending review.")
-        else:
-            new_result = TestResult(
-                appointment=appointment,
-                result_value=result_value,
-                remarks=remarks,
-                updated_by=request.user
-            )
-            new_result.save()
+    gender_display = {'M': 'Male', 'F': 'Female', 'O': 'Other'}.get(gender, '—')
 
-            appointment.status = 'Completed'
-            appointment.save()
-            messages.success(request, "New laboratory test result submitted successfully.")
-
-        return redirect('view_test_requests')
-
-    context = {
-        'appointment': appointment,
-        'result': existing_result
+    return {
+        'age': age if age else '—',
+        'gender_display': gender_display,
+        'address': address if address else '—',
     }
-    return render(request, 'laboratory/record_result.html', context)
 
 
 @login_required
@@ -498,6 +481,7 @@ def generate_report_view(request, appointment_id):
     return render(request, 'laboratory/generate_report.html', {
         'appointment': appointment,
         'result': result,
+        'patient_snapshot': _resolve_patient_snapshot(appointment),
     })
 
 

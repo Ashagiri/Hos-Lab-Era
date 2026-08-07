@@ -24,6 +24,10 @@
       .info-value { color: #0f172a; font-weight: 500; }
       .table th { background-color: #0f172a !important; color: #ffffff !important; }
       .result-input { max-width: 150px; font-weight: 600; }
+      .verify-panel { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem 1.25rem; }
+      .verify-panel .form-check-input { width: 1.15em; height: 1.15em; margin-top: 0.15em; }
+      .verify-panel .form-check-label { cursor: pointer; }
+      .verify-panel .form-check-input:disabled ~ .form-check-label { color: #94a3b8; cursor: not-allowed; }
     </style>
   </head>
   <body>
@@ -67,16 +71,10 @@
               <div class="row g-3 mb-4 px-2">
                 <div class="col-md-4">
                   <span class="info-label">Age / Gender</span>:
-                  <span class="info-value">
-                    {{ appointment.patient_age|default:"—" }} /
-                    {% if appointment.patient_gender == 'M' %}Male
-                    {% elif appointment.patient_gender == 'F' %}Female
-                    {% elif appointment.patient_gender == 'O' %}Other
-                    {% else %}—{% endif %}
-                  </span>
+                  <span class="info-value">{{ patient_snapshot.age }} / {{ patient_snapshot.gender_display }}</span>
                 </div>
                 <div class="col-md-4">
-                  <span class="info-label">Address</span>: <span class="info-value">{{ appointment.patient_address|default:"—" }}</span>
+                  <span class="info-label">Address</span>: <span class="info-value">{{ patient_snapshot.address }}</span>
                 </div>
                 <div class="col-md-4">
                   <span class="info-label">Referral</span>:
@@ -121,23 +119,38 @@
               </div>
 
               <div class="section-title">Verification & Authorization</div>
-              <div class="row g-3 bg-light rounded p-3 border mx-0 mb-4">
-                <div class="col-12">
-                  {% if result.verified %}
-                    <span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i>Verified by {{ result.verified_by }} on {{ result.verified_at|date:"Y-m-d H:i" }}</span>
-                  {% else %}
-                    <span class="text-muted small">Not yet verified. Save the result, then verify once you've confirmed it's correct.</span>
-                  {% endif %}
-                </div>
+              <div class="verify-panel mb-4">
+                {% if result.verified %}
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i>Verified</span>
+                    <span class="small text-muted">by {{ result.verified_by }} on {{ result.verified_at|date:"Y-m-d H:i" }}</span>
+                  </div>
+                {% else %}
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="verifyConfirmCheck" {% if not result.pk %}disabled{% endif %}>
+                    <label class="form-check-label small text-dark" for="verifyConfirmCheck">
+                      I have reviewed this result against the reference range and confirm it is accurate.
+                    </label>
+                  </div>
+                  <p class="text-muted small mb-0 mt-2">
+                    {% if not result.pk %}
+                      Save the result first to unlock verification.
+                    {% else %}
+                      Check the box above to enable the Verify button.
+                    {% endif %}
+                  </p>
+                {% endif %}
               </div>
 
               <div class="d-flex flex-wrap gap-2 justify-content-center pt-3 border-top">
                 <button type="submit" name="action" value="edit" class="btn btn-primary btn-sm">
                   <i class="bi bi-save me-1"></i> Save Result
                 </button>
-                <button type="submit" name="action" value="verify" class="btn btn-success btn-sm" {% if not result.pk %}disabled{% endif %}>
+                {% if not result.verified %}
+                <button type="submit" name="action" value="verify" id="verifyBtn" class="btn btn-success btn-sm" disabled>
                   <i class="bi bi-shield-check me-1"></i> Verify Result
                 </button>
+                {% endif %}
                 <a href="{% url 'reports_list' %}" class="btn btn-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i> Return to Queue</a>
               </div>
             </form>
@@ -145,6 +158,18 @@
         </div>
       </main>
     </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const checkbox = document.getElementById('verifyConfirmCheck');
+        const verifyBtn = document.getElementById('verifyBtn');
+        if (checkbox && verifyBtn) {
+          checkbox.addEventListener('change', function () {
+            verifyBtn.disabled = !checkbox.checked;
+          });
+        }
+      });
+    </script>
 
   </body>
 </html>
