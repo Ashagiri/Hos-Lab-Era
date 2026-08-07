@@ -14,6 +14,7 @@ def register_view(request):
         dob = request.POST.get('dob')
         email = request.POST.get('email')
         phone = request.POST.get('phone')
+        address = request.POST.get('address')
         age = request.POST.get('age')
         gender = request.POST.get('gender')
         password = request.POST.get('password')
@@ -49,6 +50,7 @@ def register_view(request):
                 user=user,
                 age=int(age) if age else 0,
                 gender=gender_map.get((gender or '').lower(), 'O'),
+                address=(address or '').strip(),
             )
 
             # Registration complete — send them to login instead of auto-logging in

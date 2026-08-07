@@ -176,7 +176,7 @@ def view_test_requests(request):
         appointments = appointments.filter(patient__username__icontains=search_query)
 
     return render(request, 'laboratory/test_requests.html', {
-        'appointments': appointments,
+        'test_requests': appointments,
         'search_query': search_query,
         'status_filter': status_filter,
     })
