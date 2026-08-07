@@ -429,7 +429,7 @@ def record_test_result(request, appointment_id):
                 updated_by=request.user
             )
             new_result.save()
-            
+
             appointment.status = 'Completed'
             appointment.save()
             messages.success(request, "New laboratory test result submitted successfully.")
