@@ -15,17 +15,15 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 
 # Database App Entities
-from .models import LabTest, Appointment, TestResult 
+from .models import LabTest, Appointment, TestResult, PatientProfile
 
 
 # =========================================================================
 # APPOINTMENT SLOT CAPACITY CONFIG
 # =========================================================================
 
-# Max number of distinct patients allowed per date + time slot.
 SLOT_CAPACITY = 5
 
-# Must match the <option> values in booking.html's Time Slot dropdown exactly.
 TIME_SLOTS = [
     "07:00 AM - 08:00 AM",
     "09:00 AM - 10:00 AM",
@@ -37,11 +35,6 @@ TIME_SLOTS = [
 
 
 def _slot_patient_count(appointment_date, appointment_time, exclude_patient_id=None):
-    """
-    Counts how many DISTINCT patients already hold an active (Pending/Completed)
-    appointment for the given date + time slot. A patient booking multiple
-    tests in the same slot only counts once.
-    """
     qs = Appointment.objects.filter(
         appointment_date__date=appointment_date,
         appointment_time=appointment_time,
@@ -53,15 +46,10 @@ def _slot_patient_count(appointment_date, appointment_time, exclude_patient_id=N
 
 
 def _next_available_slot(appointment_date, requested_slot, exclude_patient_id):
-    """
-    Looks at the slots that come AFTER requested_slot in TIME_SLOTS order
-    (same date) and returns the first one that still has room.
-    Returns None if every later slot that day is also full.
-    """
     try:
         start_index = TIME_SLOTS.index(requested_slot)
     except ValueError:
-        start_index = -1  # Unrecognized slot value -> scan from the top
+        start_index = -1
 
     for slot in TIME_SLOTS[start_index + 1:]:
         if _slot_patient_count(appointment_date, slot, exclude_patient_id) < SLOT_CAPACITY:
@@ -70,7 +58,7 @@ def _next_available_slot(appointment_date, requested_slot, exclude_patient_id):
 
 
 # =========================================================================
-# STATIC DISPLAY METADATA (icons/descriptions not stored in the DB)
+# STATIC DISPLAY METADATA
 # =========================================================================
 
 TEST_DISPLAY_INFO = {
@@ -90,27 +78,18 @@ TEST_DISPLAY_INFO = {
 # =========================================================================
 
 def home_view(request):
-    """
-    Renders the primary landing marketing homepage.
-    """
     return render(request, 'laboratory/home.html')
 
 
 # =========================================================================
-# CORE WORKSPACE DASHBOARDS (DYNAMIC SEGREGATION)
+# CORE WORKSPACE DASHBOARDS
 # =========================================================================
 
 @login_required
 def dashboard_view(request):
-    """
-    Patient Workspace Dashboard.
-    Exclusively queries and renders the logged-in user's personal histories,
-    and calculates returning user state for dynamic greetings.
-    """
     user = request.user
     appointments = Appointment.objects.filter(patient=user).order_by('-appointment_date')
 
-    # Requires last_login to be at least 30 seconds newer than date_joined to treat as returning
     is_returning_user = False
     if user.last_login and user.date_joined:
         login_gap = (user.last_login - user.date_joined).total_seconds()
@@ -134,7 +113,7 @@ def technician_dashboard_view(request):
     if not is_tech:
         return redirect('login')
 
-    appointments = Appointment.objects.all().order_by('-appointment_date')
+    appointments = Appointment.objects.all().select_related('patient', 'test').order_by('-appointment_date')
 
     status_filter = request.GET.get('status', '').strip()
     search_query = request.GET.get('q', '').strip()
@@ -156,10 +135,6 @@ def technician_dashboard_view(request):
 
 @login_required
 def view_test_requests(request):
-    """
-    Dedicated standalone page listing all pending test requests
-    for technicians/admins to pick up and process.
-    """
     is_tech = (
         (hasattr(request.user, 'role') and request.user.role in ['admin', 'technician'])
         or request.user.username == 'tech'
@@ -170,11 +145,12 @@ def view_test_requests(request):
         return redirect('dashboard')
 
     search_query = request.GET.get('q', '').strip()
+    status_filter = request.GET.get('status', '').strip()
 
-    try:
-        appointments = Appointment.objects.using('lab_db').filter(status='Pending').order_by('-appointment_date')
-    except Exception:
-        appointments = Appointment.objects.filter(status='Pending').order_by('-appointment_date')
+    appointments = Appointment.objects.all().select_related('patient', 'test').order_by('-appointment_date')
+
+    if status_filter in ('Pending', 'Completed', 'Cancelled'):
+        appointments = appointments.filter(status=status_filter)
 
     if search_query:
         appointments = appointments.filter(patient__username__icontains=search_query)
@@ -182,6 +158,7 @@ def view_test_requests(request):
     return render(request, 'laboratory/test_requests.html', {
         'appointments': appointments,
         'search_query': search_query,
+        'status_filter': status_filter,
     })
 
 
@@ -191,19 +168,25 @@ def view_test_requests(request):
 
 @login_required
 def settings_view(request):
-    """
-    Manages personal account field updates and security password resets.
-    """
     user = request.user
+    patient_prof = getattr(user, 'patient_profile', None)
+
     if request.method == 'POST':
-        if hasattr(user, 'full_name'):
-            user.full_name = request.POST.get('full_name', getattr(user, 'full_name', ''))
+        full_name = request.POST.get('full_name')
+        if full_name and hasattr(user, 'first_name'):
+            name_parts = full_name.split(' ', 1)
+            user.first_name = name_parts[0]
+            user.last_name = name_parts[1] if len(name_parts) > 1 else ''
+
         user.email = request.POST.get('email', user.email)
-        if hasattr(user, 'phone'):
-            user.phone = request.POST.get('phone', getattr(user, 'phone', ''))
-        if hasattr(user, 'address'):
-            user.address = request.POST.get('address', getattr(user, 'address', ''))
         user.save()
+
+        if patient_prof:
+            if hasattr(patient_prof, 'phone'):
+                patient_prof.phone = request.POST.get('phone', patient_prof.phone)
+            if hasattr(patient_prof, 'address'):
+                patient_prof.address = request.POST.get('address', patient_prof.address)
+            patient_prof.save()
 
         current_password = request.POST.get('current_password')
         new_password = request.POST.get('new_password')
@@ -224,7 +207,7 @@ def settings_view(request):
 
         return redirect('settings')
 
-    return render(request, 'laboratory/settings.html')
+    return render(request, 'laboratory/settings.html', {'patient_profile': patient_prof})
 
 
 # =========================================================================
@@ -233,15 +216,30 @@ def settings_view(request):
 
 @login_required
 def booking_view(request):
-    """
-    Handles diagnostic test booking creation and pre-fills registered user metadata.
-    """
     user = request.user
+    patient_prof = getattr(user, 'patient_profile', None)
 
     if request.method == 'POST':
         appointment_date = request.POST.get('appointment_date')
         appointment_time = request.POST.get('appointment_time')
         selected_test_ids = request.POST.getlist('tests')
+
+        # Safely save patient fields if they exist on model
+        if patient_prof:
+            address_input = request.POST.get('address')
+            phone_input = request.POST.get('phone')
+            age_input = request.POST.get('age')
+            gender_input = request.POST.get('gender')
+
+            if address_input and hasattr(patient_prof, 'address'):
+                patient_prof.address = address_input
+            if phone_input and hasattr(patient_prof, 'phone'):
+                patient_prof.phone = phone_input
+            if age_input and hasattr(patient_prof, 'age'):
+                patient_prof.age = age_input
+            if gender_input and hasattr(patient_prof, 'gender'):
+                patient_prof.gender = gender_input
+            patient_prof.save()
 
         if not selected_test_ids or not appointment_date or not appointment_time:
             messages.error(request, "Please select at least one test, date, and time slot.")
@@ -302,14 +300,14 @@ def booking_view(request):
         test.icon = info["icon"]
         test.display_desc = info["desc"]
 
-    # Safely extract user profile attributes for auto-filling booking forms
+    # Safe attribute extraction preventing AttributeError
     profile_data = {
-        'full_name': getattr(user, 'full_name', user.get_full_name() or user.username),
+        'full_name': user.get_full_name() or user.username,
         'email': user.email,
-        'phone': getattr(user, 'phone', getattr(getattr(user, 'profile', None), 'phone', '')),
-        'address': getattr(user, 'address', getattr(getattr(user, 'profile', None), 'address', '')),
-        'age': getattr(user, 'age', getattr(getattr(user, 'profile', None), 'age', '')),
-        'gender': getattr(user, 'gender', getattr(getattr(user, 'profile', None), 'gender', '')),
+        'phone': getattr(user, 'phone', getattr(patient_prof, 'phone', '')) if patient_prof else '',
+        'address': getattr(user, 'address', getattr(patient_prof, 'address', '')) if patient_prof else '',
+        'age': getattr(user, 'age', getattr(patient_prof, 'age', '')) if patient_prof else '',
+        'gender': getattr(user, 'gender', getattr(patient_prof, 'gender', '')) if patient_prof else '',
     }
 
     return render(request, 'laboratory/booking.html', {
@@ -320,10 +318,6 @@ def booking_view(request):
 
 @login_required
 def check_slot_availability(request):
-    """
-    GET /booking/check-slots/?date=YYYY-MM-DD
-    Returns JSON with each time slot's booked count and capacity status.
-    """
     date_str = request.GET.get('date')
     parsed_date = parse_date(date_str) if date_str else None
 
@@ -348,11 +342,7 @@ def check_slot_availability(request):
 
 @login_required
 def record_test_result(request, appointment_id):
-    try:
-        appointment = get_object_or_404(Appointment.objects.using('lab_db'), id=appointment_id)
-    except Exception:
-        appointment = get_object_or_404(Appointment, id=appointment_id)
-
+    appointment = get_object_or_404(Appointment, id=appointment_id)
     existing_result = getattr(appointment, 'result', None)
 
     if request.method == 'POST':
@@ -392,9 +382,6 @@ def record_test_result(request, appointment_id):
 
 @login_required
 def generate_report_view(request, appointment_id):
-    """
-    Report workspace: Edit result, Verify result, then Upload/Download the final PDF.
-    """
     is_staff = (
         (hasattr(request.user, 'role') and request.user.role in ['admin', 'technician'])
         or request.user.username == 'tech'
@@ -404,12 +391,8 @@ def generate_report_view(request, appointment_id):
         messages.error(request, "Access restricted to authorized management profiles.")
         return redirect('dashboard')
 
-    try:
-        appointment = get_object_or_404(Appointment.objects.using('lab_db'), id=appointment_id)
-        result = TestResult.objects.using('lab_db').filter(appointment=appointment).first()
-    except Exception:
-        appointment = get_object_or_404(Appointment, id=appointment_id)
-        result = TestResult.objects.filter(appointment=appointment).first()
+    appointment = get_object_or_404(Appointment, id=appointment_id)
+    result = TestResult.objects.filter(appointment=appointment).first()
 
     if not result:
         result = TestResult(appointment=appointment)
@@ -461,9 +444,6 @@ def generate_report_view(request, appointment_id):
 
 @login_required
 def download_report_view(request, appointment_id):
-    """
-    Assembles a certified binary PDF stream report file dynamically using ReportLab layouts.
-    """
     is_staff = (
         (hasattr(request.user, 'role') and request.user.role in ['admin', 'technician'])
         or request.user.username == 'tech'
@@ -478,7 +458,6 @@ def download_report_view(request, appointment_id):
     buffer = io.BytesIO()
     p = canvas.Canvas(buffer, pagesize=letter)
 
-    # Header Bar
     p.setFillColor(colors.HexColor("#1a233a"))
     p.rect(0, 720, 612, 100, fill=1, stroke=0)
 
@@ -488,13 +467,12 @@ def download_report_view(request, appointment_id):
     p.setFont("Helvetica", 10)
     p.drawString(40, 740, "Certified Clinical Laboratory Report - Official Copy")
 
-    # Patient Meta Box
     p.setFillColor(colors.HexColor("#f8fafc"))
     p.rect(40, 580, 532, 110, fill=1, stroke=1)
 
     p.setFillColor(colors.HexColor("#1e293b"))
     p.setFont("Helvetica-Bold", 12)
-    p.drawString(60, 665, f"Patient Name: {appointment.patient.username}")
+    p.drawString(60, 665, f"Patient Name: {appointment.patient.get_full_name() or appointment.patient.username}")
     p.drawString(60, 645, f"Report ID: #LMS-00{appointment.id}")
 
     if hasattr(appointment.appointment_date, 'strftime'):
@@ -505,7 +483,6 @@ def download_report_view(request, appointment_id):
     p.drawString(320, 665, f"Date Compiled: {formatted_date}")
     p.drawString(320, 645, f"Status: {appointment.status}")
 
-    # Table Header
     p.setFillColor(colors.HexColor("#2563eb"))
     p.rect(40, 520, 532, 25, fill=1, stroke=0)
     p.setFillColor(colors.white)
@@ -515,7 +492,6 @@ def download_report_view(request, appointment_id):
     p.drawString(380, 528, "NORMAL RANGE")
     p.drawString(490, 528, "FLAG")
 
-    # Table Content Row
     test_name = appointment.test.test_name if appointment.test else "N/A"
     normal_range = appointment.test.normal_range if (appointment.test and hasattr(appointment.test, 'normal_range')) else "N/A"
 
@@ -540,7 +516,6 @@ def download_report_view(request, appointment_id):
     p.setLineWidth(1)
     p.line(40, 475, 572, 475)
 
-    # Footer
     p.setFillColor(colors.HexColor("#64748b"))
     p.setFont("Helvetica-Oblique", 9)
     p.drawString(40, 100, "* This is a digitally verified laboratory report generated by LabPortal.")
@@ -555,12 +530,5 @@ def download_report_view(request, appointment_id):
 
 @login_required
 def reports_list(request):
-    """
-    Queries all completed appointments and renders the queue table list.
-    """
-    try:
-        appointments = Appointment.objects.using('lab_db').filter(status='Completed').order_by('-appointment_date')
-    except Exception:
-        appointments = Appointment.objects.filter(status='Completed').order_by('-appointment_date')
-
+    appointments = Appointment.objects.filter(status='Completed').select_related('patient', 'test').order_by('-appointment_date')
     return render(request, 'laboratory/report_list.html', {'appointments': appointments})
