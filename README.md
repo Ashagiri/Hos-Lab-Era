@@ -20,7 +20,6 @@
 * **Database:** SQLite3 (Environment setup configured for migration scaling)
 * **Frontend:** Clean HTML5, Modern CSS3 Flexbox/Grid
 
-  
 ---
 
 ## 📂 Project Structure
