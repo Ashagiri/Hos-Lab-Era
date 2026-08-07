@@ -87,6 +87,16 @@
         background: transparent;
       }
 
+      /* Hide native browser password reveal eye icon (Edge / IE / Chrome) */
+      input[type="password"]::-ms-reveal,
+      input[type="password"]::-ms-clear,
+      input[type="password"]::-webkit-contacts-auto-fill-button,
+      input[type="password"]::-webkit-credentials-auto-fill-button {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+      }
+
       .password-eye-btn {
         background: transparent;
         border: none;
@@ -131,9 +141,19 @@
       <h3 class="m-0 card-title-accent">Create an Account</h3>
     </div>
 
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show rounded-3 shadow-sm mb-4" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+
     <form method="POST">
       {% csrf_token %}
       
+      <!-- Full Name & Date of Birth -->
       <div class="row g-3 mb-3">
         <div class="col-md-6">
           <label class="field-label">Full Name :</label>
@@ -165,6 +185,7 @@
         </div>
       </div>
 
+      <!-- Email Address & Phone Number -->
       <div class="row g-3 mb-3">
         <div class="col-md-6">
           <label class="field-label">Email Address :</label>
@@ -198,6 +219,24 @@
         </div>
       </div>
 
+      <!-- Address Field -->
+      <div class="row g-3 mb-3">
+        <div class="col-12">
+          <label class="field-label">Address :</label>
+          <div class="input-group-custom">
+            <div class="icon-addon"><i class="fa-solid fa-location-dot"></i></div>
+            <input 
+              type="text" 
+              name="address" 
+              class="form-control-clean" 
+              placeholder="Enter your address" 
+              required
+            >
+          </div>
+        </div>
+      </div>
+
+      <!-- Password & Confirm Password -->
       <div class="row g-3 mb-3">
         <div class="col-md-6">
           <label class="field-label">Password :</label>
@@ -243,6 +282,7 @@
         </div>
       </div>
 
+      <!-- Age (Auto-calculated) & Gender -->
       <div class="row g-3 mb-4">
         <div class="col-md-6">
           <label class="field-label">Age :</label>
@@ -250,12 +290,11 @@
             <div class="icon-addon"><i class="fa-solid fa-user-clock"></i></div>
             <input 
               type="number" 
+              id="age"
               name="age" 
               class="form-control-clean" 
-              placeholder="Enter your age" 
-              min="1" 
-              max="120"
-              title="Please enter a valid age between 1 and 120."
+              placeholder="Auto-calculated from DOB" 
+              readonly
               required
             >
           </div>
@@ -266,14 +305,15 @@
             <div class="icon-addon"><i class="fa-solid fa-venus-mars"></i></div>
             <select name="gender" class="form-select-clean" required>
               <option value="" disabled selected hidden>Select gender</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="other">Other</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
             </select>
           </div>
         </div>
       </div>
 
+      <!-- Terms & Conditions Checkbox -->
       <div class="mb-4 form-check text-start">
         <input type="checkbox" class="form-check-input" id="termsCheck" required>
         <label class="form-check-label text-muted small" for="termsCheck">
@@ -281,6 +321,7 @@
         </label>
       </div>
 
+      <!-- Submit Button & Footer Link -->
       <div class="d-grid gap-3">
         <button class="btn btn-primary-action d-flex align-items-center justify-content-center gap-2 shadow-sm" type="submit">
           <i class="fa-solid fa-user-plus"></i> Register
@@ -302,22 +343,44 @@
         const input = document.getElementById(inputId);
         const btn = document.getElementById(btnId);
         const icon = document.getElementById(iconId);
-        btn.addEventListener('click', function() {
-          const check = input.type === 'password';
-          input.type = check ? 'text' : 'password';
-          icon.classList.toggle('fa-eye-slash', !check);
-          icon.classList.toggle('fa-eye', check);
-        });
+        if (btn && input && icon) {
+          btn.addEventListener('click', function() {
+            const check = input.type === 'password';
+            input.type = check ? 'text' : 'password';
+            icon.classList.toggle('fa-eye-slash', !check);
+            icon.classList.toggle('fa-eye', check);
+          });
+        }
       }
       linkToggle('regPass', 'toggleRegPass', 'regPassIcon');
       linkToggle('confirmPass', 'toggleConfirmPass', 'confirmPassIcon');
 
-      // Date of Birth: Prevent selecting future dates
       document.addEventListener('DOMContentLoaded', function() {
         const dobInput = document.getElementById('dob');
+        const ageInput = document.getElementById('age');
+
+        // Prevent selecting future dates in DOB calendar
         if (dobInput) {
           const today = new Date().toISOString().split('T')[0];
           dobInput.setAttribute('max', today);
+
+          // Auto-calculate Age on DOB change
+          dobInput.addEventListener('change', function() {
+            const dobValue = this.value;
+            if (!dobValue) return;
+
+            const dob = new Date(dobValue);
+            const now = new Date();
+
+            let calculatedAge = now.getFullYear() - dob.getFullYear();
+            const monthDiff = now.getMonth() - dob.getMonth();
+
+            if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < dob.getDate())) {
+              calculatedAge--;
+            }
+
+            ageInput.value = calculatedAge >= 0 ? calculatedAge : 0;
+          });
         }
 
         // Real-time password match validation
@@ -332,8 +395,10 @@
           }
         }
 
-        password.addEventListener('change', validatePasswordMatch);
-        confirmPassword.addEventListener('keyup', validatePasswordMatch);
+        if (password && confirmPassword) {
+          password.addEventListener('change', validatePasswordMatch);
+          confirmPassword.addEventListener('keyup', validatePasswordMatch);
+        }
       });
     </script>
   </body>

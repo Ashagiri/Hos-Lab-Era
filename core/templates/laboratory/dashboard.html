@@ -93,6 +93,7 @@
     <div class="container-fluid p-0">
       <div class="d-flex flex-column flex-md-row">
         
+        <!-- Sidebar Navigation -->
         <div class="col-12 col-md-3 col-lg-2 text-white p-4 min-vh-md-100 position-sticky top-0" style="background-color: var(--sidebar-bg); z-index: 1000;">
           <div class="d-flex flex-row flex-md-column h-100 justify-content-between justify-content-md-start">
             
@@ -137,6 +138,7 @@
           </div>
         </div>
 
+        <!-- Main Workspace View -->
         <div class="col-12 col-md-9 col-lg-10 min-vh-100 pb-5 px-3 px-md-5">
           
           {% if messages %}
@@ -150,6 +152,7 @@
             </div>
           {% endif %}
 
+          <!-- Top Header Navigation -->
           <nav class="navbar navbar-light bg-white border-0 rounded-4 px-4 py-3 my-4 shadow-sm glass-card">
             <div class="container-fluid p-0 d-flex justify-content-between align-items-center">
               <h4 class="mb-0 fw-bold text-dark fs-5 fs-sm-4 tracking-tight">Hospital Laboratory System</h4>
@@ -167,6 +170,7 @@
             </div>
           </nav>
 
+          <!-- Banner Welcome Section -->
           <div class="mb-4">
             <div class="card border-0 rounded-4 overflow-hidden shadow-sm section-card" 
                  style="background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%); min-height: 180px;">
@@ -178,7 +182,16 @@
               <div class="card-body p-4 p-md-5 d-flex align-items-center">
                 <div class="row align-items-center g-3 w-100">
                   <div class="col-12 col-md-8 position-relative" style="z-index: 2;">
-                    <h2 class="card-title fw-bold text-dark mb-2 fs-2 tracking-tight">Welcome back, {{ request.user.username }}!</h2>
+                    
+                    <!-- Fixed Dynamic Welcome Banner: Uses view context variable -->
+                    <h2 class="card-title fw-bold text-dark mb-2 fs-2 tracking-tight">
+                      {% if is_returning_user %}
+                        Welcome back, {{ request.user.username }}!
+                      {% else %}
+                        Welcome, {{ request.user.username }}!
+                      {% endif %}
+                    </h2>
+
                     <p class="card-text text-secondary mb-0" style="max-width: 540px; line-height: 1.6; font-size: 14px;">
                       Easily check, filter, schedule, and track your ongoing clinical results, prescriptions, and medical reports.
                     </p>
@@ -193,6 +206,7 @@
             </div>
           </div>
 
+          <!-- Quick Action Buttons -->
           <div class="mb-5">
             <h5 class="fw-bold text-dark mb-3.5 tracking-tight">Quick Actions</h5>
             
@@ -238,6 +252,7 @@
               </div>
             </div>
 
+            <!-- Recent Lab Updates and Booking Overview -->
             <div class="row g-4" id="recent-updates-section">
               
               <div class="col-12 col-lg-7">
@@ -252,8 +267,8 @@
                       <table class="table table-borderless align-middle mb-0">
                         <thead>
                           <tr class="text-secondary border-bottom" style="font-size: 13px;">
-                            <th class="pb-2 ps-0" style="width: 45%;">TEST PARAMETER</th>
-                            <th class="pb-2" style="width: 30%;">DATE & TIMELINE</th>
+                            <th class="pb-2 ps-0" style="width: 40%;">TEST PARAMETER</th>
+                            <th class="pb-2" style="width: 35%;">DATE & TIMELINE</th>
                             <th class="pb-2 text-end" style="width: 25%;">ACTIONS</th>
                           </tr>
                         </thead>
@@ -276,7 +291,10 @@
                               </div>
                             </td>
                             <td class="py-3 text-secondary small fw-medium">
-                              {{ appointment.appointment_date }}
+                              <div>{{ appointment.appointment_date }}</div>
+                              {% if appointment.appointment_time %}
+                                <div class="text-muted opacity-75" style="font-size: 11px;">{{ appointment.appointment_time }}</div>
+                              {% endif %}
                             </td>
                             <td class="py-3 text-end">
                               <div class="d-flex align-items-center justify-content-end gap-2">
@@ -302,6 +320,7 @@
                 </div>
               </div>
 
+              <!-- Next Scheduled Session Section -->
               <div class="col-12 col-lg-5" id="my-bookings">
                 <div class="card h-100 border-0 rounded-4 p-4 bg-white shadow-sm section-card d-flex flex-column justify-content-between">
                   <div>
@@ -320,6 +339,11 @@
                             <div class="text-secondary small mb-1.5 fw-medium">
                               <i class="fa-regular fa-calendar text-primary me-2"></i>{{ next_booking.appointment_date }}
                             </div>
+                            {% if next_booking.appointment_time %}
+                            <div class="text-secondary small mb-1.5 fw-medium">
+                              <i class="fa-regular fa-clock text-primary me-2"></i>{{ next_booking.appointment_time }}
+                            </div>
+                            {% endif %}
                             <div class="text-secondary small fw-medium">
                               <i class="fa-solid fa-circle-check text-primary me-2"></i>Status: <span class="text-dark fw-bold">{{ next_booking.status }}</span>
                             </div>

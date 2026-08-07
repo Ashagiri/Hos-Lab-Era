@@ -1,4 +1,6 @@
 import io
+from datetime import timedelta
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import FileResponse, JsonResponse
 from django.contrib.auth.decorators import login_required
@@ -14,8 +16,6 @@ from reportlab.lib import colors
 
 # Database App Entities
 from .models import LabTest, Appointment, TestResult 
-from laboratory import views
-
 
 
 # =========================================================================
@@ -61,7 +61,7 @@ def _next_available_slot(appointment_date, requested_slot, exclude_patient_id):
     try:
         start_index = TIME_SLOTS.index(requested_slot)
     except ValueError:
-        start_index = -1  # unrecognized slot value -> just scan from the top
+        start_index = -1  # Unrecognized slot value -> scan from the top
 
     for slot in TIME_SLOTS[start_index + 1:]:
         if _slot_patient_count(appointment_date, slot, exclude_patient_id) < SLOT_CAPACITY:
@@ -84,6 +84,7 @@ TEST_DISPLAY_INFO = {
     "Cancer Test": {"icon": "🧪", "desc": "Complete chemical, physical, and microscopic evaluation for metabolic or infection markers"},
 }
 
+
 # =========================================================================
 # SYSTEM MARKETING ENTRY VIEW
 # =========================================================================
@@ -103,10 +104,24 @@ def home_view(request):
 def dashboard_view(request):
     """
     Patient Workspace Dashboard.
-    Exclusively queries and renders the logged-in user's personal histories.
+    Exclusively queries and renders the logged-in user's personal histories,
+    and calculates returning user state for dynamic greetings.
     """
-    appointments = Appointment.objects.filter(patient=request.user).order_by('-appointment_date')
-    return render(request, 'laboratory/dashboard.html', {'appointments': appointments})
+    user = request.user
+    appointments = Appointment.objects.filter(patient=user).order_by('-appointment_date')
+
+    # Requires last_login to be at least 30 seconds newer than date_joined to treat as returning
+    is_returning_user = False
+    if user.last_login and user.date_joined:
+        login_gap = (user.last_login - user.date_joined).total_seconds()
+        if login_gap > 30:
+            is_returning_user = True
+
+    context = {
+        'appointments': appointments,
+        'is_returning_user': is_returning_user,
+    }
+    return render(request, 'laboratory/dashboard.html', context)
 
 
 @login_required
@@ -142,9 +157,8 @@ def technician_dashboard_view(request):
 @login_required
 def view_test_requests(request):
     """
-    Dedicated standalone page (own URL) listing all pending test requests
-    for technicians/admins to pick up and process, separate from the
-    main dashboard.
+    Dedicated standalone page listing all pending test requests
+    for technicians/admins to pick up and process.
     """
     is_tech = (
         (hasattr(request.user, 'role') and request.user.role in ['admin', 'technician'])
@@ -157,8 +171,10 @@ def view_test_requests(request):
 
     search_query = request.GET.get('q', '').strip()
 
-    # UPDATED HERE: Added .using('lab_db') to sync with your actual lab records database
-    appointments = Appointment.objects.using('lab_db').filter(status='Pending').order_by('-appointment_date')
+    try:
+        appointments = Appointment.objects.using('lab_db').filter(status='Pending').order_by('-appointment_date')
+    except Exception:
+        appointments = Appointment.objects.filter(status='Pending').order_by('-appointment_date')
 
     if search_query:
         appointments = appointments.filter(patient__username__icontains=search_query)
@@ -168,6 +184,7 @@ def view_test_requests(request):
         'search_query': search_query,
     })
 
+
 # =========================================================================
 # PROFILE CONFIGURATIONS & SETTINGS MANAGEMENT
 # =========================================================================
@@ -175,18 +192,19 @@ def view_test_requests(request):
 @login_required
 def settings_view(request):
     """
-    Manages personal account fields updates, system alerts switches, and cryptographic
-    password validation sequences safely for any logged-in user profile context.
+    Manages personal account field updates and security password resets.
     """
     user = request.user
     if request.method == 'POST':
-        # 1. Update Core Bio Meta Fields
-        user.full_name = request.POST.get('full_name')
-        user.email = request.POST.get('email')
-        user.phone = request.POST.get('phone')
+        if hasattr(user, 'full_name'):
+            user.full_name = request.POST.get('full_name', getattr(user, 'full_name', ''))
+        user.email = request.POST.get('email', user.email)
+        if hasattr(user, 'phone'):
+            user.phone = request.POST.get('phone', getattr(user, 'phone', ''))
+        if hasattr(user, 'address'):
+            user.address = request.POST.get('address', getattr(user, 'address', ''))
         user.save()
 
-        # 2. Update Passwords Safely via Cryptographic Validation Check
         current_password = request.POST.get('current_password')
         new_password = request.POST.get('new_password')
         confirm_password = request.POST.get('confirm_password')
@@ -199,7 +217,7 @@ def settings_view(request):
             else:
                 user.set_password(new_password)
                 user.save()
-                update_session_auth_hash(request, user)  # Prevents logging out active session
+                update_session_auth_hash(request, user)
                 messages.success(request, "Password parameters modified successfully.")
         else:
             messages.success(request, "Account details saved successfully.")
@@ -216,18 +234,15 @@ def settings_view(request):
 @login_required
 def booking_view(request):
     """
-    Handles diagnostic test booking creation forms via POST data pipelines,
-    and streams database available test sets via GET requests.
+    Handles diagnostic test booking creation and pre-fills registered user metadata.
     """
+    user = request.user
+
     if request.method == 'POST':
-        # 1. Capture schedule timelines from client form elements
         appointment_date = request.POST.get('appointment_date')
         appointment_time = request.POST.get('appointment_time')
-
-        # 2. Extract selected test primary keys array list
         selected_test_ids = request.POST.getlist('tests')
 
-        # Input guard validations
         if not selected_test_ids or not appointment_date or not appointment_time:
             messages.error(request, "Please select at least one test, date, and time slot.")
             return redirect('booking')
@@ -238,10 +253,10 @@ def booking_view(request):
             return redirect('booking')
 
         existing_patient_count = _slot_patient_count(
-            parsed_date, appointment_time, exclude_patient_id=request.user.id
+            parsed_date, appointment_time, exclude_patient_id=user.id
         )
         if existing_patient_count >= SLOT_CAPACITY:
-            suggested_slot = _next_available_slot(parsed_date, appointment_time, request.user.id)
+            suggested_slot = _next_available_slot(parsed_date, appointment_time, user.id)
             if suggested_slot:
                 messages.error(
                     request,
@@ -258,12 +273,11 @@ def booking_view(request):
             return redirect('booking')
 
         try:
-            # 3. Generate records independently for each checked parameter
             for test_id in selected_test_ids:
                 test_instance = LabTest.objects.get(id=test_id)
 
                 Appointment.objects.create(
-                    patient=request.user,
+                    patient=user,
                     test=test_instance,
                     appointment_date=appointment_date,
                     appointment_time=appointment_time,
@@ -283,20 +297,32 @@ def booking_view(request):
     # GET Workflow processing
     all_tests = LabTest.objects.all().select_related('category')
 
-    # Attach display-only icon + description metadata (not persisted to DB)
     for test in all_tests:
         info = TEST_DISPLAY_INFO.get(test.test_name, {"icon": "🧪", "desc": ""})
         test.icon = info["icon"]
         test.display_desc = info["desc"]
 
-    return render(request, 'laboratory/booking.html', {'tests': all_tests})
+    # Safely extract user profile attributes for auto-filling booking forms
+    profile_data = {
+        'full_name': getattr(user, 'full_name', user.get_full_name() or user.username),
+        'email': user.email,
+        'phone': getattr(user, 'phone', getattr(getattr(user, 'profile', None), 'phone', '')),
+        'address': getattr(user, 'address', getattr(getattr(user, 'profile', None), 'address', '')),
+        'age': getattr(user, 'age', getattr(getattr(user, 'profile', None), 'age', '')),
+        'gender': getattr(user, 'gender', getattr(getattr(user, 'profile', None), 'gender', '')),
+    }
+
+    return render(request, 'laboratory/booking.html', {
+        'tests': all_tests,
+        'user_info': profile_data,
+    })
 
 
 @login_required
 def check_slot_availability(request):
     """
     GET /booking/check-slots/?date=YYYY-MM-DD
-    Returns JSON with each time slot's booked count and whether it's full.
+    Returns JSON with each time slot's booked count and capacity status.
     """
     date_str = request.GET.get('date')
     parsed_date = parse_date(date_str) if date_str else None
@@ -322,8 +348,11 @@ def check_slot_availability(request):
 
 @login_required
 def record_test_result(request, appointment_id):
-    # Fetch from your secondary routed laboratory database context
-    appointment = get_object_or_404(Appointment.objects.using('lab_db'), id=appointment_id)
+    try:
+        appointment = get_object_or_404(Appointment.objects.using('lab_db'), id=appointment_id)
+    except Exception:
+        appointment = get_object_or_404(Appointment, id=appointment_id)
+
     existing_result = getattr(appointment, 'result', None)
 
     if request.method == 'POST':
@@ -331,31 +360,27 @@ def record_test_result(request, appointment_id):
         remarks = request.POST.get('remarks')
 
         if existing_result:
-            # Update existing record and clear verification metrics
             existing_result.result_value = result_value
             existing_result.remarks = remarks
             existing_result.updated_by = request.user
             existing_result.verified = False
             existing_result.verified_by = None
             existing_result.verified_at = None
-            existing_result.save(using='lab_db')
+            existing_result.save()
             messages.success(request, "Test result updated. Verification reset pending review.")
         else:
-            # Create a completely new result tracking profile
             new_result = TestResult(
                 appointment=appointment,
                 result_value=result_value,
                 remarks=remarks,
                 updated_by=request.user
             )
-            new_result.save(using='lab_db')
+            new_result.save()
             
-            # Update parent appointment state cleanly
             appointment.status = 'Completed'
-            appointment.save(using='lab_db')
+            appointment.save()
             messages.success(request, "New laboratory test result submitted successfully.")
 
-        # THIS REDIRECTS YOU STRAIGHT BACK TO THE REQUESTS LIST
         return redirect('view_test_requests')
 
     context = {
@@ -363,6 +388,7 @@ def record_test_result(request, appointment_id):
         'result': existing_result
     }
     return render(request, 'laboratory/record_result.html', context)
+
 
 @login_required
 def generate_report_view(request, appointment_id):
@@ -378,8 +404,15 @@ def generate_report_view(request, appointment_id):
         messages.error(request, "Access restricted to authorized management profiles.")
         return redirect('dashboard')
 
-    appointment = get_object_or_404(Appointment, id=appointment_id)
-    result = getattr(appointment, 'result', None)
+    try:
+        appointment = get_object_or_404(Appointment.objects.using('lab_db'), id=appointment_id)
+        result = TestResult.objects.using('lab_db').filter(appointment=appointment).first()
+    except Exception:
+        appointment = get_object_or_404(Appointment, id=appointment_id)
+        result = TestResult.objects.filter(appointment=appointment).first()
+
+    if not result:
+        result = TestResult(appointment=appointment)
 
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -392,28 +425,20 @@ def generate_report_view(request, appointment_id):
                 messages.error(request, "Result value cannot be empty.")
                 return redirect('generate_report', appointment_id=appointment.id)
 
-            if result:
-                result.result_value = result_value
-                result.remarks = remarks
-                result.updated_by = request.user
-                result.verified = False
-                result.verified_by = None
-                result.verified_at = None
-                result.save()
-            else:
-                result = TestResult.objects.create(
-                    appointment=appointment,
-                    result_value=result_value,
-                    remarks=remarks,
-                    updated_by=request.user,
-                )
+            result.result_value = result_value
+            result.remarks = remarks
+            result.updated_by = request.user
+            result.verified = False
+            result.verified_by = None
+            result.verified_at = None
+            result.save()
 
             appointment.status = 'Completed'
             appointment.save()
             messages.success(request, "Result saved. Please verify before uploading the final report.")
 
         elif action == 'verify':
-            if not result:
+            if not result.pk:
                 messages.error(request, "Cannot verify -- no result has been entered yet.")
             else:
                 result.verified = True
@@ -422,7 +447,7 @@ def generate_report_view(request, appointment_id):
                 result.save()
                 messages.success(request, "Result marked as verified.")
 
-        return redirect('generate_report', appointment_id=appointment.id)
+        return redirect('reports_list')
 
     return render(request, 'laboratory/generate_report.html', {
         'appointment': appointment,
@@ -453,6 +478,7 @@ def download_report_view(request, appointment_id):
     buffer = io.BytesIO()
     p = canvas.Canvas(buffer, pagesize=letter)
 
+    # Header Bar
     p.setFillColor(colors.HexColor("#1a233a"))
     p.rect(0, 720, 612, 100, fill=1, stroke=0)
 
@@ -462,6 +488,7 @@ def download_report_view(request, appointment_id):
     p.setFont("Helvetica", 10)
     p.drawString(40, 740, "Certified Clinical Laboratory Report - Official Copy")
 
+    # Patient Meta Box
     p.setFillColor(colors.HexColor("#f8fafc"))
     p.rect(40, 580, 532, 110, fill=1, stroke=1)
 
@@ -478,6 +505,7 @@ def download_report_view(request, appointment_id):
     p.drawString(320, 665, f"Date Compiled: {formatted_date}")
     p.drawString(320, 645, f"Status: {appointment.status}")
 
+    # Table Header
     p.setFillColor(colors.HexColor("#2563eb"))
     p.rect(40, 520, 532, 25, fill=1, stroke=0)
     p.setFillColor(colors.white)
@@ -487,27 +515,32 @@ def download_report_view(request, appointment_id):
     p.drawString(380, 528, "NORMAL RANGE")
     p.drawString(490, 528, "FLAG")
 
+    # Table Content Row
+    test_name = appointment.test.test_name if appointment.test else "N/A"
+    normal_range = appointment.test.normal_range if (appointment.test and hasattr(appointment.test, 'normal_range')) else "N/A"
+
     p.setFillColor(colors.black)
     p.setFont("Helvetica", 11)
-    p.drawString(50, 490, f"{appointment.test.test_name}")
+    p.drawString(50, 490, f"{test_name}")
 
     try:
         live_result = appointment.result
-        display_val = live_result.result_value
+        display_val = live_result.result_value if live_result.result_value else "Pending"
         display_remarks = live_result.remarks or "NORMAL"
     except (TestResult.DoesNotExist, AttributeError):
-        display_val = "14.2 g/dL" if "blood" in appointment.test.test_name.lower() else "98 mg/dL"
+        display_val = "14.2 g/dL" if "blood" in test_name.lower() else "98 mg/dL"
         display_remarks = "NORMAL"
 
-    p.drawString(250, 490, display_val)
-    p.drawString(380, 490, appointment.test.normal_range)
+    p.drawString(250, 490, str(display_val))
+    p.drawString(380, 490, str(normal_range))
     p.setFillColor(colors.HexColor("#16a34a"))
-    p.drawString(490, 490, display_remarks)
+    p.drawString(490, 490, str(display_remarks))
 
     p.setStrokeColor(colors.HexColor("#cbd5e1"))
     p.setLineWidth(1)
     p.line(40, 475, 572, 475)
 
+    # Footer
     p.setFillColor(colors.HexColor("#64748b"))
     p.setFont("Helvetica-Oblique", 9)
     p.drawString(40, 100, "* This is a digitally verified laboratory report generated by LabPortal.")
@@ -520,41 +553,14 @@ def download_report_view(request, appointment_id):
     return FileResponse(buffer, as_attachment=True, filename=f"LabReport_00{appointment.id}.pdf")
 
 
-def view_test_requests(request):
-    # Fixed: Using the actual field 'appointment_date' for database ordering
-    test_requests = Appointment.objects.all().order_by('-appointment_date')
-    
-    return render(request, 'laboratory/test_requests.html', {
-        'test_requests': test_requests
-    })
-    
 @login_required
 def reports_list(request):
-    # This queries all completed rows and renders the queue table list
-    appointments = Appointment.objects.using('lab_db').filter(status='Completed').order_by('-appointment_date')
-    return render(request, 'laboratory/report_list.html', {'appointments': appointments})
-
-@login_required
-def generate_report_view(request, appointment_id):
-    # This targets the specific unique item context
-    appointment = get_object_or_404(Appointment.objects.using('lab_db'), id=appointment_id)
-    
+    """
+    Queries all completed appointments and renders the queue table list.
+    """
     try:
-        result = TestResult.objects.using('lab_db').get(appointment=appointment)
-    except TestResult.DoesNotExist:
-        result = TestResult(appointment=appointment)
+        appointments = Appointment.objects.using('lab_db').filter(status='Completed').order_by('-appointment_date')
+    except Exception:
+        appointments = Appointment.objects.filter(status='Completed').order_by('-appointment_date')
 
-    if request.method == 'POST':
-        result.result_value = request.POST.get('result_value')
-        result.remarks = request.POST.get('remarks')
-        if request.POST.get('verifyCheck') == 'on':
-            result.verified = True
-        result.save(using='lab_db')
-        return redirect('reports_list')
-
-    context = {
-        'appointment': appointment,
-        'result': result,
-    }
-    # Rendering the new single entry sheet view
-    return render(request, 'laboratory/generate_report.html', context)
+    return render(request, 'laboratory/report_list.html', {'appointments': appointments})

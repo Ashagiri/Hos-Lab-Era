@@ -64,33 +64,14 @@
                             <label class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fa-solid fa-user text-muted"></i></span>
-                                <input type="text" name="full_name" class="form-control" placeholder="Enter your full name" value="{{ request.user.username }}" required>
-                            </div>
-                        </div>
-
-                        <div class="col-md-3">
-                            <label class="form-label fw-semibold">Age <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fa-solid fa-calendar text-muted"></i></span>
-                                <input type="number" name="age" class="form-control" placeholder="Age" required>
-                            </div>
-                        </div>
-
-                        <div class="col-md-3">
-                            <label class="form-label fw-semibold">Gender <span class="text-danger">*</span></label>
-                            <select name="gender" class="form-select" required>
-                                <option selected disabled value="">Select Gender</option>
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Mobile Number <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <span class="input-group-text fw-semibold text-muted">+977</span>
-                                <input type="tel" name="mobile" class="form-control" placeholder="98XXXXXXXX" required>
+                                <input 
+                                  type="text" 
+                                  name="full_name" 
+                                  class="form-control" 
+                                  placeholder="Enter your full name" 
+                                  value="{% if request.user.full_name %}{{ request.user.full_name }}{% elif request.user.first_name %}{{ request.user.first_name }} {{ request.user.last_name }}{% else %}{{ request.user.username }}{% endif %}" 
+                                  required
+                                >
                             </div>
                         </div>
 
@@ -102,21 +83,70 @@
                             </div>
                         </div>
 
+                        
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Mobile Number <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text fw-semibold text-muted">+977</span>
+                                <input 
+                                  type="tel" 
+                                  name="mobile" 
+                                  class="form-control" 
+                                  placeholder="98XXXXXXXX" 
+                                  value="{{ request.user.phone }}" 
+                                  pattern="^(98|97|96)\d{8}$"
+                                  required
+                                >
+                            </div>
+                        </div>
+
+                         <div class="col-md-3">
+                            <label class="form-label fw-semibold">Age <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fa-solid fa-calendar text-muted"></i></span>
+                                <input 
+                                  type="number" 
+                                  name="age" 
+                                  class="form-control" 
+                                  placeholder="Age" 
+                                  value="{{ request.user.age }}" 
+                                  min="1" 
+                                  max="120"
+                                  required
+                                >
+                            </div>
+                        </div>
+
+                        
+
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Address <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fa-solid fa-location-dot text-muted"></i></span>
-                                <input type="text" name="address" class="form-control" placeholder="Enter your address" required>
+                               <input type="text"
+       class="form-control"
+       id="address"
+       name="address"
+       placeholder="Enter your address"
+       value="{{ user_info.address|default:'' }}"
+       required>
                             </div>
                         </div>
 
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">ID Number <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fa-solid fa-id-card text-muted"></i></span>
-                                <input type="text" name="id_number" class="form-control" placeholder="Enter your ID number" required>
-                            </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Gender <span class="text-danger">*</span></label>
+                            <select name="gender" class="form-select" required>
+                                <option value="" disabled {% if not request.user.gender %}selected{% endif %}>Select Gender</option>
+                                <option value="Male" {% if request.user.gender|lower == 'male' %}selected{% endif %}>Male</option>
+                                <option value="Female" {% if request.user.gender|lower == 'female' %}selected{% endif %}>Female</option>
+                                <option value="Other" {% if request.user.gender|lower == 'other' %}selected{% endif %}>Other</option>
+                            </select>
                         </div>
+
+                       
+
+                        
                     </div>
                 </div>
             </div>
@@ -258,8 +288,16 @@
         checkbox.addEventListener('change', updateTotal);
       });
 
-      
       updateTotal();
+
+      // Prevent past dates for appointment scheduling
+      document.addEventListener('DOMContentLoaded', function() {
+        const appointmentDate = document.getElementById('appointmentDate');
+        if (appointmentDate) {
+          const today = new Date().toISOString().split('T')[0];
+          appointmentDate.setAttribute('min', today);
+        }
+      });
     </script>
 
 </body>
