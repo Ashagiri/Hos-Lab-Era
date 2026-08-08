@@ -1,7 +1,11 @@
 import io
 import re
+import logging
 from datetime import timedelta
 
+from django.conf import settings
+from django.urls import reverse
+from django.core.mail import EmailMultiAlternatives
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import FileResponse, JsonResponse
 from django.contrib.auth.decorators import login_required
@@ -11,6 +15,8 @@ from django.contrib.auth import update_session_auth_hash
 from django.db.models import Count, Sum, Q
 from django.utils.dateparse import parse_date
 from django.utils import timezone
+
+logger = logging.getLogger(__name__)
 
 # ReportLab Engine Modules
 from reportlab.pdfgen import canvas
@@ -791,7 +797,13 @@ def generate_report_view(request, appointment_id):
                 result.verified_by = request.user
                 result.verified_at = timezone.now()
                 result.save()
-                messages.success(request, "Result marked as verified.")
+
+                email_sent = _send_report_ready_email(appointment)
+                if email_sent:
+                    messages.success(request, "Result verified and report emailed to the patient.")
+                else:
+                    messages.success(request, "Result marked as verified.")
+                    messages.warning(request, "Could not email the patient (no address on file or delivery failed).")
 
         return redirect('reports_list')
 
@@ -806,19 +818,13 @@ def generate_report_view(request, appointment_id):
 # SECURE REPORT DOCUMENT STREAM DISTRIBUTION
 # =========================================================================
 
-@login_required
-def download_report_view(request, appointment_id):
-    is_staff = (
-        (hasattr(request.user, 'role') and request.user.role in ['admin', 'technician'])
-        or request.user.username == 'tech'
-        or request.user.is_superuser
-    )
-
-    if is_staff:
-        appointment = get_object_or_404(Appointment, id=appointment_id)
-    else:
-        appointment = get_object_or_404(Appointment, id=appointment_id, patient=request.user)
-
+def _build_report_pdf_bytes(appointment):
+    """
+    Renders the certified PDF report for a single appointment and
+    returns the raw PDF bytes. Shared by the download view and by
+    the "report ready" email so both always produce the exact same
+    document.
+    """
     snapshot = _resolve_patient_snapshot(appointment)
     test_name = appointment.test.test_name if appointment.test else "N/A"
     normal_range = appointment.test.normal_range if (appointment.test and hasattr(appointment.test, 'normal_range')) else "N/A"
@@ -1038,7 +1044,110 @@ def download_report_view(request, appointment_id):
     doc.build(story)
 
     buffer.seek(0)
-    return FileResponse(buffer, as_attachment=True, filename=f"LabReport_00{appointment.id}.pdf")
+    return buffer.getvalue()
+
+
+@login_required
+def download_report_view(request, appointment_id):
+    is_staff = (
+        (hasattr(request.user, 'role') and request.user.role in ['admin', 'technician'])
+        or request.user.username == 'tech'
+        or request.user.is_superuser
+    )
+
+    if is_staff:
+        appointment = get_object_or_404(Appointment, id=appointment_id)
+    else:
+        appointment = get_object_or_404(Appointment, id=appointment_id, patient=request.user)
+
+    pdf_bytes = _build_report_pdf_bytes(appointment)
+    return FileResponse(
+        io.BytesIO(pdf_bytes),
+        as_attachment=True,
+        filename=f"LabReport_00{appointment.id}.pdf",
+    )
+
+
+# =========================================================================
+# AUTOMATED "REPORT READY" EMAIL NOTIFICATION
+# =========================================================================
+
+def _send_report_ready_email(appointment):
+    """
+    Fired the moment a technician verifies/signs a report (the same
+    action that makes it visible on the patient's dashboard). Emails
+    the patient that their report is ready, with the certified PDF
+    attached. Failures are logged but never interrupt the technician's
+    workflow -- a failed email should not block a signed report.
+    """
+    patient = appointment.patient
+    if not patient.email:
+        return False
+
+    try:
+        pdf_bytes = _build_report_pdf_bytes(appointment)
+
+        patient_name = patient.get_full_name() or patient.username
+        test_name = appointment.test.test_name if appointment.test else "your requested test"
+        report_url = settings.SITE_URL.rstrip('/') + reverse('patient_reports')
+
+        subject = f"Your Lab Report is Ready — Appointment #LMS-00{appointment.id}"
+
+        text_body = (
+            f"Hi {patient_name},\n\n"
+            f"Your laboratory report for \"{test_name}\" (Appointment #LMS-00{appointment.id}) "
+            f"has been reviewed, signed, and is now ready.\n\n"
+            f"The certified PDF is attached to this email, and you can also view or "
+            f"re-download it anytime from your dashboard:\n{report_url}\n\n"
+            f"— LabPortal Medical Diagnostics"
+        )
+
+        html_body = f"""
+        <div style="font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;max-width:520px;margin:0 auto;">
+          <div style="background:#0f172a;padding:20px 24px;border-radius:8px 8px 0 0;">
+            <span style="color:#fff;font-size:16px;font-weight:700;">LabPortal Medical Diagnostics</span>
+          </div>
+          <div style="border:1px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;padding:24px;">
+            <p style="font-size:15px;color:#1e293b;">Hi {patient_name},</p>
+            <p style="font-size:14px;color:#334155;line-height:1.6;">
+              Your laboratory report for <b>{test_name}</b>
+              (Appointment <b>#LMS-00{appointment.id}</b>) has been reviewed, signed,
+              and is now ready.
+            </p>
+            <p style="font-size:14px;color:#334155;line-height:1.6;">
+              The certified PDF is attached to this email. You can also view or
+              re-download it anytime from your dashboard.
+            </p>
+            <p style="margin:24px 0;">
+              <a href="{report_url}"
+                 style="background:#2563eb;color:#fff;text-decoration:none;padding:10px 20px;
+                        border-radius:6px;font-size:14px;font-weight:600;display:inline-block;">
+                View My Reports
+              </a>
+            </p>
+            <p style="font-size:12px;color:#94a3b8;margin-top:24px;">
+              This is an automated notification from LabPortal Medical Diagnostics.
+            </p>
+          </div>
+        </div>
+        """
+
+        email = EmailMultiAlternatives(
+            subject=subject,
+            body=text_body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[patient.email],
+        )
+        email.attach_alternative(html_body, "text/html")
+        email.attach(f"LabReport_00{appointment.id}.pdf", pdf_bytes, "application/pdf")
+        email.send(fail_silently=False)
+        return True
+
+    except Exception:
+        logger.exception(
+            "Failed to send report-ready email for appointment #%s", appointment.id
+        )
+        return False
 
 
 @login_required
