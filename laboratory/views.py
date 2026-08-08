@@ -1,4 +1,5 @@
 import io
+import re
 from datetime import timedelta
 
 from django.shortcuts import render, redirect, get_object_or_404
@@ -14,6 +15,12 @@ from django.utils import timezone
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
+from reportlab.lib.units import mm
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT
+from reportlab.platypus import (
+    SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, HRFlowable,
+)
 
 # Database App Entities
 from .models import LabTest, Appointment, TestResult, PatientProfile
@@ -527,6 +534,64 @@ def check_slot_availability(request):
 # DIAGNOSTIC DATA ENTRY & PROCESSING (STAFF ONLY)
 # =========================================================================
 
+def _pdf_safe(text):
+    """
+    ReportLab's base-14 fonts (Helvetica etc.) silently render a blank
+    glyph for a handful of common lab-report characters -- most notably
+    the micro sign (µ) used in µL / µg/dL -- even though no exception is
+    raised. Swap those out for safe ASCII look-alikes so nothing on the
+    PDF ever comes out as an invisible gap.
+    """
+    if text is None:
+        return ""
+    text = str(text)
+    replacements = {
+        "\u00b5": "u",   # µ MICRO SIGN
+        "\u03bc": "u",   # μ GREEK SMALL LETTER MU
+        "\u2013": "-",   # – en dash
+        "\u2014": "-",   # — em dash
+        "\u2018": "'", "\u2019": "'",
+        "\u201c": '"', "\u201d": '"',
+        "\u00a0": " ",   # non-breaking space
+    }
+    for bad, good in replacements.items():
+        text = text.replace(bad, good)
+    return text
+
+
+def _compute_flag(result_value, normal_range):
+    """
+    Attempts to classify a numeric result against a simple "low-high"
+    normal range (e.g. "70-100" or "4.5 - 11.0 x10^3/uL") as LOW / HIGH /
+    NORMAL. Composite, multi-parameter ranges (e.g. a CBC panel string
+    listing Hb/WBC/Platelets together) can't be safely reduced to one
+    number, so those -- and anything non-numeric -- fall back to a
+    neutral "REVIEW" flag rather than guessing.
+    """
+    try:
+        value = float(str(result_value).strip())
+    except (TypeError, ValueError):
+        return "REVIEW", "#64748b"
+
+    range_text = normal_range or ""
+    # Only trust a range string that is a single "low-high" pair, not a
+    # composite panel listing several parameters (those contain multiple
+    # colons/commas and would give a misleading flag).
+    if range_text.count(":") > 0 or range_text.count(",") > 0:
+        return "REVIEW", "#64748b"
+
+    match = re.search(r"(-?\d+(?:\.\d+)?)\s*[-\u2013]\s*(-?\d+(?:\.\d+)?)", range_text)
+    if not match:
+        return "REVIEW", "#64748b"
+
+    low, high = float(match.group(1)), float(match.group(2))
+    if value < low:
+        return "LOW", "#d97706"
+    if value > high:
+        return "HIGH", "#dc2626"
+    return "NORMAL", "#16a34a"
+
+
 def _resolve_patient_snapshot(appointment):
     """
     Prefer the demographic snapshot captured at booking time
@@ -626,74 +691,223 @@ def download_report_view(request, appointment_id):
     else:
         appointment = get_object_or_404(Appointment, id=appointment_id, patient=request.user)
 
-    buffer = io.BytesIO()
-    p = canvas.Canvas(buffer, pagesize=letter)
+    snapshot = _resolve_patient_snapshot(appointment)
+    test_name = appointment.test.test_name if appointment.test else "N/A"
+    normal_range = appointment.test.normal_range if (appointment.test and hasattr(appointment.test, 'normal_range')) else "N/A"
+    unit = appointment.test.unit if (appointment.test and hasattr(appointment.test, 'unit')) else ""
 
-    p.setFillColor(colors.HexColor("#1a233a"))
-    p.rect(0, 720, 612, 100, fill=1, stroke=0)
+    try:
+        live_result = appointment.result
+        result_value = live_result.result_value or "Pending"
+        remarks = (live_result.remarks or "").strip()
+        is_verified = bool(live_result.verified)
+        verified_by = live_result.verified_by.get_full_name() or live_result.verified_by.username if live_result.verified_by else None
+        verified_at = live_result.verified_at
+    except (TestResult.DoesNotExist, AttributeError):
+        result_value = "Pending"
+        remarks = ""
+        is_verified = False
+        verified_by = None
+        verified_at = None
 
-    p.setFillColor(colors.white)
-    p.setFont("Helvetica-Bold", 22)
-    p.drawString(40, 760, "LABPORTAL MEDICAL DIAGNOSTICS")
-    p.setFont("Helvetica", 10)
-    p.drawString(40, 740, "Certified Clinical Laboratory Report - Official Copy")
-
-    p.setFillColor(colors.HexColor("#f8fafc"))
-    p.rect(40, 580, 532, 110, fill=1, stroke=1)
-
-    p.setFillColor(colors.HexColor("#1e293b"))
-    p.setFont("Helvetica-Bold", 12)
-    p.drawString(60, 665, f"Patient Name: {appointment.patient.get_full_name() or appointment.patient.username}")
-    p.drawString(60, 645, f"Report ID: #LMS-00{appointment.id}")
+    flag_text, flag_color = _compute_flag(result_value, normal_range)
 
     if hasattr(appointment.appointment_date, 'strftime'):
         formatted_date = appointment.appointment_date.strftime('%B %d, %Y')
     else:
         formatted_date = str(appointment.appointment_date)
 
-    p.drawString(320, 665, f"Date Compiled: {formatted_date}")
-    p.drawString(320, 645, f"Status: {appointment.status}")
+    # ---------------------------------------------------------------
+    # Styles
+    # ---------------------------------------------------------------
+    styles = getSampleStyleSheet()
+    label_style = ParagraphStyle(
+        "Label", parent=styles["Normal"], fontName="Helvetica", fontSize=9,
+        textColor=colors.HexColor("#64748b"), leading=12,
+    )
+    value_style = ParagraphStyle(
+        "Value", parent=styles["Normal"], fontName="Helvetica-Bold", fontSize=10.5,
+        textColor=colors.HexColor("#1e293b"), leading=13,
+    )
+    cell_style = ParagraphStyle(
+        "Cell", parent=styles["Normal"], fontName="Helvetica", fontSize=9.5,
+        textColor=colors.HexColor("#1e293b"), leading=12.5,
+    )
+    cell_bold_style = ParagraphStyle(
+        "CellBold", parent=cell_style, fontName="Helvetica-Bold",
+    )
+    remarks_style = ParagraphStyle(
+        "Remarks", parent=styles["Normal"], fontName="Helvetica-Oblique", fontSize=9.5,
+        textColor=colors.HexColor("#334155"), leading=13,
+    )
 
-    p.setFillColor(colors.HexColor("#2563eb"))
-    p.rect(40, 520, 532, 25, fill=1, stroke=0)
-    p.setFillColor(colors.white)
-    p.setFont("Helvetica-Bold", 10)
-    p.drawString(50, 528, "TEST PARAMETER")
-    p.drawString(250, 528, "RESULT")
-    p.drawString(380, 528, "NORMAL RANGE")
-    p.drawString(490, 528, "FLAG")
+    def field(label, value):
+        return [Paragraph(_pdf_safe(label), label_style), Paragraph(_pdf_safe(value), value_style)]
 
-    test_name = appointment.test.test_name if appointment.test else "N/A"
-    normal_range = appointment.test.normal_range if (appointment.test and hasattr(appointment.test, 'normal_range')) else "N/A"
+    # ---------------------------------------------------------------
+    # Build the flowable story
+    # ---------------------------------------------------------------
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer, pagesize=letter,
+        leftMargin=40, rightMargin=40, topMargin=0, bottomMargin=40,
+    )
+    story = []
 
-    p.setFillColor(colors.black)
-    p.setFont("Helvetica", 11)
-    p.drawString(50, 490, f"{test_name}")
+    # --- Header banner ---
+    header_data = [[
+        Paragraph(
+            '<font color="white" size="18"><b>LABPORTAL MEDICAL DIAGNOSTICS</b></font>'
+            '<br/><font color="#cbd5e1" size="9">Certified Clinical Laboratory Report &mdash; Official Copy</font>',
+            ParagraphStyle("HeaderTitle", fontName="Helvetica", leading=16),
+        ),
+        Paragraph(
+            f'<font color="white" size="9">Report ID</font><br/>'
+            f'<font color="white" size="13"><b>#LMS-00{appointment.id}</b></font>',
+            ParagraphStyle("HeaderId", alignment=TA_RIGHT, fontName="Helvetica", leading=14),
+        ),
+    ]]
+    header_table = Table(header_data, colWidths=[380, 152])
+    header_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#1a233a")),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("LEFTPADDING", (0, 0), (0, 0), 40),
+        ("RIGHTPADDING", (1, 0), (1, 0), 40),
+        ("TOPPADDING", (0, 0), (-1, -1), 24),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 24),
+    ]))
+    story.append(header_table)
+    story.append(Spacer(1, 20))
 
-    try:
-        live_result = appointment.result
-        display_val = live_result.result_value if live_result.result_value else "Pending"
-        display_remarks = live_result.remarks or "NORMAL"
-    except (TestResult.DoesNotExist, AttributeError):
-        display_val = "14.2 g/dL" if "blood" in test_name.lower() else "98 mg/dL"
-        display_remarks = "NORMAL"
+    # --- Patient information panel ---
+    patient_name = appointment.patient.get_full_name() or appointment.patient.username
+    info_rows = [
+        [
+            field("PATIENT NAME", patient_name),
+            field("REPORT DATE", formatted_date),
+        ],
+        [
+            field("EMAIL", appointment.patient.email or "-"),
+            field("STATUS", appointment.status),
+        ],
+        [
+            field("AGE / GENDER", f"{snapshot['age']} / {snapshot['gender_display']}"),
+            field("ADDRESS", snapshot['address']),
+        ],
+        [
+            field("REFERRAL", "Doctor Referred" if appointment.referral_type == "doctor" else "Self-Referred"),
+            field("COLLECTION SLOT", appointment.appointment_time or "-"),
+        ],
+    ]
+    info_table_data = []
+    for left, right in info_rows:
+        info_table_data.append([left[0], left[1], right[0], right[1]])
+    info_table = Table(info_table_data, colWidths=[95, 158, 95, 158])
+    info_table.setStyle(TableStyle([
+        ("BOX", (0, 0), (-1, -1), 1, colors.HexColor("#e2e8f0")),
+        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#f8fafc")),
+        ("TOPPADDING", (0, 0), (-1, -1), 8),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+        ("LEFTPADDING", (0, 0), (0, -1), 14),
+        ("RIGHTPADDING", (-1, 0), (-1, -1), 14),
+        ("LINEBELOW", (0, 0), (-1, -2), 0.5, colors.HexColor("#e2e8f0")),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+    ]))
+    story.append(info_table)
+    story.append(Spacer(1, 22))
 
-    p.drawString(250, 490, str(display_val))
-    p.drawString(380, 490, str(normal_range))
-    p.setFillColor(colors.HexColor("#16a34a"))
-    p.drawString(490, 490, str(display_remarks))
+    # --- Results table ---
+    story.append(Paragraph(
+        "LABORATORY RESULTS",
+        ParagraphStyle("SectionTitle", fontName="Helvetica-Bold", fontSize=11,
+                        textColor=colors.HexColor("#1a233a"), spaceAfter=8),
+    ))
 
-    p.setStrokeColor(colors.HexColor("#cbd5e1"))
-    p.setLineWidth(1)
-    p.line(40, 475, 572, 475)
+    flag_html = f'<font color="{flag_color}"><b>{_pdf_safe(flag_text)}</b></font>'
+    results_header = [
+        Paragraph("<b>TEST PARAMETER</b>", cell_bold_style),
+        Paragraph("<b>RESULT</b>", cell_bold_style),
+        Paragraph("<b>UNIT</b>", cell_bold_style),
+        Paragraph("<b>NORMAL RANGE</b>", cell_bold_style),
+        Paragraph("<b>FLAG</b>", cell_bold_style),
+    ]
+    results_row = [
+        Paragraph(_pdf_safe(test_name), cell_style),
+        Paragraph(f"<b>{_pdf_safe(result_value)}</b>", cell_bold_style),
+        Paragraph(_pdf_safe(unit), cell_style),
+        Paragraph(_pdf_safe(normal_range), cell_style),
+        Paragraph(flag_html, cell_style),
+    ]
+    results_table = Table(
+        [results_header, results_row],
+        colWidths=[140, 65, 75, 155, 65],
+    )
+    results_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#2563eb")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("BOX", (0, 0), (-1, -1), 1, colors.HexColor("#cbd5e1")),
+        ("INNERGRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#e2e8f0")),
+        ("TOPPADDING", (0, 0), (-1, -1), 9),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 9),
+        ("LEFTPADDING", (0, 0), (-1, -1), 8),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white]),
+    ]))
+    story.append(results_table)
+    story.append(Spacer(1, 4))
+    story.append(Paragraph(
+        "Flags marked REVIEW indicate a composite/panel result or a non-numeric value that a clinician "
+        "should interpret directly rather than an automated low/high comparison.",
+        ParagraphStyle("FootNote", fontName="Helvetica-Oblique", fontSize=7.5,
+                        textColor=colors.HexColor("#94a3b8")),
+    ))
+    story.append(Spacer(1, 22))
 
-    p.setFillColor(colors.HexColor("#64748b"))
-    p.setFont("Helvetica-Oblique", 9)
-    p.drawString(40, 100, "* This is a digitally verified laboratory report generated by LabPortal.")
-    p.drawString(40, 85, "  Authorized signatures are archived within security infrastructure registries securely.")
+    # --- Clinical remarks ---
+    story.append(Paragraph(
+        "CLINICAL REMARKS",
+        ParagraphStyle("SectionTitle2", fontName="Helvetica-Bold", fontSize=11,
+                        textColor=colors.HexColor("#1a233a"), spaceAfter=8),
+    ))
+    remarks_box_data = [[Paragraph(
+        _pdf_safe(remarks) if remarks else "No additional remarks were recorded for this test.",
+        remarks_style,
+    )]]
+    remarks_table = Table(remarks_box_data, colWidths=[532])
+    remarks_table.setStyle(TableStyle([
+        ("BOX", (0, 0), (-1, -1), 1, colors.HexColor("#e2e8f0")),
+        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#f8fafc")),
+        ("TOPPADDING", (0, 0), (-1, -1), 12),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
+        ("LEFTPADDING", (0, 0), (-1, -1), 14),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 14),
+    ]))
+    story.append(remarks_table)
+    story.append(Spacer(1, 22))
 
-    p.showPage()
-    p.save()
+    # --- Verification / sign-off ---
+    if is_verified and verified_by:
+        verified_line = (
+            f'<font color="#16a34a"><b>&#10003; VERIFIED</b></font> by {_pdf_safe(verified_by)}'
+            f' on {verified_at.strftime("%B %d, %Y %I:%M %p") if verified_at else "-"}'
+        )
+    else:
+        verified_line = '<font color="#d97706"><b>PENDING VERIFICATION</b></font> &mdash; awaiting authorized sign-off'
+    story.append(Paragraph(verified_line, ParagraphStyle(
+        "Verify", fontName="Helvetica", fontSize=9.5, textColor=colors.HexColor("#334155"),
+    )))
+    story.append(Spacer(1, 8))
+    story.append(HRFlowable(width="100%", color=colors.HexColor("#cbd5e1"), thickness=0.75))
+    story.append(Spacer(1, 8))
+    story.append(Paragraph(
+        "* This is a digitally generated laboratory report issued by LabPortal Medical Diagnostics. "
+        "Authorized signatures are held on file within our secure records infrastructure.",
+        ParagraphStyle("Disclaimer", fontName="Helvetica-Oblique", fontSize=8,
+                        textColor=colors.HexColor("#64748b")),
+    ))
+
+    doc.build(story)
 
     buffer.seek(0)
     return FileResponse(buffer, as_attachment=True, filename=f"LabReport_00{appointment.id}.pdf")
