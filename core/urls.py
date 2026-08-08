@@ -16,6 +16,8 @@ from laboratory.views import (
     reports_list,
     view_test_requests,
     patient_reports_view,
+    booking_status_view,
+    cancel_booking_view,
 )
 from accounts.views import register_view, login_view, technician_login_view, logout_view
 
@@ -47,6 +49,10 @@ urlpatterns = [
 
     # Dedicated Patient "My Reports" Page
     path('reports/', patient_reports_view, name='patient_reports'),
+
+    # Dedicated Patient "Bookings Status" Live Tracker Page
+    path('bookings/status/', booking_status_view, name='booking_status'),
+    path('bookings/<int:appointment_id>/cancel/', cancel_booking_view, name='cancel_booking'),
 
     # Reports: list/picker page, then per-appointment generate view.
     # This single endpoint now handles both "Input Results" (from the
