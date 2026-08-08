@@ -6,6 +6,7 @@ from django.http import FileResponse, JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
+from django.db.models import Count
 from django.utils.dateparse import parse_date
 from django.utils import timezone
 
@@ -141,12 +142,58 @@ def technician_dashboard_view(request):
     if search_query:
         appointments = appointments.filter(patient__username__icontains=search_query)
 
+    today = timezone.localdate()
+
+    pending_count = Appointment.objects.filter(status='Pending').count()
+    completed_today_count = Appointment.objects.filter(
+        status='Completed', appointment_date__date=today
+    ).count()
+    cancelled_count = Appointment.objects.filter(status='Cancelled').count()
+    total_patients = Appointment.objects.values('patient').distinct().count()
+
+    # Live queue: pending appointments waiting to be processed, soonest first.
+    active_queue = (
+        Appointment.objects.filter(status='Pending')
+        .select_related('patient', 'test')
+        .order_by('appointment_date')[:8]
+    )
+
+    # Most recently completed sessions, for a quick activity feed.
+    recent_completed = (
+        Appointment.objects.filter(status='Completed')
+        .select_related('patient', 'test')
+        .order_by('-appointment_date')[:5]
+    )
+
+    # Test-volume breakdown so staff can see what's driving demand.
+    test_breakdown_qs = (
+        Appointment.objects.values('test__test_name')
+        .annotate(count=Count('id'))
+        .order_by('-count')[:5]
+    )
+    max_breakdown_count = max([row['count'] for row in test_breakdown_qs], default=0)
+    test_breakdown = [
+        {
+            'name': row['test__test_name'],
+            'count': row['count'],
+            'percent': round((row['count'] / max_breakdown_count) * 100) if max_breakdown_count else 0,
+        }
+        for row in test_breakdown_qs
+    ]
+
     return render(request, 'laboratory/technician.html', {
         'appointments': appointments,
-        'pending_count': Appointment.objects.filter(status='Pending').count(),
+        'pending_count': pending_count,
         'completed_count': Appointment.objects.filter(status='Completed').count(),
+        'completed_today_count': completed_today_count,
+        'cancelled_count': cancelled_count,
+        'total_patients': total_patients,
+        'active_queue': active_queue,
+        'recent_completed': recent_completed,
+        'test_breakdown': test_breakdown,
         'status_filter': status_filter,
         'search_query': search_query,
+        'today': today,
     })
 
 
@@ -401,6 +448,56 @@ def patient_reports_view(request):
         'completed_count': completed_count,
         'pending_count': pending_count,
     })
+
+
+@login_required
+def booking_status_view(request):
+    """
+    Dedicated "Bookings Status" page for patients -- a live tracker showing
+    every appointment the logged-in patient holds, its stage in the
+    workflow (Booked -> Sample Collection -> Processing -> Report Ready),
+    and lets a patient cancel a still-pending booking.
+    """
+    user = request.user
+    appointments = Appointment.objects.filter(patient=user).select_related('test').order_by('-appointment_date')
+
+    status_filter = request.GET.get('status', '').strip()
+    if status_filter in ('Pending', 'Completed', 'Cancelled'):
+        appointments = appointments.filter(status=status_filter)
+
+    base_qs = Appointment.objects.filter(patient=user)
+    total_count = base_qs.count()
+    completed_count = base_qs.filter(status='Completed').count()
+    pending_count = base_qs.filter(status='Pending').count()
+    cancelled_count = base_qs.filter(status='Cancelled').count()
+
+    return render(request, 'laboratory/booking_status.html', {
+        'appointments': appointments,
+        'status_filter': status_filter,
+        'total_count': total_count,
+        'completed_count': completed_count,
+        'pending_count': pending_count,
+        'cancelled_count': cancelled_count,
+    })
+
+
+@login_required
+def cancel_booking_view(request, appointment_id):
+    """
+    Lets a patient cancel their own still-pending appointment directly
+    from the Bookings Status tracker.
+    """
+    appointment = get_object_or_404(Appointment, id=appointment_id, patient=request.user)
+
+    if request.method == 'POST':
+        if appointment.status == 'Pending':
+            appointment.status = 'Cancelled'
+            appointment.save()
+            messages.success(request, f"Booking #LMS-00{appointment.id} has been cancelled.")
+        else:
+            messages.error(request, "Only pending bookings can be cancelled.")
+
+    return redirect('booking_status')
 
 
 @login_required
