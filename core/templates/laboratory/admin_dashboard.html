@@ -144,7 +144,7 @@
           <a href="{% url 'admin_technician_records' %}" class="nav-link">
             <i class="bi bi-person-badge"></i> <span>Technician Records</span>
           </a>
-          <a href="{% url 'reports_list' %}" class="nav-link">
+          <a href="{% url 'admin_reports_list' %}" class="nav-link">
             <i class="bi bi-bar-chart-line"></i> <span>All Reports</span>
           </a>
           {% if can_open_django_admin %}
@@ -237,7 +237,7 @@
           </div>
 
           <div class="col-6 col-lg-4">
-            <a href="{% url 'reports_list' %}" class="text-decoration-none">
+            <a href="{% url 'admin_reports_list' %}" class="text-decoration-none">
               <div class="stat-card p-3 d-flex align-items-center justify-content-between">
                 <div>
                   <span class="text-muted small d-block mb-1 fw-medium">Completed Work</span>
@@ -282,7 +282,7 @@
             <div class="data-table-card p-4">
               <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="mb-0 fw-bold text-dark">Recent Booking Activity</h5>
-                <a href="{% url 'reports_list' %}" class="btn btn-sm btn-outline-primary">
+                <a href="{% url 'admin_reports_list' %}" class="btn btn-sm btn-outline-primary">
                   <i class="bi bi-list-ul me-1"></i>View All Reports
                 </a>
               </div>

@@ -17,6 +17,7 @@ from laboratory.views import (
     check_slot_availability,
     generate_report_view,
     reports_list,
+    admin_reports_list,
     view_test_requests,
     patient_reports_view,
     booking_status_view,
@@ -53,6 +54,7 @@ urlpatterns = [
     path('dashboard/admin/', admin_dashboard_view, name='admin_dashboard'),
     path('dashboard/admin/patients/', admin_patient_records_view, name='admin_patient_records'),
     path('dashboard/admin/technicians/', admin_technician_records_view, name='admin_technician_records'),
+    path('dashboard/admin/reports/', admin_reports_list, name='admin_reports_list'),
 
     # Patient Scheduling Operations
     path('booking/', booking_view, name='booking'),

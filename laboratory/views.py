@@ -1045,3 +1045,37 @@ def download_report_view(request, appointment_id):
 def reports_list(request):
     appointments = Appointment.objects.filter(status='Completed').select_related('patient', 'test').order_by('-appointment_date')
     return render(request, 'laboratory/report_list.html', {'appointments': appointments})
+
+
+@login_required
+def admin_reports_list(request):
+    """
+    Dedicated, read-only "All Reports" page for administrators -- a
+    simpler view of every completed report and its sign-off status,
+    styled to match the rest of the admin dashboard instead of
+    reusing the technician's "Generate Reports" workspace.
+    """
+    if not _is_admin(request.user):
+        messages.error(request, "Access restricted to authorized administrator profiles.")
+        return redirect('login')
+
+    search_query = request.GET.get('q', '').strip()
+
+    appointments = Appointment.objects.filter(status='Completed').select_related(
+        'patient', 'test', 'result'
+    ).order_by('-appointment_date')
+
+    if search_query:
+        appointments = appointments.filter(
+            Q(patient__username__icontains=search_query)
+            | Q(patient__full_name__icontains=search_query)
+            | Q(patient__email__icontains=search_query)
+        )
+
+    can_open_django_admin = request.user.is_staff or request.user.is_superuser
+
+    return render(request, 'laboratory/admin_report_list.html', {
+        'appointments': appointments,
+        'search_query': search_query,
+        'can_open_django_admin': can_open_django_admin,
+    })
