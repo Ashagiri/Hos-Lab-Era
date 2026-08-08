@@ -1,0 +1,325 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bookings Status - Lab Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+      body {
+        background-image: url("{% static 'fff.jpg' %}");
+        background-color: #fdfdfd;
+        background-repeat: no-repeat;
+        background-position: center center;
+        background-size: cover;
+        background-attachment: fixed;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      }
+
+      .stat-pill {
+        border-radius: 16px;
+        padding: 1.1rem 1.25rem;
+      }
+
+      .filter-chip {
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.82rem;
+        padding: 0.45rem 1rem;
+        border-radius: 30px;
+        border: 1px solid #e2e8f0;
+        color: #475569;
+        background: #ffffff;
+        transition: all 0.15s ease-in-out;
+      }
+      .filter-chip:hover {
+        color: #0d6efd;
+        border-color: #0d6efd;
+      }
+      .filter-chip.active {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+        color: #ffffff;
+      }
+
+      .booking-card {
+        border: 1px solid #e2e8f0;
+        transition: box-shadow 0.15s ease-in-out;
+      }
+      .booking-card:hover {
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+      }
+
+      .icon-circle {
+        width: 46px;
+        height: 46px;
+        flex-shrink: 0;
+      }
+
+      /* --- Progress Tracker --- */
+      .tracker {
+        display: flex;
+        align-items: flex-start;
+        width: 100%;
+      }
+      .tracker-step {
+        flex: 1;
+        text-align: center;
+        position: relative;
+      }
+      .tracker-step .dot {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: #e2e8f0;
+        color: #94a3b8;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        font-weight: 700;
+        margin: 0 auto 6px;
+        position: relative;
+        z-index: 2;
+        transition: all 0.2s ease;
+      }
+      .tracker-step .line {
+        position: absolute;
+        top: 13px;
+        left: -50%;
+        width: 100%;
+        height: 3px;
+        background: #e2e8f0;
+        z-index: 1;
+      }
+      .tracker-step:first-child .line { display: none; }
+      .tracker-step .label {
+        font-size: 0.68rem;
+        font-weight: 600;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+      }
+      .tracker-step.done .dot {
+        background: #16a34a;
+        color: #ffffff;
+      }
+      .tracker-step.done .line { background: #16a34a; }
+      .tracker-step.done .label { color: #16a34a; }
+      .tracker-step.current .dot {
+        background: #2563eb;
+        color: #ffffff;
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+      }
+      .tracker-step.current .label { color: #2563eb; }
+      .tracker.cancelled .dot { background: #fee2e2 !important; color: #dc2626 !important; }
+      .tracker.cancelled .line { background: #fee2e2 !important; }
+      .tracker.cancelled .label { color: #dc2626 !important; }
+    </style>
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-expand-lg bg-body-tertiary shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold text-primary" href="{% url 'dashboard' %}">Bookings Status</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNavDropdown">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'dashboard' %}">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'booking' %}">Booking Now</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'patient_reports' %}">My Reports</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-danger" href="{% url 'logout' %}">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-5" style="max-width: 1000px;">
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show rounded-3 shadow-sm" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="card shadow-sm border-0 rounded-4 mb-4 bg-white">
+            <div class="card-body p-4 border-bottom border-light-subtle d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div>
+                    <h2 class="h5 fw-bold text-primary mb-1">Bookings Status</h2>
+                    <p class="text-muted small mb-0">Live tracker for every diagnostic booking you've made, from scheduling to report delivery.</p>
+                </div>
+                <a href="{% url 'booking' %}" class="btn btn-primary btn-sm fw-semibold rounded-3 px-3">
+                    <i class="fa-solid fa-plus me-1"></i> Book New Test
+                </a>
+            </div>
+
+            <div class="card-body p-4">
+                <div class="row g-3 mb-4">
+                    <div class="col-6 col-md-3">
+                        <div class="stat-pill bg-light border h-100">
+                            <span class="text-muted small d-block mb-1 fw-medium">Total Bookings</span>
+                            <h4 class="mb-0 fw-bold text-dark">{{ total_count }}</h4>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="stat-pill bg-warning-subtle border border-warning-subtle h-100">
+                            <span class="text-warning small d-block mb-1 fw-semibold">Pending</span>
+                            <h4 class="mb-0 fw-bold text-warning">{{ pending_count }}</h4>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="stat-pill bg-success-subtle border border-success-subtle h-100">
+                            <span class="text-success small d-block mb-1 fw-semibold">Completed</span>
+                            <h4 class="mb-0 fw-bold text-success">{{ completed_count }}</h4>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="stat-pill bg-secondary-subtle border border-secondary-subtle h-100">
+                            <span class="text-secondary small d-block mb-1 fw-semibold">Cancelled</span>
+                            <h4 class="mb-0 fw-bold text-secondary">{{ cancelled_count }}</h4>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 mb-4 flex-wrap">
+                    <a href="{% url 'booking_status' %}" class="filter-chip {% if not status_filter %}active{% endif %}">All</a>
+                    <a href="{% url 'booking_status' %}?status=Pending" class="filter-chip {% if status_filter == 'Pending' %}active{% endif %}">Pending</a>
+                    <a href="{% url 'booking_status' %}?status=Completed" class="filter-chip {% if status_filter == 'Completed' %}active{% endif %}">Completed</a>
+                    <a href="{% url 'booking_status' %}?status=Cancelled" class="filter-chip {% if status_filter == 'Cancelled' %}active{% endif %}">Cancelled</a>
+                </div>
+
+                {% if appointments %}
+                <div class="d-flex flex-column gap-3">
+                    {% for appointment in appointments %}
+                    <div class="booking-card rounded-4 p-3 p-md-4 bg-white">
+                        <div class="d-flex align-items-start justify-content-between flex-wrap gap-3 mb-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="icon-circle d-flex align-items-center justify-content-center rounded-circle bg-primary bg-opacity-10 text-primary">
+                                    <i class="fa-solid fa-flask-vial"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 fw-bold text-dark fs-6">{{ appointment.test.test_name }}</h6>
+                                    <p class="text-muted mb-0 small">
+                                        ID: #LMS-00{{ appointment.id }} &middot;
+                                        {{ appointment.appointment_date|date:"M d, Y" }}
+                                        {% if appointment.appointment_time %} &middot; {{ appointment.appointment_time }}{% endif %}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge rounded-pill px-3 py-2 fw-semibold text-uppercase
+                                    {% if appointment.status == 'Completed' %}bg-success-subtle text-success border border-success-subtle
+                                    {% elif appointment.status == 'Pending' %}bg-warning-subtle text-warning border border-warning-subtle
+                                    {% else %}bg-secondary-subtle text-secondary border border-secondary-subtle{% endif %}"
+                                    style="font-size: 0.7rem;">
+                                    {{ appointment.status }}
+                                </span>
+
+                                {% if appointment.status == 'Completed' %}
+                                <a href="{% url 'download_report' appointment.id %}" class="btn btn-sm btn-outline-primary fw-semibold rounded-3">
+                                    <i class="fa-solid fa-download me-1"></i> Report
+                                </a>
+                                {% elif appointment.status == 'Pending' %}
+                                <form action="{% url 'cancel_booking' appointment.id %}" method="POST" onsubmit="return confirm('Cancel this booking? This action cannot be undone.');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger fw-semibold rounded-3">
+                                        <i class="fa-solid fa-xmark me-1"></i> Cancel
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        {% if appointment.status == 'Cancelled' %}
+                        <div class="tracker cancelled">
+                            <div class="tracker-step done">
+                                <span class="dot"><i class="fa-solid fa-check"></i></span>
+                                <div class="label">Booked</div>
+                            </div>
+                            <div class="tracker-step current">
+                                <span class="line"></span>
+                                <span class="dot"><i class="fa-solid fa-xmark"></i></span>
+                                <div class="label">Cancelled</div>
+                            </div>
+                        </div>
+                        {% elif appointment.status == 'Completed' %}
+                        <div class="tracker">
+                            <div class="tracker-step done">
+                                <span class="dot"><i class="fa-solid fa-check"></i></span>
+                                <div class="label">Booked</div>
+                            </div>
+                            <div class="tracker-step done">
+                                <span class="line"></span>
+                                <span class="dot"><i class="fa-solid fa-check"></i></span>
+                                <div class="label">Sample Collected</div>
+                            </div>
+                            <div class="tracker-step done">
+                                <span class="line"></span>
+                                <span class="dot"><i class="fa-solid fa-check"></i></span>
+                                <div class="label">Processing</div>
+                            </div>
+                            <div class="tracker-step done">
+                                <span class="line"></span>
+                                <span class="dot"><i class="fa-solid fa-check"></i></span>
+                                <div class="label">Report Ready</div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="tracker">
+                            <div class="tracker-step done">
+                                <span class="dot"><i class="fa-solid fa-check"></i></span>
+                                <div class="label">Booked</div>
+                            </div>
+                            <div class="tracker-step current">
+                                <span class="line"></span>
+                                <span class="dot">2</span>
+                                <div class="label">Sample Collection</div>
+                            </div>
+                            <div class="tracker-step">
+                                <span class="line"></span>
+                                <span class="dot">3</span>
+                                <div class="label">Processing</div>
+                            </div>
+                            <div class="tracker-step">
+                                <span class="line"></span>
+                                <span class="dot">4</span>
+                                <div class="label">Report Ready</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fa-regular fa-calendar-xmark text-muted mb-3 d-block" style="font-size: 2.5rem;"></i>
+                    <p class="fw-semibold text-secondary mb-1">No bookings found</p>
+                    <p class="text-muted small mb-3">Records matching this filter will show up here once available.</p>
+                    <a href="{% url 'booking' %}" class="btn btn-primary btn-sm fw-semibold rounded-3 px-3">
+                        <i class="fa-solid fa-plus me-1"></i> Book a Test
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
