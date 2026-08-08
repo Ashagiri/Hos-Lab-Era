@@ -9,6 +9,9 @@ from laboratory.views import (
     booking_view,
     dashboard_view,
     technician_dashboard_view,
+    admin_dashboard_view,
+    admin_patient_records_view,
+    admin_technician_records_view,
     download_report_view,
     settings_view,
     check_slot_availability,
@@ -19,13 +22,19 @@ from laboratory.views import (
     booking_status_view,
     cancel_booking_view,
 )
-from accounts.views import register_view, login_view, technician_login_view, logout_view
+from accounts.views import register_view, login_view, technician_login_view, admin_login_view, logout_view
 
 urlpatterns = [
     # Dedicated Staff Portal Login View (Handles /technician/)
     path('technician/', technician_login_view, name='technician_login'),
 
-    # Built-in Django Administrative Portal
+    # Dedicated Administrator Portal Login View (Handles /admin-portal/)
+    # NOTE: kept separate from Django's own /admin/ path below.
+    path('admin-portal/', admin_login_view, name='admin_login'),
+
+    # Built-in Django Administrative Portal (advanced/raw data management --
+    # linked to from within the professional Admin Dashboard for staff who
+    # need it, but no longer the primary landing page for admin logins).
     path('admin/', admin.site.urls),
 
     # Public Marketing Welcome Homepage
@@ -39,6 +48,11 @@ urlpatterns = [
 
     # Dedicated standalone "View Test Requests" page
     path('dashboard/technician/requests/', view_test_requests, name='view_test_requests'),
+
+    # Professional Admin Command Center Dashboard + records pages
+    path('dashboard/admin/', admin_dashboard_view, name='admin_dashboard'),
+    path('dashboard/admin/patients/', admin_patient_records_view, name='admin_patient_records'),
+    path('dashboard/admin/technicians/', admin_technician_records_view, name='admin_technician_records'),
 
     # Patient Scheduling Operations
     path('booking/', booking_view, name='booking'),

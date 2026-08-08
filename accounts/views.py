@@ -109,10 +109,16 @@ def login_view(request):
             is_tech = (
                 (hasattr(user, 'role') and user.role == 'technician')
                 or user.username == 'tech'
+            )
+            is_admin = (
+                (hasattr(user, 'role') and user.role == 'admin')
                 or user.is_superuser
             )
+
             if is_tech:
                 return redirect('technician_dashboard')
+            elif is_admin:
+                return redirect('admin_dashboard')
             else:
                 return redirect('dashboard')
         else:
@@ -158,6 +164,39 @@ def technician_login_view(request):
             return redirect('technician_login')
             
     return render(request, 'accounts/technician_login.html')
+
+
+def admin_login_view(request):
+    """
+    Dedicated authentication gateway for the professional Admin Dashboard.
+    Kept separate from the technician portal so an 'admin' role account
+    (or a Django superuser) lands on the custom dashboard rather than
+    the raw Django admin site.
+    """
+    if request.method == 'POST':
+        username_input = request.POST.get('username')
+        password_input = request.POST.get('password')
+
+        user = authenticate(request, username=username_input, password=password_input)
+
+        if user is not None:
+            is_admin_role = (
+                (hasattr(user, 'role') and user.role == 'admin')
+                or user.is_superuser
+            )
+
+            if is_admin_role:
+                login(request, user)
+                messages.success(request, "Administrator Console Activated.")
+                return redirect('admin_dashboard')
+            else:
+                messages.error(request, "Access Denied. You do not have administrator privileges.")
+                return redirect('admin_login')
+        else:
+            messages.error(request, "Invalid username or password.")
+            return redirect('admin_login')
+
+    return render(request, 'accounts/admin_login.html')
 
 
 def logout_view(request):

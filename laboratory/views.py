@@ -5,9 +5,10 @@ from datetime import timedelta
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import FileResponse, JsonResponse
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import get_user_model
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
-from django.db.models import Count
+from django.db.models import Count, Sum, Q
 from django.utils.dateparse import parse_date
 from django.utils import timezone
 
@@ -201,6 +202,133 @@ def technician_dashboard_view(request):
         'status_filter': status_filter,
         'search_query': search_query,
         'today': today,
+    })
+
+
+def _is_admin(user):
+    """
+    True for accounts flagged with the 'admin' role, plus superusers
+    (so the Django-created superuser account can reach the professional
+    Admin Dashboard without needing its role field hand-edited).
+    Technicians are intentionally excluded even if a technician account
+    happens to also be a superuser -- see login_view routing.
+    """
+    is_tech = (hasattr(user, 'role') and user.role == 'technician') or user.username == 'tech'
+    if is_tech:
+        return False
+    return (hasattr(user, 'role') and user.role == 'admin') or user.is_superuser
+
+
+@login_required
+def admin_dashboard_view(request):
+    """
+    Professional Admin Command Center -- a real dashboard (matching the
+    look of the patient/technician workspaces) instead of the raw Django
+    admin, giving administrators a single-glance operational overview:
+    patient/technician headcounts, revenue collected, and workflow
+    status across every appointment in the system.
+    """
+    if not _is_admin(request.user):
+        messages.error(request, "Access restricted to authorized administrator profiles.")
+        return redirect('login')
+
+    User = get_user_model()
+
+    total_patients = User.objects.filter(role='patient').count()
+    total_technicians = User.objects.filter(role='technician').count()
+
+    appointments = Appointment.objects.select_related('patient', 'test')
+
+    pending_count = appointments.filter(status='Pending').count()
+    completed_count = appointments.filter(status='Completed').count()
+    cancelled_count = appointments.filter(status='Cancelled').count()
+    total_bookings = appointments.count()
+
+    total_payment = appointments.filter(status='Completed').aggregate(
+        total=Sum('test__price')
+    )['total'] or 0
+    pending_payment = appointments.filter(status='Pending').aggregate(
+        total=Sum('test__price')
+    )['total'] or 0
+
+    recent_patients = User.objects.filter(role='patient').order_by('-date_joined')[:5]
+    recent_technicians = User.objects.filter(role='technician').order_by('-date_joined')[:5]
+    recent_activity = appointments.order_by('-appointment_date')[:8]
+
+    can_open_django_admin = request.user.is_staff or request.user.is_superuser
+
+    return render(request, 'laboratory/admin_dashboard.html', {
+        'total_patients': total_patients,
+        'total_technicians': total_technicians,
+        'total_bookings': total_bookings,
+        'pending_count': pending_count,
+        'completed_count': completed_count,
+        'cancelled_count': cancelled_count,
+        'total_payment': total_payment,
+        'pending_payment': pending_payment,
+        'recent_patients': recent_patients,
+        'recent_technicians': recent_technicians,
+        'recent_activity': recent_activity,
+        'can_open_django_admin': can_open_django_admin,
+        'today': timezone.localdate(),
+    })
+
+
+@login_required
+def admin_patient_records_view(request):
+    """
+    Dedicated, searchable roster of every patient account, with a
+    quick appointment count per patient.
+    """
+    if not _is_admin(request.user):
+        messages.error(request, "Access restricted to authorized administrator profiles.")
+        return redirect('login')
+
+    User = get_user_model()
+    search_query = request.GET.get('q', '').strip()
+
+    patients = User.objects.filter(role='patient').order_by('-date_joined')
+    if search_query:
+        patients = patients.filter(
+            Q(username__icontains=search_query)
+            | Q(email__icontains=search_query)
+            | Q(full_name__icontains=search_query)
+        )
+    patients = patients.annotate(appointment_count=Count('appointments'))
+
+    return render(request, 'laboratory/admin_patient_records.html', {
+        'patients': patients,
+        'search_query': search_query,
+        'total_patients': User.objects.filter(role='patient').count(),
+    })
+
+
+@login_required
+def admin_technician_records_view(request):
+    """
+    Dedicated, searchable roster of every technician account, with a
+    quick count of how many results each has verified/signed off.
+    """
+    if not _is_admin(request.user):
+        messages.error(request, "Access restricted to authorized administrator profiles.")
+        return redirect('login')
+
+    User = get_user_model()
+    search_query = request.GET.get('q', '').strip()
+
+    technicians = User.objects.filter(role='technician').order_by('-date_joined')
+    if search_query:
+        technicians = technicians.filter(
+            Q(username__icontains=search_query)
+            | Q(email__icontains=search_query)
+            | Q(full_name__icontains=search_query)
+        )
+    technicians = technicians.annotate(verified_count=Count('verified_results', distinct=True))
+
+    return render(request, 'laboratory/admin_technician_records.html', {
+        'technicians': technicians,
+        'search_query': search_query,
+        'total_technicians': User.objects.filter(role='technician').count(),
     })
 
 

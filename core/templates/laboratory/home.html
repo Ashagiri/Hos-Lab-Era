@@ -48,8 +48,8 @@
                 Login
               </a>
               <ul class="dropdown-menu">
-                <!-- 1. Dynamically links to the Django Admin page -->
-                <li><a class="dropdown-item" href="{% url 'admin:index' %}">Admin</a></li>
+                <!-- 1. Dedicated Administrator Portal (professional dashboard) -->
+                <li><a class="dropdown-item" href="{% url 'admin_login' %}">Admin</a></li>
 
                 <!-- 2. Links to your technician page (using dynamic urls is highly recommended) -->
                 <li><a class="dropdown-item" href="{% url 'technician_login' %}">Technician</a></li>
