@@ -13,6 +13,8 @@ from laboratory.views import (
     admin_dashboard_view,
     admin_patient_records_view,
     admin_technician_records_view,
+    admin_add_technician_view,
+    admin_edit_technician_view,
     download_report_view,
     settings_view,
     check_slot_availability,
@@ -55,6 +57,8 @@ urlpatterns = [
     path('dashboard/admin/', admin_dashboard_view, name='admin_dashboard'),
     path('dashboard/admin/patients/', admin_patient_records_view, name='admin_patient_records'),
     path('dashboard/admin/technicians/', admin_technician_records_view, name='admin_technician_records'),
+    path('dashboard/admin/technicians/add/', admin_add_technician_view, name='admin_add_technician'),
+    path('dashboard/admin/technicians/<int:technician_id>/edit/', admin_edit_technician_view, name='admin_edit_technician'),
     path('dashboard/admin/reports/', admin_reports_list, name='admin_reports_list'),
 
     # Patient Scheduling Operations

@@ -237,6 +237,19 @@
           </div>
 
           <div class="col-6 col-lg-4">
+            <div class="stat-card p-3 d-flex align-items-center justify-content-between">
+              <div>
+                <span class="text-muted small d-block mb-1 fw-medium">Today's Payment Collected</span>
+                <h3 class="mb-0 fw-bold text-dark">Rs. {{ today_payment }}</h3>
+                <span class="text-muted" style="font-size: 0.72rem;">{{ today|date:"M d, Y" }}</span>
+              </div>
+              <div class="bg-success bg-opacity-10 text-success p-3 rounded-circle">
+                <i class="bi bi-wallet2 fs-4 d-flex"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-6 col-lg-4">
             <a href="{% url 'admin_reports_list' %}" class="text-decoration-none">
               <div class="stat-card p-3 d-flex align-items-center justify-content-between">
                 <div>

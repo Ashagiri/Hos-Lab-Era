@@ -111,8 +111,11 @@
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
           <div>
             <h1 class="h3 mb-0 text-dark fw-bold">Technician Records</h1>
-            <p class="text-muted small mb-0">{{ total_technicians }} registered technician account{{ total_technicians|pluralize }}.</p>
+            <p class="text-muted small mb-0">{{ total_technicians }} registered technician account{{ total_technicians|pluralize }}. All technician accounts are provisioned by the administrator.</p>
           </div>
+          <a href="{% url 'admin_add_technician' %}" class="btn btn-primary">
+            <i class="bi bi-person-plus me-1"></i> Add Technician
+          </a>
         </div>
 
         <div class="data-table-card p-3 mb-4">
@@ -137,28 +140,47 @@
             <table class="table table-hover align-middle mb-0">
               <thead class="table-light">
                 <tr>
-                  <th>Technician</th>
+                  <th>Technician ID</th>
+                  <th>Full Name</th>
                   <th>Username</th>
                   <th>Email</th>
-                  <th>Phone</th>
+                  <th>Status</th>
+                  <th>Last Login</th>
+                  <th>Date Joined</th>
                   <th class="text-end">Results Verified</th>
+                  <th class="text-end">Manage</th>
                 </tr>
               </thead>
               <tbody>
                 {% for tech in technicians %}
                 <tr>
-                  <td class="fw-semibold text-dark">{{ tech.get_full_name|default:"—" }}</td>
+                  <td class="fw-bold text-primary">TC-{{ tech.id|stringformat:"04d" }}</td>
+                  <td class="fw-semibold text-dark">{{ tech.get_full_name|default:"Not provided" }}</td>
                   <td class="text-muted small">{{ tech.username }}</td>
                   <td class="small">{{ tech.email|default:"—" }}</td>
-                  <td class="small">{{ tech.phone|default:"—" }}</td>
+                  <td class="small">
+                    {% if tech.is_active %}
+                      <span class="badge bg-success bg-opacity-10 text-success">Active</span>
+                    {% else %}
+                      <span class="badge bg-secondary bg-opacity-10 text-secondary">Suspended</span>
+                    {% endif %}
+                  </td>
+                  <td class="small text-secondary">{{ tech.last_login|date:"M d, Y g:i A"|default:"Never logged in" }}</td>
+                  <td class="small text-secondary">{{ tech.date_joined|date:"M d, Y" }}</td>
                   <td class="text-end">
                     <span class="badge bg-success bg-opacity-10 text-success">{{ tech.verified_count }}</span>
+                  </td>
+                  <td class="text-end">
+                    <a href="{% url 'admin_edit_technician' tech.id %}" class="btn btn-sm btn-outline-secondary">
+                      <i class="bi bi-pencil-square"></i>
+                    </a>
                   </td>
                 </tr>
                 {% empty %}
                 <tr>
-                  <td colspan="5" class="text-center py-4 text-muted">
+                  <td colspan="9" class="text-center py-4 text-muted">
                     <i class="bi bi-inbox fs-3 d-block mb-2"></i> No technician records found.
+                    <a href="{% url 'admin_add_technician' %}" class="d-block mt-2">Add your first technician</a>
                   </td>
                 </tr>
                 {% endfor %}

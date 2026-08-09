@@ -12,6 +12,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from django.db.models import Count, Sum, Q
 from django.utils.dateparse import parse_date
 from django.utils import timezone
@@ -31,6 +33,7 @@ from reportlab.platypus import (
 
 # Database App Entities
 from .models import LabTest, Appointment, TestResult, PatientProfile
+from accounts.utils import generate_unique_username, generate_strong_temp_password
 
 
 # =========================================================================
@@ -257,6 +260,11 @@ def admin_dashboard_view(request):
         total=Sum('test__price')
     )['total'] or 0
 
+    today = timezone.localdate()
+    today_payment = appointments.filter(
+        status='Completed', appointment_date__date=today
+    ).aggregate(total=Sum('test__price'))['total'] or 0
+
     recent_patients = User.objects.filter(role='patient').order_by('-date_joined')[:5]
     recent_technicians = User.objects.filter(role='technician').order_by('-date_joined')[:5]
     recent_activity = appointments.order_by('-appointment_date')[:8]
@@ -272,11 +280,12 @@ def admin_dashboard_view(request):
         'cancelled_count': cancelled_count,
         'total_payment': total_payment,
         'pending_payment': pending_payment,
+        'today_payment': today_payment,
         'recent_patients': recent_patients,
         'recent_technicians': recent_technicians,
         'recent_activity': recent_activity,
         'can_open_django_admin': can_open_django_admin,
-        'today': timezone.localdate(),
+        'today': today,
     })
 
 
@@ -336,6 +345,128 @@ def admin_technician_records_view(request):
         'search_query': search_query,
         'total_technicians': User.objects.filter(role='technician').count(),
     })
+
+
+@login_required
+def admin_add_technician_view(request):
+    """
+    Lets an administrator create technician accounts from inside the
+    app (instead of the raw Django admin), with a system-generated
+    username and a password that must pass the same strong-password
+    rules as everyone else -- so accounts no longer get set up with
+    something like 'test' / '123'.
+    """
+    if not _is_admin(request.user):
+        messages.error(request, "Access restricted to authorized administrator profiles.")
+        return redirect('login')
+
+    User = get_user_model()
+    suggested_username = ''
+    suggested_password = generate_strong_temp_password()
+
+    if request.method == 'POST':
+        full_name = (request.POST.get('full_name') or '').strip()
+        email = (request.POST.get('email') or '').strip()
+        phone = (request.POST.get('phone') or '').strip()
+        password = request.POST.get('password') or ''
+        confirm_password = request.POST.get('confirm_password') or ''
+        suggested_username = generate_unique_username(full_name, role_prefix='tech')
+
+        if not full_name or not email:
+            messages.error(request, "Full name and email are required.")
+        elif email and User.objects.filter(email=email).exists():
+            messages.error(request, "An account with this email already exists.")
+        elif password != confirm_password:
+            messages.error(request, "Passwords do not match.")
+        else:
+            try:
+                validate_password(password)
+            except ValidationError as e:
+                for err in e.messages:
+                    messages.error(request, err)
+                return render(request, 'laboratory/admin_add_technician.html', {
+                    'suggested_username': suggested_username,
+                    'suggested_password': generate_strong_temp_password(),
+                })
+
+            username = generate_unique_username(full_name, role_prefix='tech')
+            tech = User.objects.create_user(
+                username=username,
+                email=email,
+                phone=phone,
+                password=password,
+                role='technician',
+            )
+            name_parts = full_name.split(' ', 1)
+            tech.first_name = name_parts[0]
+            tech.last_name = name_parts[1] if len(name_parts) > 1 else ''
+            tech.full_name = full_name
+            tech.save()
+
+            messages.success(
+                request,
+                f"Technician account created. Username: {username}"
+            )
+            return redirect('admin_technician_records')
+
+    return render(request, 'laboratory/admin_add_technician.html', {
+        'suggested_username': suggested_username,
+        'suggested_password': suggested_password,
+    })
+
+
+@login_required
+def admin_edit_technician_view(request, technician_id):
+    """
+    Lets an administrator update a single technician's profile details,
+    reactivate/suspend their access, and reset their password -- all
+    subject to the same strong-password validation as account creation.
+    """
+    if not _is_admin(request.user):
+        messages.error(request, "Access restricted to authorized administrator profiles.")
+        return redirect('login')
+
+    User = get_user_model()
+    tech = get_object_or_404(User, id=technician_id, role='technician')
+
+    if request.method == 'POST':
+        full_name = (request.POST.get('full_name') or '').strip()
+        email = (request.POST.get('email') or '').strip()
+        phone = (request.POST.get('phone') or '').strip()
+        is_active = request.POST.get('is_active') == 'on'
+        new_password = request.POST.get('new_password') or ''
+        confirm_password = request.POST.get('confirm_password') or ''
+
+        if email and User.objects.filter(email=email).exclude(id=tech.id).exists():
+            messages.error(request, "Another account already uses this email.")
+            return render(request, 'laboratory/admin_edit_technician.html', {'tech': tech})
+
+        if full_name:
+            name_parts = full_name.split(' ', 1)
+            tech.first_name = name_parts[0]
+            tech.last_name = name_parts[1] if len(name_parts) > 1 else ''
+            tech.full_name = full_name
+        tech.email = email
+        tech.phone = phone
+        tech.is_active = is_active
+
+        if new_password or confirm_password:
+            if new_password != confirm_password:
+                messages.error(request, "The new passwords do not match.")
+                return render(request, 'laboratory/admin_edit_technician.html', {'tech': tech})
+            try:
+                validate_password(new_password, user=tech)
+            except ValidationError as e:
+                for err in e.messages:
+                    messages.error(request, err)
+                return render(request, 'laboratory/admin_edit_technician.html', {'tech': tech})
+            tech.set_password(new_password)
+
+        tech.save()
+        messages.success(request, "Technician account updated successfully.")
+        return redirect('admin_technician_records')
+
+    return render(request, 'laboratory/admin_edit_technician.html', {'tech': tech})
 
 
 @login_required
@@ -419,6 +550,12 @@ def settings_view(request):
             elif new_password != confirm_password:
                 messages.error(request, "The new passwords do not match.")
             else:
+                try:
+                    validate_password(new_password, user=user)
+                except ValidationError as e:
+                    for err in e.messages:
+                        messages.error(request, err)
+                    return redirect('settings')
                 user.set_password(new_password)
                 user.save()
                 update_session_auth_hash(request, user)
