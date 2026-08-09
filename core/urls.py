@@ -1,5 +1,6 @@
 from django.contrib import admin
-from django.urls import path
+from django.contrib.auth import views as auth_views
+from django.urls import path, reverse_lazy
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -84,6 +85,40 @@ urlpatterns = [
     path('accounts/register/', register_view, name='register'),
     path('accounts/login/', login_view, name='login'),
     path('accounts/logout/', logout_view, name='logout'),
+
+    # Forgot Password / Reset Flow (patient self-service password recovery)
+    path(
+        'accounts/password-reset/',
+        auth_views.PasswordResetView.as_view(
+            template_name='accounts/password_reset.html',
+            email_template_name='accounts/password_reset_email.html',
+            subject_template_name='accounts/password_reset_subject.txt',
+            success_url=reverse_lazy('password_reset_done'),
+        ),
+        name='password_reset',
+    ),
+    path(
+        'accounts/password-reset/done/',
+        auth_views.PasswordResetDoneView.as_view(
+            template_name='accounts/password_reset_done.html'
+        ),
+        name='password_reset_done',
+    ),
+    path(
+        'accounts/reset/<uidb64>/<token>/',
+        auth_views.PasswordResetConfirmView.as_view(
+            template_name='accounts/password_reset_confirm.html',
+            success_url=reverse_lazy('password_reset_complete'),
+        ),
+        name='password_reset_confirm',
+    ),
+    path(
+        'accounts/reset/done/',
+        auth_views.PasswordResetCompleteView.as_view(
+            template_name='accounts/password_reset_complete.html'
+        ),
+        name='password_reset_complete',
+    ),
 ]
 
 # Serve Static Assets During Local Development Sharding

@@ -551,7 +551,7 @@ def booking_view(request):
             clean_address = last_appt.address.strip()
 
     profile_data = {
-        'full_name': user.get_full_name() or user.username,
+        'full_name': user.full_name or user.get_full_name() or user.username,
         'email': user.email or '',
         'address': clean_address,
         'age': patient_prof.age if patient_prof.age is not None else 0,
@@ -914,7 +914,11 @@ def _build_report_pdf_bytes(appointment):
     story.append(Spacer(1, 20))
 
     # --- Patient information panel ---
-    patient_name = appointment.patient.get_full_name() or appointment.patient.username
+    patient_name = (
+        appointment.patient.full_name
+        or appointment.patient.get_full_name()
+        or appointment.patient.username
+    )
     info_rows = [
         [
             field("PATIENT NAME", patient_name),
@@ -1087,7 +1091,7 @@ def _send_report_ready_email(appointment):
     try:
         pdf_bytes = _build_report_pdf_bytes(appointment)
 
-        patient_name = patient.get_full_name() or patient.username
+        patient_name = patient.full_name or patient.get_full_name() or patient.username
         test_name = appointment.test.test_name if appointment.test else "your requested test"
         report_url = settings.SITE_URL.rstrip('/') + reverse('patient_reports')
 
