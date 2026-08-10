@@ -149,7 +149,7 @@
               <thead class="table-light">
                 <tr>
                   <th>Appointment ID</th>
-                  <th>Patient Information</th>
+                  <th>Patient</th>
                   <th>Test Profile</th>
                   <th>Status</th>
                   <th class="text-end">Action</th>
@@ -160,7 +160,7 @@
                 <tr>
                   <td class="fw-bold text-primary">#{{ appointment.id }}</td>
                   <td>
-                    <div class="fw-semibold text-dark">{{ appointment.patient.get_full_name|default:appointment.patient.username }}</div>
+                    <div class="fw-semibold text-dark">{{ appointment.patient.full_name|default:appointment.patient.get_full_name|default:appointment.patient.username }}</div>
                     <small class="text-muted d-block">
                       {{ appointment.patient_age|default:"—" }} yrs,
                       {% if appointment.patient_gender == 'M' %}Male

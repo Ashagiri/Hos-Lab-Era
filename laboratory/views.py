@@ -363,6 +363,9 @@ def admin_add_technician_view(request):
     User = get_user_model()
     suggested_username = ''
     suggested_password = generate_strong_temp_password()
+    full_name = ''
+    email = ''
+    phone = ''
 
     if request.method == 'POST':
         full_name = (request.POST.get('full_name') or '').strip()
@@ -372,46 +375,63 @@ def admin_add_technician_view(request):
         confirm_password = request.POST.get('confirm_password') or ''
         suggested_username = generate_unique_username(full_name, role_prefix='tech')
 
+        # Whatever the admin already typed, keep it on screen if a check
+        # below fails -- only the password fields are left out (they're
+        # never echoed back into the HTML on error).
+        form_data = {
+            'suggested_username': suggested_username,
+            'suggested_password': suggested_password,
+            'full_name': full_name,
+            'email': email,
+            'phone': phone,
+        }
+
         if not full_name or not email:
             messages.error(request, "Full name and email are required.")
-        elif email and User.objects.filter(email=email).exists():
+            return render(request, 'laboratory/admin_add_technician.html', form_data)
+
+        if email and User.objects.filter(email=email).exists():
             messages.error(request, "An account with this email already exists.")
-        elif password != confirm_password:
+            return render(request, 'laboratory/admin_add_technician.html', form_data)
+
+        if password != confirm_password:
             messages.error(request, "Passwords do not match.")
-        else:
-            try:
-                validate_password(password)
-            except ValidationError as e:
-                for err in e.messages:
-                    messages.error(request, err)
-                return render(request, 'laboratory/admin_add_technician.html', {
-                    'suggested_username': suggested_username,
-                    'suggested_password': generate_strong_temp_password(),
-                })
+            return render(request, 'laboratory/admin_add_technician.html', form_data)
 
-            username = generate_unique_username(full_name, role_prefix='tech')
-            tech = User.objects.create_user(
-                username=username,
-                email=email,
-                phone=phone,
-                password=password,
-                role='technician',
-            )
-            name_parts = full_name.split(' ', 1)
-            tech.first_name = name_parts[0]
-            tech.last_name = name_parts[1] if len(name_parts) > 1 else ''
-            tech.full_name = full_name
-            tech.save()
+        try:
+            validate_password(password)
+        except ValidationError as e:
+            for err in e.messages:
+                messages.error(request, err)
+            form_data['suggested_password'] = generate_strong_temp_password()
+            return render(request, 'laboratory/admin_add_technician.html', form_data)
 
-            messages.success(
-                request,
-                f"Technician account created. Username: {username}"
-            )
-            return redirect('admin_technician_records')
+        username = generate_unique_username(full_name, role_prefix='tech')
+        tech = User.objects.create_user(
+            username=username,
+            email=email,
+            phone=phone,
+            password=password,
+            role='technician',
+        )
+        name_parts = full_name.split(' ', 1)
+        tech.first_name = name_parts[0]
+        tech.last_name = name_parts[1] if len(name_parts) > 1 else ''
+        tech.full_name = full_name
+        tech.save()
+
+        messages.success(
+            request,
+            f"Technician account created. Username: {username}"
+        )
+        return redirect('admin_technician_records')
 
     return render(request, 'laboratory/admin_add_technician.html', {
         'suggested_username': suggested_username,
         'suggested_password': suggested_password,
+        'full_name': full_name,
+        'email': email,
+        'phone': phone,
     })
 
 
@@ -437,10 +457,10 @@ def admin_edit_technician_view(request, technician_id):
         new_password = request.POST.get('new_password') or ''
         confirm_password = request.POST.get('confirm_password') or ''
 
-        if email and User.objects.filter(email=email).exclude(id=tech.id).exists():
-            messages.error(request, "Another account already uses this email.")
-            return render(request, 'laboratory/admin_edit_technician.html', {'tech': tech})
-
+        # Apply the submitted values to the in-memory object right away,
+        # before any validation -- so if a check below fails, the form
+        # redisplays what the admin just typed instead of the old saved
+        # values. tech.save() still only happens after every check passes.
         if full_name:
             name_parts = full_name.split(' ', 1)
             tech.first_name = name_parts[0]
@@ -449,6 +469,10 @@ def admin_edit_technician_view(request, technician_id):
         tech.email = email
         tech.phone = phone
         tech.is_active = is_active
+
+        if email and User.objects.filter(email=email).exclude(id=tech.id).exists():
+            messages.error(request, "Another account already uses this email.")
+            return render(request, 'laboratory/admin_edit_technician.html', {'tech': tech})
 
         if new_password or confirm_password:
             if new_password != confirm_password:
@@ -522,6 +546,8 @@ def settings_view(request):
             name_parts = full_name.split(' ', 1)
             user.first_name = name_parts[0]
             user.last_name = name_parts[1] if len(name_parts) > 1 else ''
+            if hasattr(user, 'full_name'):
+                user.full_name = full_name
 
         user.email = request.POST.get('email', user.email)
         user.save()
@@ -912,7 +938,16 @@ def generate_report_view(request, appointment_id):
 
             if not result_value:
                 messages.error(request, "Result value cannot be empty.")
-                return redirect('generate_report', appointment_id=appointment.id)
+                # Show what was typed instead of redirecting back to a
+                # fresh GET, which would silently drop the remarks text
+                # (and any result_value) the technician had already entered.
+                result.result_value = result_value
+                result.remarks = remarks
+                return render(request, 'laboratory/generate_report.html', {
+                    'appointment': appointment,
+                    'result': result,
+                    'patient_snapshot': _resolve_patient_snapshot(appointment),
+                })
 
             result.result_value = result_value
             result.remarks = remarks
@@ -972,7 +1007,10 @@ def _build_report_pdf_bytes(appointment):
         result_value = live_result.result_value or "Pending"
         remarks = (live_result.remarks or "").strip()
         is_verified = bool(live_result.verified)
-        verified_by = live_result.verified_by.get_full_name() or live_result.verified_by.username if live_result.verified_by else None
+        verified_by = (
+            (live_result.verified_by.full_name or live_result.verified_by.get_full_name() or live_result.verified_by.username)
+            if live_result.verified_by else None
+        )
         verified_at = live_result.verified_at
     except (TestResult.DoesNotExist, AttributeError):
         result_value = "Pending"

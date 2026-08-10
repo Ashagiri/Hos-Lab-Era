@@ -176,7 +176,7 @@
                     </td>
 
                     <td>
-                      <div class="fw-semibold text-dark">{{ request.patient.get_full_name|default:request.patient.username }}</div>
+                      <div class="fw-semibold text-dark">{{ request.patient.full_name|default:request.patient.get_full_name|default:request.patient.username }}</div>
                       <small class="text-muted d-block">
                         {{ request.patient.patient_profile.get_gender_display }}, {{ request.patient.patient_profile.age }} Yrs
                       </small>

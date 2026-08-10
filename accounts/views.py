@@ -1,7 +1,10 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, authenticate, logout, get_user_model
 from django.contrib import messages
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from laboratory.models import PatientProfile, Appointment  # Adjust to your exact model package locations
+from .utils import generate_unique_username
 
 # Initialize the dynamic model lookup handle for your custom accounts.User swap
 User = get_user_model()
@@ -19,19 +22,47 @@ def register_view(request):
         gender = request.POST.get('gender')
         password = request.POST.get('password')
         confirm_password = request.POST.get('confirm_password')
-        
+
+        # Whatever the user already typed, keep it so a validation error
+        # only clears the field(s) that actually failed instead of the
+        # whole form. Passwords are intentionally left out of this — they
+        # are never echoed back into the HTML on error, so the person
+        # just retypes them; that's standard practice and avoids putting
+        # a plaintext password into the page source.
+        form_data = {
+            'full_name': full_name,
+            'dob': dob,
+            'email': email,
+            'phone': phone,
+            'address': address,
+            'age': age,
+            'gender': gender,
+        }
+
         # 2. Validation Checks
         if password != confirm_password:
             messages.error(request, "Passwords do not match!")
-            return render(request, 'accounts/register.html')
-            
+            return render(request, 'accounts/register.html', form_data)
+
         if email and User.objects.filter(email=email).exists():
             messages.error(request, "An account with this email already exists.")
-            return render(request, 'accounts/register.html')
+            return render(request, 'accounts/register.html', form_data)
 
         try:
+            validate_password(password)
+        except ValidationError as e:
+            for err in e.messages:
+                messages.error(request, err)
+            return render(request, 'accounts/register.html', form_data)
+
+        try:
+            # Username is a short, human-readable handle generated from the
+            # patient's name (e.g. "kritika.sharma") -- kept separate from
+            # their email so the two records don't just repeat one another.
+            generated_username = generate_unique_username(full_name, role_prefix='patient')
+
             user = User.objects.create_user(
-                username=email, 
+                username=generated_username,
                 email=email,
                 phone=phone, 
                 password=password, 
@@ -42,7 +73,16 @@ def register_view(request):
             if hasattr(user, 'dob') and dob: user.dob = dob
             if hasattr(user, 'age') and age: user.age = int(age)
             if hasattr(user, 'gender'): user.gender = gender
-            
+
+            # Also populate Django's built-in first_name/last_name so
+            # anything that calls the standard get_full_name() (admin
+            # site, password-similarity checks, etc.) sees the same name
+            # as the custom full_name field, instead of coming up blank.
+            if full_name:
+                name_parts = full_name.strip().split(' ', 1)
+                user.first_name = name_parts[0]
+                user.last_name = name_parts[1] if len(name_parts) > 1 else ''
+
             user.save()
 
             gender_map = {'male': 'M', 'female': 'F', 'other': 'O'}
@@ -59,8 +99,19 @@ def register_view(request):
             
         except Exception as e:
             messages.error(request, f"Registration error: {str(e)}")
-            return render(request, 'accounts/register.html')
-        
+            return render(request, 'accounts/register.html', form_data)
+
+    # ---> GET Request Handling: this is a fresh visit to the page (e.g.
+    # clicking "Create an Account" after logging out), not a redisplay
+    # after a failed submission, so flush any leftover messages (like
+    # "You have been logged out successfully") the same way login_view
+    # does. Otherwise a stale message from a previous request lingers in
+    # the session and shows up here.
+    existing_messages = messages.get_messages(request)
+    for _ in existing_messages:
+        pass
+    existing_messages.used = True
+
     return render(request, 'accounts/register.html')
 
 
@@ -162,7 +213,16 @@ def technician_login_view(request):
         else:
             messages.error(request, "Invalid username or password.")
             return redirect('technician_login')
-            
+
+    # ---> GET Request Handling: flush any leftover messages from other
+    # pages (e.g. "You have been logged out successfully") the same way
+    # login_view does, so a fresh visit here starts clean.
+    else:
+        existing_messages = messages.get_messages(request)
+        for _ in existing_messages:
+            pass
+        existing_messages.used = True
+
     return render(request, 'accounts/technician_login.html')
 
 
@@ -195,6 +255,13 @@ def admin_login_view(request):
         else:
             messages.error(request, "Invalid username or password.")
             return redirect('admin_login')
+
+    # ---> GET Request Handling: same message flush as above.
+    else:
+        existing_messages = messages.get_messages(request)
+        for _ in existing_messages:
+            pass
+        existing_messages.used = True
 
     return render(request, 'accounts/admin_login.html')
 

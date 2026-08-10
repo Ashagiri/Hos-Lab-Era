@@ -293,7 +293,7 @@
                     {% for appt in active_queue %}
                     <tr>
                       <td class="fw-bold text-primary">#LMS-00{{ appt.id }}</td>
-                      <td>{{ appt.patient.get_full_name|default:appt.patient.username }}</td>
+                      <td>{{ appt.patient.full_name|default:appt.patient.get_full_name|default:appt.patient.username }}</td>
                       <td>{{ appt.test.test_name }}</td>
                       <td class="small text-secondary">
                         {{ appt.appointment_date|date:"M d, Y" }}
@@ -344,7 +344,7 @@
               <div class="activity-item">
                 <div class="small fw-semibold text-dark">{{ appt.test.test_name }}</div>
                 <div class="text-muted" style="font-size: 0.78rem;">
-                  {{ appt.patient.get_full_name|default:appt.patient.username }} &middot; {{ appt.appointment_date|date:"M d, Y" }}
+                  {{ appt.patient.full_name|default:appt.patient.get_full_name|default:appt.patient.username }} &middot; {{ appt.appointment_date|date:"M d, Y" }}
                 </div>
               </div>
               {% empty %}

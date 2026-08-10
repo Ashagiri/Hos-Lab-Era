@@ -103,6 +103,17 @@
         cursor: pointer;
       }
 
+      /* Hide native browser password reveal eye icon (Edge / IE / Chrome)
+         so it doesn't render alongside our own custom eye toggle button. */
+      input[type="password"]::-ms-reveal,
+      input[type="password"]::-ms-clear,
+      input[type="password"]::-webkit-contacts-auto-fill-button,
+      input[type="password"]::-webkit-credentials-auto-fill-button {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+      }
+
       .btn-primary-action {
         background-color: #4338ca;
         color: #ffffff;
@@ -135,7 +146,7 @@
 
     {% if messages %}
       {% for message in messages %}
-        <div class="alert alert-danger py-2 small" role="alert">
+        <div class="alert alert-{{ message.tags }} py-2 small" role="alert">
           {{ message }}
         </div>
       {% endfor %}

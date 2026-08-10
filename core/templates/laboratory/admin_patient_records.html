@@ -150,7 +150,7 @@
                 {% for patient in patients %}
                 <tr>
                   <td class="fw-bold text-primary">PT-{{ patient.id|stringformat:"04d" }}</td>
-                  <td class="fw-semibold text-dark">{{ patient.get_full_name|default:"Not provided" }}</td>
+                  <td class="fw-semibold text-dark">{{ patient.full_name|default:patient.get_full_name|default:"Not provided" }}</td>
                   <td class="text-muted small">{{ patient.username }}</td>
                   <td class="small">{{ patient.email|default:"—" }}</td>
                   <td class="small">{{ patient.phone|default:"—" }}</td>

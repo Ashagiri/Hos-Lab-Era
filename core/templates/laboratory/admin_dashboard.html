@@ -314,7 +314,7 @@
                     {% for appt in recent_activity %}
                     <tr>
                       <td class="fw-bold text-primary">#LMS-00{{ appt.id }}</td>
-                      <td>{{ appt.patient.get_full_name|default:appt.patient.username }}</td>
+                      <td>{{ appt.patient.full_name|default:appt.patient.get_full_name|default:appt.patient.username }}</td>
                       <td>{{ appt.test.test_name }}</td>
                       <td class="small text-secondary">{{ appt.appointment_date|date:"M d, Y" }}</td>
                       <td>
@@ -347,7 +347,7 @@
               </div>
               {% for patient in recent_patients %}
               <div class="activity-item">
-                <div class="small fw-semibold text-dark">{{ patient.get_full_name|default:patient.username }}</div>
+                <div class="small fw-semibold text-dark">{{ patient.full_name|default:patient.get_full_name|default:patient.username }}</div>
                 <div class="text-muted" style="font-size: 0.78rem;">{{ patient.email|default:"No email on file" }}</div>
               </div>
               {% empty %}
@@ -362,7 +362,7 @@
               </div>
               {% for tech in recent_technicians %}
               <div class="activity-item">
-                <div class="small fw-semibold text-dark">{{ tech.get_full_name|default:tech.username }}</div>
+                <div class="small fw-semibold text-dark">{{ tech.full_name|default:tech.get_full_name|default:tech.username }}</div>
                 <div class="text-muted" style="font-size: 0.78rem;">{{ tech.email|default:"No email on file" }}</div>
               </div>
               {% empty %}

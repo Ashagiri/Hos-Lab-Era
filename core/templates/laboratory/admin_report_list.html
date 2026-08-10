@@ -155,8 +155,10 @@
                 <tr>
                   <td class="fw-bold text-primary">#{{ appointment.id }}</td>
                   <td>
-                    <div class="fw-semibold text-dark">{{ appointment.patient.get_full_name|default:appointment.patient.username }}</div>
-                    <small class="text-muted d-block">{{ appointment.patient.email|default:"—" }}</small>
+                    <div class="fw-semibold text-dark">{{ appointment.patient.full_name|default:appointment.patient.get_full_name|default:appointment.patient.username }}</div>
+                    {% if appointment.patient.full_name or appointment.patient.first_name %}
+                      <small class="text-muted d-block">{{ appointment.patient.email|default:"—" }}</small>
+                    {% endif %}
                   </td>
                   <td>
                     <span class="badge bg-light text-dark border">{{ appointment.test.test_name }}</span>

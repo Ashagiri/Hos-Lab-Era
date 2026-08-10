@@ -166,6 +166,7 @@
               placeholder="Enter your Full Name" 
               pattern="^[A-Z][a-z]+(\s[A-Z][a-z]+)+$"
               title="Each name must start with a capital letter."
+              value="{{ full_name|default:'' }}"
               required
             >
           </div>
@@ -179,6 +180,7 @@
               id="dob" 
               name="dob" 
               class="form-control-clean" 
+              value="{{ dob|default:'' }}"
               required
             >
           </div>
@@ -198,6 +200,7 @@
               placeholder="Enter email address" 
               pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
               title="Please enter a valid email address."
+              value="{{ email|default:'' }}"
               required
             >
           </div>
@@ -213,6 +216,7 @@
               placeholder="Enter phone number" 
               pattern="^(98|97|96)\d{8}$"
               title="Please enter a valid 10-digit phone number starting with 98, 97, or 96."
+              value="{{ phone|default:'' }}"
               required
             >
           </div>
@@ -230,6 +234,7 @@
               name="address" 
               class="form-control-clean" 
               placeholder="Enter your address" 
+              value="{{ address|default:'' }}"
               required
             >
           </div>
@@ -294,6 +299,7 @@
               name="age" 
               class="form-control-clean" 
               placeholder="Auto-calculated from DOB" 
+              value="{{ age|default:'' }}"
               readonly
               required
             >
@@ -304,10 +310,10 @@
           <div class="input-group-custom">
             <div class="icon-addon"><i class="fa-solid fa-venus-mars"></i></div>
             <select name="gender" class="form-select-clean" required>
-              <option value="" disabled selected hidden>Select gender</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-              <option value="Other">Other</option>
+              <option value="" disabled {% if not gender %}selected{% endif %} hidden>Select gender</option>
+              <option value="Male" {% if gender == "Male" %}selected{% endif %}>Male</option>
+              <option value="Female" {% if gender == "Female" %}selected{% endif %}>Female</option>
+              <option value="Other" {% if gender == "Other" %}selected{% endif %}>Other</option>
             </select>
           </div>
         </div>

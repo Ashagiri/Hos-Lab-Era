@@ -155,7 +155,7 @@
                 {% for tech in technicians %}
                 <tr>
                   <td class="fw-bold text-primary">TC-{{ tech.id|stringformat:"04d" }}</td>
-                  <td class="fw-semibold text-dark">{{ tech.get_full_name|default:"Not provided" }}</td>
+                  <td class="fw-semibold text-dark">{{ tech.full_name|default:tech.get_full_name|default:"Not provided" }}</td>
                   <td class="text-muted small">{{ tech.username }}</td>
                   <td class="small">{{ tech.email|default:"—" }}</td>
                   <td class="small">
