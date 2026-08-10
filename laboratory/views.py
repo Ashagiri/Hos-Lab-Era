@@ -163,7 +163,7 @@ def technician_dashboard_view(request):
 
     pending_count = Appointment.objects.filter(status='Pending').count()
     completed_today_count = Appointment.objects.filter(
-        status='Completed', appointment_date__date=today
+        status='Completed', completed_at__date=today
     ).count()
     cancelled_count = Appointment.objects.filter(status='Cancelled').count()
     total_patients = Appointment.objects.values('patient').distinct().count()
@@ -262,7 +262,7 @@ def admin_dashboard_view(request):
 
     today = timezone.localdate()
     today_payment = appointments.filter(
-        status='Completed', appointment_date__date=today
+        status='Completed', completed_at__date=today
     ).aggregate(total=Sum('test__price'))['total'] or 0
 
     recent_patients = User.objects.filter(role='patient').order_by('-date_joined')[:5]
@@ -958,6 +958,14 @@ def generate_report_view(request, appointment_id):
             result.save()
 
             appointment.status = 'Completed'
+            # Only stamp completed_at the FIRST time a result is entered for
+            # this appointment. This is the moment the test is actually
+            # finished and payment is effectively collected -- it must not
+            # be overwritten by a later correction/edit to the result, or
+            # revenue would silently shift to whatever day someone later
+            # fixes a typo in the result.
+            if appointment.completed_at is None:
+                appointment.completed_at = timezone.now()
             appointment.save()
             messages.success(request, "Result saved. Please verify before uploading the final report.")
 
@@ -1022,7 +1030,12 @@ def _build_report_pdf_bytes(appointment):
     flag_text, flag_color = _compute_flag(result_value, normal_range)
 
     if hasattr(appointment.appointment_date, 'strftime'):
-        formatted_date = appointment.appointment_date.strftime('%B %d, %Y')
+        # appointment_date is a timezone-aware DateTimeField (stored in
+        # UTC). Formatting it directly can print the wrong calendar day
+        # for appointments near midnight in Asia/Kathmandu (UTC+5:45) --
+        # convert to local time first, same fix as the verification
+        # timestamp below.
+        formatted_date = timezone.localtime(appointment.appointment_date).strftime('%B %d, %Y')
     else:
         formatted_date = str(appointment.appointment_date)
 
@@ -1201,9 +1214,15 @@ def _build_report_pdf_bytes(appointment):
 
     # --- Verification / sign-off ---
     if is_verified and verified_by:
+        # verified_at is stored as a UTC-aware datetime (timezone.now()).
+        # Formatting it directly with .strftime() prints the raw UTC
+        # clock time, not the project's local time (Asia/Kathmandu,
+        # UTC+5:45) -- that's why the report showed a time nearly 6
+        # hours behind the wall clock. Convert to local time first.
+        local_verified_at = timezone.localtime(verified_at) if verified_at else None
         verified_line = (
             f'<font color="#16a34a"><b>&#10003; VERIFIED</b></font> by {_pdf_safe(verified_by)}'
-            f' on {verified_at.strftime("%B %d, %Y %I:%M %p") if verified_at else "-"}'
+            f' on {local_verified_at.strftime("%B %d, %Y %I:%M %p") if local_verified_at else "-"}'
         )
     else:
         verified_line = '<font color="#d97706"><b>PENDING VERIFICATION</b></font> &mdash; awaiting authorized sign-off'

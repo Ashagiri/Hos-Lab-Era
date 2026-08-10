@@ -63,6 +63,13 @@ class Appointment(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # Set the moment the appointment actually becomes 'Completed' (i.e. when
+    # payment is effectively collected). This is intentionally separate from
+    # appointment_date, which is only the originally SCHEDULED test date/time
+    # and may be in the past or future relative to when the test was really
+    # carried out and paid for.
+    completed_at = models.DateTimeField(null=True, blank=True)
+
     # Referral details captured at booking time
     referral_type = models.CharField(max_length=10, choices=REFERRAL_CHOICES, default='self')
     doctor_name = models.CharField(max_length=150, blank=True, null=True)
