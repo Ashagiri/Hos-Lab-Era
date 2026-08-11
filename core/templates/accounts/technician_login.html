@@ -133,13 +133,7 @@
       <h3 class="m-0 card-title-accent">Staff Portal</h3>
     </div>
 
-    {% if messages %}
-      {% for message in messages %}
-        <div class="alert alert-{{ message.tags }} py-2 small" role="alert">
-          {{ message }}
-        </div>
-      {% endfor %}
-    {% endif %}
+    
 
     <form method="POST">
       {% csrf_token %}
