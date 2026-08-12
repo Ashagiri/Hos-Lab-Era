@@ -5,6 +5,7 @@
 -----
 
 
+
 ## 🚀 Key Features Built So Far
 * **Custom Authentication Engine:** Secure registration and login workflows using Django's backend authentication.
 * **Role-Based Access Control (RBAC):** Custom user profiles equipped to support specialized roles (e.g., Patient, Pathologist, Admin).
