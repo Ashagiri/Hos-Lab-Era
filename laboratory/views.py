@@ -32,7 +32,7 @@ from reportlab.platypus import (
 )
 
 # Database App Entities
-from .models import LabTest, Appointment, TestResult, PatientProfile
+from .models import LabTest, Appointment, TestResult, PatientProfile, Payment
 from accounts.utils import generate_unique_username, generate_strong_temp_password
 
 
@@ -667,10 +667,12 @@ def booking_view(request):
             return redirect('booking')
 
         try:
+            created_appointments = []
+            total_amount = 0
             for test_id in selected_test_ids:
                 test_instance = LabTest.objects.get(id=test_id)
 
-                Appointment.objects.create(
+                appointment = Appointment.objects.create(
                     patient=user,
                     test=test_instance,
                     appointment_date=appointment_date,
@@ -683,9 +685,21 @@ def booking_view(request):
                     patient_age=patient_prof.age,
                     patient_gender=patient_prof.gender,
                 )
+                created_appointments.append(appointment)
+                total_amount += test_instance.price
 
-            messages.success(request, "Your laboratory test session has been booked successfully!")
-            return redirect('dashboard')
+            # Bundle every test booked in this single trip through the
+            # form into one Payment so the patient pays once, via
+            # whichever gateway (eSewa / Khalti / Fonepay / NIC Asia /
+            # cash at the lab) they pick on the next screen.
+            payment = Payment.objects.create(
+                patient=user,
+                amount=total_amount,
+            )
+            payment.appointments.set(created_appointments)
+
+            messages.success(request, "Your laboratory test session has been booked! Please complete payment to confirm it.")
+            return redirect('payment_select', transaction_uuid=payment.transaction_uuid)
 
         except LabTest.DoesNotExist:
             messages.error(request, "One or more selected tests could not be found. Please try again.")

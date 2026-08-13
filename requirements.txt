@@ -1,0 +1,4 @@
+Django==6.0.6
+python-dotenv
+reportlab
+requests

@@ -125,6 +125,51 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = f"LabPortal Medical Diagnostics <{EMAIL_HOST_USER}>"
 
 
+# =========================================================================
+# PAYMENT GATEWAY CONFIGURATION (Loaded from .env)
+# =========================================================================
+# All values below default to the OFFICIAL public sandbox/UAT credentials
+# published by each provider's developer docs, so the booking -> payment
+# flow works out of the box in DEBUG mode without any setup. Override every
+# one of these in your .env file with your real merchant credentials before
+# going live -- the sandbox values will never move real money, but they
+# will also never work in production.
+
+# --- eSewa (ePay v2) --------------------------------------------------
+# Official eSewa UAT/sandbox values (developer.esewa.com.np/pages/Test-credentials)
+ESEWA_PRODUCT_CODE = os.getenv('ESEWA_PRODUCT_CODE', 'EPAYTEST')
+ESEWA_SECRET_KEY = os.getenv('ESEWA_SECRET_KEY', '8gBm/:&EnhH.1/q')
+ESEWA_PAYMENT_URL = os.getenv('ESEWA_PAYMENT_URL', 'https://rc-epay.esewa.com.np/api/epay/main/v2/form')
+ESEWA_STATUS_CHECK_URL = os.getenv('ESEWA_STATUS_CHECK_URL', 'https://rc.esewa.com.np/api/epay/transaction/status/')
+# Switch to the two lines below (and your real product code/secret) for production:
+#   ESEWA_PAYMENT_URL=https://epay.esewa.com.np/api/epay/main/v2/form
+#   ESEWA_STATUS_CHECK_URL=https://esewa.com.np/api/epay/transaction/status/
+
+# --- Khalti (ePayment / KPG v2) ---------------------------------------
+# Sign up as a test merchant at https://test-admin.khalti.com to get a
+# real test secret key -- there is no shared public one like eSewa's.
+KHALTI_SECRET_KEY = os.getenv('KHALTI_SECRET_KEY', '')
+KHALTI_INITIATE_URL = os.getenv('KHALTI_INITIATE_URL', 'https://dev.khalti.com/api/v2/epayment/initiate/')
+KHALTI_LOOKUP_URL = os.getenv('KHALTI_LOOKUP_URL', 'https://dev.khalti.com/api/v2/epayment/lookup/')
+# Switch to https://khalti.com/api/v2/epayment/{initiate,lookup}/ for production.
+
+# --- Fonepay ------------------------------------------------------------
+# Requires a merchant code + shared secret issued by Fonepay after
+# merchant onboarding. Leave blank to keep the Fonepay option hidden.
+FONEPAY_MERCHANT_CODE = os.getenv('FONEPAY_MERCHANT_CODE', '')
+FONEPAY_SECRET_KEY = os.getenv('FONEPAY_SECRET_KEY', '')
+FONEPAY_PAYMENT_URL = os.getenv('FONEPAY_PAYMENT_URL', 'https://dev-clientapi.fonepay.com/api/merchantRequest')
+# Switch to https://clientapi.fonepay.com/api/merchantRequest for production.
+
+# --- NIC Asia Bank (manual direct deposit / bank transfer) -------------
+# NIC Asia doesn't expose a self-service merchant API for small
+# businesses, so this option is a "pay by bank transfer, then tell us
+# the reference number" flow that staff verify from the Admin Dashboard.
+NIC_ASIA_ACCOUNT_NAME = os.getenv('NIC_ASIA_ACCOUNT_NAME', 'LabPortal Medical Diagnostics Pvt. Ltd.')
+NIC_ASIA_ACCOUNT_NUMBER = os.getenv('NIC_ASIA_ACCOUNT_NUMBER', '0010123456789012')
+NIC_ASIA_BRANCH = os.getenv('NIC_ASIA_BRANCH', 'New Road Branch, Kathmandu')
+
+
 from django.contrib.messages import constants as messages
 
 MESSAGE_TAGS = {

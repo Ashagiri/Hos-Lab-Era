@@ -1,3 +1,5 @@
+import uuid
+
 from django.db import models
 from django.conf import settings
 
@@ -51,6 +53,11 @@ class Appointment(models.Model):
         ('self', 'Self'),
         ('doctor', 'Doctor'),
     )
+    PAYMENT_STATUS_CHOICES = (
+        ('unpaid', 'Unpaid'),
+        ('paid', 'Paid'),
+        ('failed', 'Payment Failed'),
+    )
 
     patient = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -81,8 +88,94 @@ class Appointment(models.Model):
     patient_age = models.IntegerField(blank=True, null=True)
     patient_gender = models.CharField(max_length=1, blank=True, null=True)
 
+    # Payment tracking. A booking can only be paid for once its Payment
+    # (see below) is marked successful by the gateway callback / manual
+    # bank-transfer verification -- this field is a cheap denormalized
+    # flag so templates and staff views don't need to join into Payment
+    # just to show a paid/unpaid pill.
+    payment_status = models.CharField(
+        max_length=10, choices=PAYMENT_STATUS_CHOICES, default='unpaid'
+    )
+
     def __str__(self):
         return f"{self.patient.username} - {self.test.test_name} on {self.appointment_date.date()}"
+
+
+class Payment(models.Model):
+    """
+    One Payment record represents a single checkout -- it can cover
+    several Appointments booked together in the same trip through the
+    booking form (a patient may select multiple tests at once), all
+    paid for with a single gateway transaction.
+    """
+    METHOD_CHOICES = (
+        ('esewa', 'eSewa'),
+        ('khalti', 'Khalti'),
+        ('fonepay', 'Fonepay'),
+        ('nic_asia', 'NIC Asia Bank Transfer'),
+        ('cash', 'Pay at Lab (Cash)'),
+    )
+    STATUS_CHOICES = (
+        ('pending', 'Pending'),
+        ('processing', 'Processing'),
+        ('success', 'Success'),
+        ('failed', 'Failed'),
+        ('cancelled', 'Cancelled'),
+    )
+
+    transaction_uuid = models.CharField(
+        max_length=64, unique=True, default=uuid.uuid4, editable=False
+    )
+    patient = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='payments',
+    )
+    appointments = models.ManyToManyField(Appointment, related_name='payments')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    method = models.CharField(max_length=20, choices=METHOD_CHOICES, blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+
+    # Gateway reference captured on success/failure -- eSewa's `ref_id`,
+    # Khalti's `pidx`/`transaction_id`, Fonepay's `bankTransactionId`, or
+    # (for manual bank transfer) whatever deposit slip / reference number
+    # the patient typed in for an admin to verify.
+    gateway_ref = models.CharField(max_length=150, blank=True, null=True)
+    raw_response = models.TextField(blank=True, null=True)
+
+    verified_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='verified_payments',
+        help_text="Set for manual methods (e.g. NIC Asia bank transfer) confirmed by staff.",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        method_label = self.get_method_display() if self.method else 'No method selected'
+        return f"Payment {self.transaction_uuid} - {method_label} - {self.get_status_display()}"
+
+    def mark_success(self, gateway_ref=None, raw_response=None, verified_by=None):
+        self.status = 'success'
+        if gateway_ref is not None:
+            self.gateway_ref = gateway_ref
+        if raw_response is not None:
+            self.raw_response = raw_response
+        if verified_by is not None:
+            self.verified_by = verified_by
+        self.save()
+        self.appointments.update(payment_status='paid')
+
+    def mark_failed(self, raw_response=None):
+        self.status = 'failed'
+        if raw_response is not None:
+            self.raw_response = raw_response
+        self.save()
+        self.appointments.update(payment_status='failed')
 
 
 class TestResult(models.Model):

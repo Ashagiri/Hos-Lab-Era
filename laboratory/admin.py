@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import PatientProfile, TestCategory, LabTest, Appointment
+from .models import PatientProfile, TestCategory, LabTest, Appointment, Payment
 
 
 @admin.register(PatientProfile)
@@ -56,3 +56,33 @@ class AppointmentAdmin(admin.ModelAdmin):
         return obj.appointment_date.date()
     appointment_date_only.short_description = 'Appointment Date'
     appointment_date_only.admin_order_field = 'appointment_date'
+
+
+@admin.register(Payment)
+class PaymentAdmin(admin.ModelAdmin):
+    list_display = ('transaction_uuid', 'patient_display', 'amount', 'method', 'status', 'gateway_ref', 'created_at')
+    list_filter = ('method', 'status', 'created_at')
+    search_fields = ('transaction_uuid', 'patient__username', 'patient__email', 'gateway_ref')
+    readonly_fields = ('transaction_uuid', 'created_at', 'updated_at', 'raw_response')
+    actions = ['approve_selected_payments', 'reject_selected_payments']
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related(None)
+
+    def patient_display(self, obj):
+        return obj.patient
+    patient_display.short_description = 'Patient'
+    patient_display.admin_order_field = 'patient'
+
+    @admin.action(description="Approve selected payments (mark as Paid)")
+    def approve_selected_payments(self, request, queryset):
+        for payment in queryset:
+            payment.mark_success(verified_by=request.user)
+        self.message_user(request, f"{queryset.count()} payment(s) marked as paid.")
+
+    @admin.action(description="Reject selected payments (mark as Failed)")
+    def reject_selected_payments(self, request, queryset):
+        for payment in queryset:
+            payment.mark_failed()
+        self.message_user(request, f"{queryset.count()} payment(s) marked as failed.")

@@ -26,6 +26,20 @@ from laboratory.views import (
     booking_status_view,
     cancel_booking_view,
 )
+from laboratory.payment_views import (
+    payment_select_view,
+    payment_esewa_pay,
+    payment_esewa_success,
+    payment_esewa_failure,
+    payment_khalti_pay,
+    payment_khalti_return,
+    payment_fonepay_pay,
+    payment_fonepay_return,
+    payment_bank_transfer_view,
+    payment_result_view,
+    admin_payments_view,
+    admin_verify_payment_view,
+)
 from accounts.views import register_view, login_view, technician_login_view, admin_login_view, logout_view
 
 urlpatterns = [
@@ -64,6 +78,28 @@ urlpatterns = [
     # Patient Scheduling Operations
     path('booking/', booking_view, name='booking'),
     path('booking/check-slots/', check_slot_availability, name='check_slot_availability'),
+
+    # =====================================================================
+    # Payments: choose a gateway, pay, then land on a result page
+    # =====================================================================
+    path('payment/<str:transaction_uuid>/', payment_select_view, name='payment_select'),
+    path('payment/<str:transaction_uuid>/result/', payment_result_view, name='payment_result'),
+
+    path('payment/<str:transaction_uuid>/esewa/', payment_esewa_pay, name='payment_esewa_pay'),
+    path('payment/esewa/success/', payment_esewa_success, name='payment_esewa_success'),
+    path('payment/esewa/failure/', payment_esewa_failure, name='payment_esewa_failure'),
+
+    path('payment/<str:transaction_uuid>/khalti/', payment_khalti_pay, name='payment_khalti_pay'),
+    path('payment/khalti/return/', payment_khalti_return, name='payment_khalti_return'),
+
+    path('payment/<str:transaction_uuid>/fonepay/', payment_fonepay_pay, name='payment_fonepay_pay'),
+    path('payment/fonepay/return/', payment_fonepay_return, name='payment_fonepay_return'),
+
+    path('payment/<str:transaction_uuid>/bank-transfer/', payment_bank_transfer_view, name='payment_bank_transfer'),
+
+    # Staff: verify manual (NIC Asia bank transfer) payments
+    path('dashboard/admin/payments/', admin_payments_view, name='admin_payments'),
+    path('dashboard/admin/payments/<int:payment_id>/verify/', admin_verify_payment_view, name='admin_verify_payment'),
 
     # Settings Profile Update Registry
     path('settings/', settings_view, name='settings'),
