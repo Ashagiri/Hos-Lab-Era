@@ -6,6 +6,7 @@
 
 The system provides a centralized platform where patients can create accounts, securely authenticate, access personalized dashboards, and interact with laboratory-related services. The project is designed with a modular architecture so that additional laboratory workflows and healthcare services can be integrated in the future.
 
+
 ---
 
 ## 📌 Project Overview
