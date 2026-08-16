@@ -95,6 +95,7 @@ Patients can:
 
 ### 🧑‍⚕️ Pathologist / Laboratory Staff
 
+
 Laboratory staff can manage laboratory-related activities such as:
 
 * Patient laboratory information.
