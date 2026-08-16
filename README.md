@@ -238,6 +238,7 @@ Notification Received
 
 # 📊 6. Patient Dashboard
 
+
 The system provides a personalized dashboard for authenticated patients.
 
 The dashboard can provide access to:
