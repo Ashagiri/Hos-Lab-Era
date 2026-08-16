@@ -55,6 +55,7 @@ The main objectives of Hos-Lab-Era are:
 
 # 🚀 Key Features
 
+
 ## 🔐 1. Secure User Authentication
 
 The system uses Django's authentication framework to manage user accounts securely.
