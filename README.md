@@ -141,6 +141,7 @@ The modular architecture allows additional laboratory services and workflows to 
 
 # 💳 4. Payment Management System
 
+
 The **Payment System has already been implemented** in Hos-Lab-Era.
 
 It allows patients to make payments associated with laboratory services and provides a structured way to track transaction status.
