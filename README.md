@@ -410,6 +410,7 @@ Hos-Lab-Era follows the **Django Model-Template-View (MTV)** architecture.
 
 # 🛠️ Technology Stack
 
+
 ## Current Technologies
 
 | Category             | Technology                 |
