@@ -87,6 +87,7 @@ Patients can:
 * Manage their profile.
 * View laboratory services.
 * Request laboratory tests.
+* Online appointments for test.
 * Make payments.
 * Track payment status.
 * View laboratory results.
