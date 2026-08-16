@@ -49,6 +49,7 @@ The main objectives of Hos-Lab-Era are:
 * ⚡ Reduce manual paperwork and administrative workload.
 * 📈 Build a scalable foundation for future healthcare technologies.
 
+
 ---
 
 # 🚀 Key Features
