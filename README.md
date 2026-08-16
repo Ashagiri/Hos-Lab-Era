@@ -1028,7 +1028,6 @@ If you find **Hos-Lab-Era** useful or interesting:
 
 # 🏥 Hos-Lab-Era
 
-
 ### *From Digital Laboratory Management to an Intelligent & Secure Healthcare Platform.*
 
 **Built with Python & Django.
