@@ -160,6 +160,7 @@ It allows patients to make payments associated with laboratory services and prov
 
 ### Payment Workflow
 
+
 ```text
 Patient
    │
