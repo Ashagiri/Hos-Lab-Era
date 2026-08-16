@@ -31,6 +31,7 @@ The project follows a modular and scalable architecture, making it possible to i
 
 # 🎯 Project Objectives
 
+
 The main objectives of Hos-Lab-Era are:
 
 * 🏥 Digitize hospital laboratory operations.
