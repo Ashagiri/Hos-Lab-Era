@@ -3,6 +3,7 @@
 ## Hospital Laboratory Management System
 
 
+
 <p align="center">
   <strong>A secure, digital, and scalable Hospital Laboratory Management System built with Django.</strong>
 </p>
