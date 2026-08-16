@@ -29,6 +29,7 @@ The project follows a modular and scalable architecture, making it possible to i
 
 
 
+
 ---
 
 # 🎯 Project Objectives
