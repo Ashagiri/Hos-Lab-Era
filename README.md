@@ -299,6 +299,7 @@ Patient Accesses Report
 
 # 🔄 Complete System Workflow
 
+
 The overall Hos-Lab-Era workflow is:
 
 ```text
