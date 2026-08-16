@@ -27,6 +27,7 @@ The system is designed to digitize and streamline laboratory-related activities 
 The project follows a modular and scalable architecture, making it possible to integrate advanced technologies such as **Artificial Intelligence (AI), Machine Learning, Blockchain, and cloud-based services** in future development phases.
 
 
+
 ---
 
 # 🎯 Project Objectives
