@@ -71,6 +71,7 @@ The system uses Django's authentication framework to manage user accounts secure
 * User profile management.
 * Secure access to authorized resources.
 
+
 ---
 
 ## 👥 2. Role-Based Access Control
