@@ -732,6 +732,7 @@ The next phase of Hos-Lab-Era will focus on improving intelligence, security, sc
 
 ## 🤖 Artificial Intelligence
 
+
 Planned AI features include:
 
 * AI-assisted laboratory analysis.
