@@ -1024,6 +1024,7 @@ If you find **Hos-Lab-Era** useful or interesting:
 💡 Suggest improvements
 🤝 Contribute to development
 
+
 ---
 
 # 🏥 Hos-Lab-Era
