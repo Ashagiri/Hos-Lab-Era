@@ -80,6 +80,7 @@ Hos-Lab-Era supports role-based access to ensure that users can access functiona
 
 ### 👤 Patient
 
+
 Patients can:
 
 * Register and log in.
