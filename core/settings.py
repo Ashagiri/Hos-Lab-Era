@@ -14,11 +14,23 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Load environment variables from .env file located at the project root
 load_dotenv(BASE_DIR / '.env')
 
-SECRET_KEY = 'django-insecure-m#_qjko(x5vov($6dawx(rg0jrbir-0vf@2li5$hm1v89gk$x_'
+# SECURITY WARNING: keep the secret key used in production secret!
+# Falls back to the old insecure dev key ONLY if nothing is set in .env,
+# so local setups that haven't updated their .env yet don't break.
+SECRET_KEY = os.getenv(
+    'DJANGO_SECRET_KEY',
+    'django-insecure-m#_qjko(x5vov($6dawx(rg0jrbir-0vf@2li5$hm1v89gk$x_',
+)
 
-DEBUG = True
+# SECURITY WARNING: don't run with DEBUG turned on in production!
+# Reads "True"/"False" (case-insensitive) from .env; defaults to True so
+# local development keeps working with no .env changes required.
+DEBUG = os.getenv('DJANGO_DEBUG', 'True').strip().lower() == 'true'
 
-ALLOWED_HOSTS = []
+# Comma-separated list in .env, e.g. ALLOWED_HOSTS=example.com,www.example.com
+# Defaults to localhost/127.0.0.1 for local development.
+_allowed_hosts_env = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1')
+ALLOWED_HOSTS = [h.strip() for h in _allowed_hosts_env.split(',') if h.strip()]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
