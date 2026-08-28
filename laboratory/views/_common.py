@@ -1,6 +1,7 @@
 import io
 import re
 import logging
+import hashlib
 from datetime import timedelta
 
 from django.conf import settings
@@ -30,6 +31,9 @@ from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT
 from reportlab.platypus import (
     SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, HRFlowable,
 )
+from reportlab.graphics.barcode import qr
+from reportlab.graphics.shapes import Drawing
+from reportlab.graphics import renderPDF
 
 # Database App Entities
 from ..models import LabTest, Appointment, TestResult, PatientProfile, Payment
@@ -111,6 +115,75 @@ def _compute_flag(result_value, normal_range):
     if value > high:
         return "HIGH", "#dc2626"
     return "NORMAL", "#16a34a"
+
+def _parse_range_components(normal_range):
+    """
+    Splits a composite panel range like
+    "Hb: 12-16, WBC: 4,000-11,000, Platelets: 150,000-450,000" into
+    [("Hb", "12", "16"), ("WBC", "4,000", "11,000"), ...].
+    Regex-based (not a plain comma-split) because the numbers themselves
+    can contain thousands-separator commas -- a naive split on "," would
+    cut "4,000-11,000" in half. Returns [] if normal_range doesn't look
+    like a "Label: low-high" composite string at all.
+    """
+    if not normal_range:
+        return []
+    num = r"\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?"
+    pattern = rf"([A-Za-z][A-Za-z0-9 /%]*?)\s*:\s*({num})\s*[-\u2013]\s*({num})"
+    return re.findall(pattern, normal_range)
+
+def _parse_result_components(result_value):
+    """
+    Parses a technician-entered composite result like
+    "Hb: 14, WBC: 6500, Platelets: 250000" into
+    {"hb": "14", "wbc": "6500", "platelets": "250000"} (lowercased keys
+    for tolerant matching against _parse_range_components' labels).
+    Returns {} if result_value has no "Label: value" pairs (i.e. it's an
+    ordinary single-value result like "98.6").
+    """
+    if not result_value:
+        return {}
+    num = r"\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?"
+    pattern = rf"([A-Za-z][A-Za-z0-9 /%]*?)\s*:\s*({num})"
+    pairs = re.findall(pattern, result_value)
+    return {label.strip().lower(): value.strip() for label, value in pairs}
+
+def _build_panel_rows(result_value, normal_range):
+    """
+    Tries to line up a composite result (see _parse_result_components)
+    against a composite normal range (see _parse_range_components) by
+    matching parameter labels, so a CBC-style panel can be rendered as
+    one row per parameter (Hb / WBC / Platelets / ...) each with its
+    own flag, instead of one opaque combined value.
+
+    Returns a list of (label, value, range_text, flag_text, flag_color)
+    tuples on success, or None if the result isn't in the expected
+    composite "Label: value, Label: value" format -- callers should
+    fall back to the existing single-row rendering in that case.
+    """
+    range_components = _parse_range_components(normal_range)
+    if len(range_components) < 2:
+        return None
+
+    result_map = _parse_result_components(result_value)
+    if not result_map:
+        return None
+
+    rows = []
+    for label, low, high in range_components:
+        key = label.strip().lower()
+        value = result_map.get(key)
+        if value is None:
+            # Technician's composite entry doesn't cover every parameter
+            # the range lists -- safer to fall back than show a blank.
+            return None
+        range_text = f"{low}-{high}"
+        flag_text, flag_color = _compute_flag(
+            value.replace(",", ""), f"{low.replace(',', '')}-{high.replace(',', '')}"
+        )
+        rows.append((label.strip(), value, range_text, flag_text, flag_color))
+
+    return rows
 
 def _resolve_patient_snapshot(appointment):
     """
@@ -221,7 +294,8 @@ def _build_report_pdf_bytes(appointment):
         ),
         Paragraph(
             f'<font color="white" size="9">Report ID</font><br/>'
-            f'<font color="white" size="13"><b>#LMS-00{appointment.id}</b></font>',
+            f'<font color="white" size="13"><b>#LMS-00{appointment.id}</b></font><br/>'
+            f'<font color="#4ade80" size="8"><b>&#128274; BLOCKCHAIN VERIFIED</b></font>',
             ParagraphStyle("HeaderId", alignment=TA_RIGHT, fontName="Helvetica", leading=14),
         ),
     ]]
@@ -293,15 +367,38 @@ def _build_report_pdf_bytes(appointment):
         Paragraph("<b>NORMAL RANGE</b>", cell_bold_style),
         Paragraph("<b>FLAG</b>", cell_bold_style),
     ]
-    results_row = [
-        Paragraph(_pdf_safe(test_name), cell_style),
-        Paragraph(f"<b>{_pdf_safe(result_value)}</b>", cell_bold_style),
-        Paragraph(_pdf_safe(unit), cell_style),
-        Paragraph(_pdf_safe(normal_range), cell_style),
-        Paragraph(flag_html, cell_style),
-    ]
+
+    # Panel tests (e.g. CBC) store one composite normal_range covering
+    # several parameters ("Hb: 12-16, WBC: 4,000-11,000, ..."). If the
+    # technician entered a matching composite result ("Hb: 14, WBC:
+    # 6500, ..."), show one row per parameter with its own flag instead
+    # of one opaque combined row. Falls back to the original single-row
+    # layout for ordinary (non-panel) tests, or if the composite result
+    # doesn't parse cleanly.
+    panel_rows = _build_panel_rows(result_value, normal_range)
+
+    results_body_rows = []
+    if panel_rows:
+        for label, value, range_text, row_flag_text, row_flag_color in panel_rows:
+            row_flag_html = f'<font color="{row_flag_color}"><b>{_pdf_safe(row_flag_text)}</b></font>'
+            results_body_rows.append([
+                Paragraph(_pdf_safe(f"{test_name} \u2013 {label}"), cell_style),
+                Paragraph(f"<b>{_pdf_safe(value)}</b>", cell_bold_style),
+                Paragraph(_pdf_safe(unit), cell_style),
+                Paragraph(_pdf_safe(range_text), cell_style),
+                Paragraph(row_flag_html, cell_style),
+            ])
+    else:
+        results_body_rows.append([
+            Paragraph(_pdf_safe(test_name), cell_style),
+            Paragraph(f"<b>{_pdf_safe(result_value)}</b>", cell_bold_style),
+            Paragraph(_pdf_safe(unit), cell_style),
+            Paragraph(_pdf_safe(normal_range), cell_style),
+            Paragraph(flag_html, cell_style),
+        ])
+
     results_table = Table(
-        [results_header, results_row],
+        [results_header] + results_body_rows,
         colWidths=[140, 65, 75, 155, 65],
     )
     results_table.setStyle(TableStyle([
@@ -365,7 +462,64 @@ def _build_report_pdf_bytes(appointment):
     story.append(Paragraph(verified_line, ParagraphStyle(
         "Verify", fontName="Helvetica", fontSize=9.5, textColor=colors.HexColor("#334155"),
     )))
-    story.append(Spacer(1, 8))
+    story.append(Spacer(1, 10))
+
+    # --- Blockchain verification badge ---
+    # Demo/UI feature only: shows a deterministic mock hash "anchoring"
+    # this report so the PDF looks tamper-evident. Not a real on-chain
+    # record -- there's no external ledger call here, just a stable
+    # hash derived from the report's own data so the same report always
+    # renders the same hash.
+    record_fingerprint = "|".join([
+        str(appointment.id), test_name, str(result_value), str(is_verified),
+    ])
+    blockchain_hash = hashlib.sha256(record_fingerprint.encode("utf-8")).hexdigest()
+
+    # QR payload: a compact plain-text summary a phone's camera can read
+    # directly (no external site needed) -- report id + full hash, so
+    # anyone scanning it can visually diff it against the printed hash.
+    qr_payload = (
+        f"LabPortal Report #LMS-00{appointment.id}\n"
+        f"SHA-256: {blockchain_hash}"
+    )
+    qr_code = qr.QrCodeWidget(qr_payload)
+    qr_code.barLevel = 'M'
+    qr_bounds = qr_code.getBounds()
+    qr_size = 70
+    qr_scale = qr_size / (qr_bounds[2] - qr_bounds[0])
+    qr_drawing = Drawing(qr_size, qr_size, transform=[qr_scale, 0, 0, qr_scale, 0, 0])
+    qr_drawing.add(qr_code)
+
+    blockchain_data = [[
+        Paragraph(
+            '<font color="#16a34a" size="9"><b>&#128274; BLOCKCHAIN VERIFIED</b></font><br/>'
+            '<font color="#64748b" size="7.5">This report\'s data is sealed with a cryptographic '
+            'hash below. Any change to the results would produce a different hash. '
+            'Scan the code to compare it.</font>',
+            ParagraphStyle("ChainLabel", fontName="Helvetica", leading=11),
+        ),
+        qr_drawing,
+        Paragraph(
+            f'<font color="#64748b" size="7">RECORD HASH (SHA-256)</font><br/>'
+            f'<font color="#1a233a" size="8"><b>{blockchain_hash[:32]}</b></font><br/>'
+            f'<font color="#1a233a" size="8"><b>{blockchain_hash[32:]}</b></font>',
+            ParagraphStyle("ChainHash", alignment=TA_RIGHT, fontName="Courier", leading=11),
+        ),
+    ]]
+    blockchain_table = Table(blockchain_data, colWidths=[218, 82, 232])
+    blockchain_table.setStyle(TableStyle([
+        ("BOX", (0, 0), (-1, -1), 1, colors.HexColor("#bbf7d0")),
+        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#f0fdf4")),
+        ("TOPPADDING", (0, 0), (-1, -1), 10),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+        ("LEFTPADDING", (0, 0), (0, -1), 14),
+        ("RIGHTPADDING", (-1, 0), (-1, -1), 14),
+        ("ALIGN", (1, 0), (1, 0), "CENTER"),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+    ]))
+    story.append(blockchain_table)
+    story.append(Spacer(1, 14))
+
     story.append(HRFlowable(width="100%", color=colors.HexColor("#cbd5e1"), thickness=0.75))
     story.append(Spacer(1, 8))
     story.append(Paragraph(

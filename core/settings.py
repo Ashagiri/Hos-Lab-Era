@@ -181,6 +181,15 @@ NIC_ASIA_ACCOUNT_NAME = os.getenv('NIC_ASIA_ACCOUNT_NAME', 'LabPortal Medical Di
 NIC_ASIA_ACCOUNT_NUMBER = os.getenv('NIC_ASIA_ACCOUNT_NUMBER', '0010123456789012')
 NIC_ASIA_BRANCH = os.getenv('NIC_ASIA_BRANCH', 'New Road Branch, Kathmandu')
 
+# =========================================================================
+# AI REPORT CHAT ASSISTANT (Anthropic API)
+# =========================================================================
+# Lets a patient ask plain-language questions about their own completed
+# report. Get a key from https://console.anthropic.com -- leave blank to
+# keep the "Ask AI" button disabled/hidden.
+ANTHROPIC_API_KEY = os.getenv('ANTHROPIC_API_KEY', '')
+ANTHROPIC_MODEL = os.getenv('ANTHROPIC_MODEL', 'claude-sonnet-5')
+
 
 from django.contrib.messages import constants as messages
 

@@ -25,6 +25,7 @@ from laboratory.views import (
     patient_reports_view,
     booking_status_view,
     cancel_booking_view,
+    report_chat_view,
 )
 from laboratory.payment_views import (
     payment_select_view,
@@ -120,6 +121,9 @@ urlpatterns = [
 
     # Automated Certified PDF Report Downloader
     path('report/download/<int:appointment_id>/', download_report_view, name='download_report'),
+
+    # AI Report Chat Assistant (JSON, POST-only -- see report_chat_view)
+    path('report/<int:appointment_id>/chat/', report_chat_view, name='report_chat'),
 
     # Authentication Management Ecosystem
     path('accounts/register/', register_view, name='register'),

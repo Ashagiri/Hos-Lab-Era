@@ -105,6 +105,14 @@
                       <td>
                         <input type="text" name="result_value" class="form-control form-control-sm result-input"
                                value="{{ result.result_value|default:'' }}" required placeholder="Enter value">
+                        {% if "," in appointment.test.normal_range and ":" in appointment.test.normal_range %}
+                          <div class="form-text small text-muted mt-1">
+                            This is a panel test with multiple parameters. To show each one separately
+                            on the report, enter a matching value for every label in the reference range,
+                            e.g. <code>Hb: 14, WBC: 6500, Platelets: 250000</code>. A single plain number
+                            will show as one combined "REVIEW" row instead.
+                          </div>
+                        {% endif %}
                       </td>
                       <td><span class="text-muted small">{{ appointment.test.unit|default:"—" }}</span></td>
                       <td><span class="fw-mono small">{{ appointment.test.normal_range|default:"—" }}</span></td>

@@ -164,6 +164,14 @@
                             <a href="{% url 'download_report' appointment.id %}" class="btn btn-sm btn-outline-primary fw-semibold rounded-3">
                                 <i class="fa-solid fa-download me-1"></i> Download PDF
                             </a>
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-success fw-semibold rounded-3 ask-ai-btn"
+                                    data-appointment-id="{{ appointment.id }}"
+                                    data-test-name="{{ appointment.test.test_name|default:'this test' }}"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#reportChatModal">
+                                <i class="fa-solid fa-robot me-1"></i> Ask AI
+                            </button>
                             {% else %}
                             <button class="btn btn-sm btn-outline-secondary fw-semibold rounded-3" disabled>
                                 <i class="fa-solid fa-clock me-1"></i> Not Ready
@@ -184,7 +192,200 @@
         </div>
     </div>
 
+    <!-- ==================================================================
+         AI REPORT CHAT ASSISTANT
+         One modal, reused for whichever completed report the patient
+         clicked "Ask AI" on. Conversation lives only in this page's JS
+         memory for the duration of the visit -- nothing is saved server
+         side, and switching to a different report's chat starts fresh.
+         ================================================================== -->
+    <div class="modal fade" id="reportChatModal" tabindex="-1" aria-labelledby="reportChatModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content rounded-4 border-0 shadow">
+          <div class="modal-header border-bottom-0 pb-0">
+            <div>
+              <h5 class="modal-title fw-bold text-dark mb-0" id="reportChatModalLabel">
+                <i class="fa-solid fa-robot text-success me-1"></i> Ask AI about
+                <span id="chatTestName">this report</span>
+              </h5>
+              <p class="text-muted small mb-0 mt-1">
+                For general understanding only &mdash; not a medical diagnosis. Always
+                confirm results with your doctor.
+              </p>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body pt-2">
+            <div id="chatMessages" class="d-flex flex-column gap-2 mb-3" style="min-height: 220px; max-height: 340px; overflow-y: auto;">
+              <div class="chat-bubble chat-bubble-ai">
+                Hi! I can help explain this report in plain language &mdash; what the
+                test measures, and what your result generally means. What would you
+                like to know?
+              </div>
+            </div>
+            <div id="chatError" class="alert alert-danger py-2 px-3 small mb-2 d-none"></div>
+          </div>
+          <div class="modal-footer border-top-0 pt-0">
+            <form id="chatForm" class="w-100 d-flex gap-2" autocomplete="off">
+              {% csrf_token %}
+              <input type="text" id="chatInput" class="form-control rounded-3"
+                     placeholder="e.g. What does a HIGH flag mean here?" maxlength="1000" required>
+              <button type="submit" id="chatSendBtn" class="btn btn-success rounded-3 fw-semibold px-3">
+                <i class="fa-solid fa-paper-plane"></i>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <style>
+      .chat-bubble {
+        max-width: 85%;
+        padding: 0.6rem 0.9rem;
+        border-radius: 14px;
+        font-size: 0.9rem;
+        line-height: 1.45;
+        white-space: pre-wrap;
+      }
+      .chat-bubble-ai {
+        align-self: flex-start;
+        background: #f1f5f9;
+        color: #1e293b;
+        border-bottom-left-radius: 4px;
+      }
+      .chat-bubble-user {
+        align-self: flex-end;
+        background: #0d6efd;
+        color: #ffffff;
+        border-bottom-right-radius: 4px;
+      }
+      .chat-bubble-typing {
+        align-self: flex-start;
+        background: #f1f5f9;
+        color: #64748b;
+        font-style: italic;
+      }
+    </style>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    (function () {
+      // Built from Django's own URL config (with a placeholder id) so this
+      // never drifts out of sync if the URL pattern ever changes.
+      const CHAT_URL_TEMPLATE = "{% url 'report_chat' appointment_id=999999 %}";
+      const modalEl = document.getElementById('reportChatModal');
+      const messagesEl = document.getElementById('chatMessages');
+      const errorEl = document.getElementById('chatError');
+      const formEl = document.getElementById('chatForm');
+      const inputEl = document.getElementById('chatInput');
+      const sendBtn = document.getElementById('chatSendBtn');
+      const testNameEl = document.getElementById('chatTestName');
+
+      let currentAppointmentId = null;
+      let history = [];  // [{role: 'user'|'assistant', content: str}, ...]
+
+      function addBubble(text, role) {
+        const bubble = document.createElement('div');
+        bubble.className = 'chat-bubble ' + (role === 'user' ? 'chat-bubble-user' : 'chat-bubble-ai');
+        bubble.textContent = text;
+        messagesEl.appendChild(bubble);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+        return bubble;
+      }
+
+      function showTyping() {
+        const bubble = document.createElement('div');
+        bubble.className = 'chat-bubble chat-bubble-typing';
+        bubble.id = 'chatTypingBubble';
+        bubble.textContent = 'Thinking…';
+        messagesEl.appendChild(bubble);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+      }
+
+      function hideTyping() {
+        const bubble = document.getElementById('chatTypingBubble');
+        if (bubble) bubble.remove();
+      }
+
+      // Reset the modal fresh for whichever report's "Ask AI" was clicked.
+      document.querySelectorAll('.ask-ai-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          currentAppointmentId = btn.getAttribute('data-appointment-id');
+          testNameEl.textContent = btn.getAttribute('data-test-name') || 'this report';
+          history = [];
+          errorEl.classList.add('d-none');
+          messagesEl.innerHTML = '';
+          addBubble(
+            'Hi! I can help explain this report in plain language — what the ' +
+            'test measures, and what your result generally means. What would ' +
+            'you like to know?',
+            'assistant'
+          );
+          inputEl.value = '';
+        });
+      });
+
+      formEl.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const question = inputEl.value.trim();
+        if (!question || !currentAppointmentId) return;
+
+        addBubble(question, 'user');
+        history.push({ role: 'user', content: question });
+        inputEl.value = '';
+        inputEl.disabled = true;
+        sendBtn.disabled = true;
+        errorEl.classList.add('d-none');
+        showTyping();
+
+        const csrftoken = formEl.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        fetch(CHAT_URL_TEMPLATE.replace('999999', currentAppointmentId), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken,
+          },
+          body: JSON.stringify({ question: question, history: history }),
+        })
+          .then(function (resp) {
+            return resp.json().then(function (data) {
+              return { ok: resp.ok, data: data };
+            });
+          })
+          .then(function (result) {
+            hideTyping();
+            if (result.ok && result.data.answer) {
+              addBubble(result.data.answer, 'assistant');
+              history.push({ role: 'assistant', content: result.data.answer });
+            } else {
+              errorEl.textContent = result.data.error || 'Something went wrong. Please try again.';
+              errorEl.classList.remove('d-none');
+              history.pop();  // don't keep an unanswered question in context
+            }
+          })
+          .catch(function () {
+            hideTyping();
+            errorEl.textContent = 'Couldn\'t reach the report assistant. Please check your connection and try again.';
+            errorEl.classList.remove('d-none');
+            history.pop();
+          })
+          .finally(function () {
+            inputEl.disabled = false;
+            sendBtn.disabled = false;
+            inputEl.focus();
+          });
+      });
+
+      // Fresh conversation each time the modal is closed, so re-opening
+      // it (even for the same report) doesn't carry stale context.
+      modalEl.addEventListener('hidden.bs.modal', function () {
+        history = [];
+        currentAppointmentId = null;
+      });
+    })();
+    </script>
 </body>
 </html>
 

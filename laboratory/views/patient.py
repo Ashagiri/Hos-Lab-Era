@@ -1,4 +1,5 @@
 import io
+import json
 import re
 import logging
 from datetime import timedelta
@@ -33,6 +34,7 @@ from reportlab.platypus import (
 
 # Database App Entities
 from ..models import LabTest, Appointment, TestResult, PatientProfile, Payment
+from ..ai_report_chat import ask_report_question
 from accounts.utils import generate_unique_username, generate_strong_temp_password
 
 
@@ -467,6 +469,49 @@ def download_report_view(request, appointment_id):
 
 
 # =========================================================================
-# AUTOMATED "REPORT READY" EMAIL NOTIFICATION
+# AI REPORT CHAT ASSISTANT
+# Patients ask plain-language questions about a completed report, either
+# from the My Reports page or a link in the "report ready" email. Stateless
+# server-side: the browser holds the running conversation and resends it
+# each turn, so nothing about the chat is persisted in the database.
 # =========================================================================
 
+@login_required
+def report_chat_view(request, appointment_id):
+    """
+    POST endpoint (JSON in, JSON out) backing the "Ask AI about this
+    report" widget. Only the owning patient can chat about their own
+    report, and only once it's actually Completed -- there's nothing
+    useful (and potentially confusing) to discuss before then.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required.'}, status=405)
+
+    appointment = get_object_or_404(Appointment, id=appointment_id, patient=request.user)
+    if appointment.status != 'Completed':
+        return JsonResponse(
+            {'error': 'This report isn\'t ready yet, so there\'s nothing to discuss.'},
+            status=400,
+        )
+
+    try:
+        body = json.loads(request.body or '{}')
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid request.'}, status=400)
+
+    question = (body.get('question') or '').strip()
+    raw_history = body.get('history') or []
+
+    # Only forward the well-formed shape Anthropic's API expects --
+    # never trust the client's history blob verbatim.
+    history = [
+        {'role': turn.get('role'), 'content': str(turn.get('content', ''))[:2000]}
+        for turn in raw_history
+        if isinstance(turn, dict) and turn.get('role') in ('user', 'assistant') and turn.get('content')
+    ][-12:]
+
+    answer, error = ask_report_question(appointment, question, history=history)
+    if error:
+        return JsonResponse({'error': error}, status=502 if answer is None else 200)
+
+    return JsonResponse({'answer': answer})
