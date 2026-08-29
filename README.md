@@ -69,7 +69,8 @@ To advance digital health integrity, Hos-Lab-Era incorporates **SHA-256 cryptogr
 ### 1. Clone & Setup Environment
 
 ```bash
-git clone [https://github.com/YOUR-USERNAME/Hos-Lab-Era.git](https://github.com/YOUR-USERNAME/Hos-Lab-Era.git)
+git clone [https://github.com/YOUR-USERNAME/Hos-Lab-Era.git]
+(https://github.com/YOUR-USERNAME/Hos-Lab-Era.git)
 cd Hos-Lab-Era
 
 # Create virtual environment
@@ -107,11 +108,18 @@ PAYMENT_API_KEY=your-payment-api-key
 Security Note: Never commit your active .env file or private credentials to GitHub repositories.
 
 # 📊 Current Development Status
-ModuleStatusUser Authentication & RBAC✅ CompleteTest Booking & Queue Management✅ CompletePayment Workflow & History✅ CompleteAutomated Email Notifications✅ CompleteDigital PDF Report Generator✅ CompleteSHA-256 Blockchain Integrity Seal✅ CompleteAsk AI Diagnostic Assistant✅ Complete
+ModuleStatusUser
+Authentication & RBAC|✅ Complete|
+Test Booking & Queue Management|✅ Complete|
+Payment Workflow & History|✅ Complete|
+Automated Email Notifications|✅ Complete|
+Digital PDF Report Generator|✅ Complete|
+HA-256 Blockchain Integrity Seal|✅ Complete|
+Ask AI Diagnostic Assistant✅ |Complete|
 
---- 
+---
 
-#👩‍💻 Author
+## 👩‍💻 Authors
 Asha Giri
 Komal Basnet
 
