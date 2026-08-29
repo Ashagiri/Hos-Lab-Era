@@ -1,283 +1,119 @@
-# 🏥 Hos-Lab-Era
-
-### Hospital Laboratory Management System
+# 🏥 HOS-LAB-ERA
 
 <p align="center">
-  A secure and digital laboratory management platform built with
-  <strong>Python & Django</strong>.
+  <strong>An Intelligent, Secure & Blockchain-Verified Hospital Laboratory Management System</strong>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Python-3.x-blue?logo=python">
-  <img src="https://img.shields.io/badge/Django-6.x-green?logo=django">
-  <img src="https://img.shields.io/badge/SQLite-3-blue?logo=sqlite">
-  <img src="https://img.shields.io/badge/AI-Integrated-purple">
-  <img src="https://img.shields.io/badge/Blockchain-Integrated-black">
-  <img src="https://img.shields.io/badge/Status-Active%20Development-yellow">
+  <img src="https://img.shields.io/badge/Python-3.x-blue?logo=python" alt="Python">
+  <img src="https://img.shields.io/badge/Django-6.x-green?logo=django" alt="Django">
+  <img src="https://img.shields.io/badge/Database-SQLite3-blue?logo=sqlite" alt="SQLite">
+  <img src="https://img.shields.io/badge/AI-Integrated-purple" alt="AI Integrated">
+  <img src="https://img.shields.io/badge/Security-SHA--256%20Blockchain-black" alt="Blockchain Verified">
 </p>
 
 ---
 
-## 📌 About
+## 📌 Executive Overview
 
-**Hos-Lab-Era** is a web-based **Hospital Laboratory Management System (HLMS)** designed to digitize and simplify laboratory operations.
+**Hos-Lab-Era** is a full-stack web application designed to digitize clinical laboratory operations. Built on the **Django framework**, the platform transitions traditional paper workflows into a unified digital portal managing online test booking, payment processing, diagnostic verification, dynamic PDF generation, and automated patient alerts.
 
-The system allows patients to book laboratory tests, make payments, receive notifications, view results, and access digital laboratory reports from one platform.
-
-It also includes **AI-assisted report understanding, blockchain-based record integrity, analytics, and cloud deployment**.
+To advance digital health integrity, Hos-Lab-Era incorporates **SHA-256 cryptographic blockchain hashing** to prevent report tampering, alongside an **integrated AI Assistant** that translates complex lab parameters into plain-language explanations directly inside the patient portal.
 
 ---
 
-## ✨ Features
+## 🌟 Core Highlights
 
-- 🔐 Secure Authentication & Authorization
-- 👤 Patient Profile & Dashboard
-- 🧪 Laboratory Test Management
-- 📅 Online Test Booking
-- 💳 Payment Management
-- 📧 Automated Email Notifications
-- 📊 Laboratory Result Management
-- 📄 Digital PDF Report Generation
-- 🤖 Ask AI for Report Understanding
-- ⛓️ Blockchain Record Integrity
-- 📈 Advanced Analytics
-- ☁️ Cloud Deployment
+* **⛓️ Cryptographic Record Verification**: Laboratory PDFs are sealed using SHA-256 hashes and verifiable QR codes, providing immediate validation against unauthorized record alterations.
+* **🤖 Integrated AI Diagnostic Explanation**: Features an in-dashboard "Ask AI" module allowing patients to query test results (e.g., flag meanings and reference ranges) in real time.
+* **📄 Automated Digital Reporting**: Generates official clinical diagnostic reports on demand with live processing status updates.
+* **💳 Seamless Financial & Email Workflows**: Full lifecycle management handling online service bookings, status tracking, transaction logging, and email triggers.
+* **🔐 Role-Based Access Control (RBAC)**: Enforces segregated views and permissions for **Patients**, **Pathology Staff**, and **System Administrators**.
 
 ---
 
-## 👥 User Roles
+## 👥 User Roles & Access Hierarchy
 
-### 👤 Patient
-- Register and login
-- Manage profile
-- Book laboratory tests
-- Make payments
-- Track test status
-- View results
-- Download reports
-- Use Ask AI
-- Receive email notifications
+### 👤 Patient Portal
+* Browse laboratory test services and schedule appointments online.
+* Process test payments and track real-time processing statuses.
+* Access certified PDF reports and consult the **Ask AI** assistant for test interpretations.
 
-### 🧑‍⚕️ Laboratory Staff
-- Manage laboratory tests
-- Process test requests
-- Manage results
-- Verify results
-- Generate reports
-- Update test status
+### 🧑‍⚕️ Pathologist & Laboratory Staff
+* Manage patient queue requests and process diagnostic samples.
+* Input parameter test results, flag clinical deviations, and verify final findings.
+* Sign off on digital laboratory reports to generate tamper-resistant cryptographic records.
 
-### 👨‍💼 Administrator
-- Manage users
-- Manage laboratory services
-- Manage payments
-- Manage system operations
+### 👨‍💼 System Administrator
+* Maintain user authentication roles, service costs, and database entries.
+* Oversee transaction logs, system performance metrics, and application configurations.
 
 ---
-
-## 🔄 System Workflow
-
-```text
-Patient
-   ↓
-Register / Login
-   ↓
-Patient Dashboard
-   ↓
-Book Laboratory Test
-   ↓
-Payment
-   ↓
-Laboratory Processing
-   ↓
-Result Verification
-   ↓
-Digital PDF Report
-   ↓
-Email Notification
-   ↓
-Patient Access
-
 
 ## 🛠️ Technology Stack
-Category	Technology
-Language	Python
-Backend	Django 6.x
-Frontend	HTML5, CSS3, JavaScript
-Database	SQLite3
-Authentication	Django Authentication
-Payment	Integrated Payment System
-Email	Django Email System
-Reports	Digital PDF Generation
-AI	AI-Assisted Report Explanation
-Blockchain	Record Integrity & Verification
-Analytics	Data Visualization
-Version Control	Git & GitHub
-Deployment	Cloud
-🏗️ Architecture
 
-Hos-Lab-Era follows the Django MTV architecture.
+| Domain | Technology |
+| :--- | :--- |
+| **Language** | Python 3.x |
+| **Backend Framework** | Django 6.x |
+| **Frontend** | HTML5, CSS3, JavaScript (Flexbox/CSS Grid Layouts) |
+| **Database** | SQLite3 (Development) / PostgreSQL Ready |
+| **Security Integrity** | SHA-256 Cryptographic Hashing & Verification QR Generation |
+| **AI Integration** | Context-Aware Diagnostic Explanation Engine |
+| **Notifications** | Django Core Email Subsystem |
 
-                Web Browser
-                     │
-                     ▼
-              Django Application
-                     │
-        ┌────────────┼────────────┐
-        ▼            ▼            ▼
-    Accounts     Laboratory    Payments
-        │            │            │
-        └────────────┼────────────┘
-                     │
-                     ▼
-                  Database
-                     │
-          ┌──────────┼──────────┐
-          ▼          ▼          ▼
-        Email       AI      Blockchain
+---
 
-## 📂 Project Structure
-Hos-Lab-Era/
-│
-├── core/
-├── accounts/
-├── laboratory/
-├── payments/
-│
-├── manage.py
-├── requirements.txt
-├── .gitignore
-└── README.md
+## ⚡ Quickstart Setup
 
-## 🚀 Installation
-1. Clone the repository
-git clone https://github.com/YOUR-USERNAME/Hos-Lab-Era.git
+### 1. Clone & Setup Environment
+
+```bash
+git clone [https://github.com/YOUR-USERNAME/Hos-Lab-Era.git](https://github.com/YOUR-USERNAME/Hos-Lab-Era.git)
 cd Hos-Lab-Era
-2. Create virtual environment
+
+# Create virtual environment
 python -m venv venv
-3. Activate environment
 
-Windows
-
+# Activate (Windows)
 venv\Scripts\activate
 
-Linux / macOS
-
+# Activate (Linux/macOS)
 source venv/bin/activate
-4. Install dependencies
+
+
+ 2. Install Dependencies & Migrate
 pip install -r requirements.txt
-5. Run migrations
 python manage.py makemigrations
 python manage.py migrate
-6. Create admin account
+
+3. Initialize Superuser & Run Server
 python manage.py createsuperuser
-7. Start the server
 python manage.py runserver
+Navigate to http://127.0.0.1:8000/ in your browser.
 
-Open:
-
-http://127.0.0.1:8000/
-🔐 Environment Variables
-
-Store sensitive configuration in environment variables.
-
-SECRET_KEY=your-secret-key
+#🔧 Environment Configuration
+Create a .env file in the root project folder:
+SECRET_KEY=your-custom-django-secret-key
 DEBUG=True
 
-EMAIL_HOST=
-EMAIL_PORT=
-EMAIL_HOST_USER=
-EMAIL_HOST_PASSWORD=
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_HOST_USER=your-email@example.com
+EMAIL_HOST_PASSWORD=your-app-password
+EMAIL_USE_TLS=True
 
-PAYMENT_API_KEY=
-PAYMENT_SECRET_KEY=
+PAYMENT_API_KEY=your-payment-api-key
+Security Note: Never commit your active .env file or private credentials to GitHub repositories.
 
-Never commit real credentials, API keys, passwords, or secret keys to GitHub.
+# 📊 Current Development Status
+ModuleStatusUser Authentication & RBAC✅ CompleteTest Booking & Queue Management✅ CompletePayment Workflow & History✅ CompleteAutomated Email Notifications✅ CompleteDigital PDF Report Generator✅ CompleteSHA-256 Blockchain Integrity Seal✅ CompleteAsk AI Diagnostic Assistant✅ Complete
 
-📸 Screenshots
-My Reports
-
-Ask AI
-
-Patient Dashboard
-
-Payment
-
-📊 Project Status
-Module	Status
-Authentication	✅ Completed
-Patient Dashboard	✅ Completed
-Laboratory Management	✅ Completed
-Test Booking	✅ Completed
-Payment System	✅ Completed
-Email Notifications	✅ Completed
-Laboratory Results	✅ Completed
-Digital Reports	✅ Completed
-Ask AI	✅ Completed
-Blockchain	✅ Completed
-Advanced Analytics	✅ Completed
-Cloud Deployment	✅ Completed
-PostgreSQL Migration	🔜 Planned
-🔒 Security
-
-The system uses Django security mechanisms including:
-
-Password hashing
-Authentication sessions
-CSRF protection
-Server-side validation
-Protected routes
-Role-based access control
-Permission-based access
-
-Sensitive healthcare and payment information should be handled using appropriate security and privacy practices.
-
-🔮 Future Enhancements
-🗄️ PostgreSQL production database
-🤖 Advanced AI & Machine Learning
-📊 Advanced healthcare analytics
-🔐 Multi-factor authentication
-📝 Audit logging
-☁️ Improved cloud scalability
-📱 Mobile application
-🔗 Enhanced blockchain verification
-🤝 Contributing
-
-Contributions and suggestions are welcome.
-
-git checkout -b feature/your-feature
-git add .
-git commit -m "Add: your feature"
-git push origin feature/your-feature
-
-Then create a Pull Request.
-
-📄 License
-
-This project is currently developed for educational and academic purposes.
-
+Planned
 👩‍💻 Author
 Asha Giri
+Komal Basnet
 
 IT Engineering Student | Python & Django Developer
 
 Nepal College of Information Technology (NCIT)
-
-Interests: Python • Django • Web Development • Cloud • AI • Machine Learning • Blockchain
-
-⭐ Support
-
-If you find Hos-Lab-Era useful:
-
-⭐ Star the repository
-🍴 Fork the project
-🐛 Report issues
-💡 Suggest improvements
-
-<p align="center">
-🏥 Hos-Lab-Era
-
-<strong>From Digital Laboratory Management to an Intelligent & Secure Healthcare Platform.</strong>
-
-Built with ❤️ using Python & Django 🚀
-
-</p> ```
