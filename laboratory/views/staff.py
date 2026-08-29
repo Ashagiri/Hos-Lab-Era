@@ -8,7 +8,6 @@ from django.urls import reverse
 from django.core.mail import EmailMultiAlternatives
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import FileResponse, JsonResponse
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
@@ -34,37 +33,16 @@ from reportlab.platypus import (
 # Database App Entities
 from ..models import LabTest, Appointment, TestResult, PatientProfile, Payment
 from accounts.utils import generate_unique_username, generate_strong_temp_password
+from accounts.decorators import is_technician, is_lab_staff, role_required
 
 
-# =========================================================================
-# APPOINTMENT SLOT CAPACITY CONFIG
-# =========================================================================
-
-SLOT_CAPACITY = 5
-
-TIME_SLOTS = [
-    "07:00 AM - 08:00 AM",
-    "09:00 AM - 10:00 AM",
-    "01:00 PM - 02:00 PM",
-    "02:00 PM - 03:00 PM",
-    "03:00 PM - 04:00 PM",
-    "04:00 PM - 05:00 PM",
-]
 from ._common import _resolve_patient_snapshot, _send_report_ready_email
 
-@login_required
+@role_required(is_lab_staff)
 def technician_dashboard_view(request):
     """
     Technician Overview Dashboard.
     """
-    is_tech = (
-        (hasattr(request.user, 'role') and request.user.role == 'technician')
-        or request.user.username == 'tech'
-        or request.user.is_superuser
-    )
-    if not is_tech:
-        return redirect('login')
-
     appointments = Appointment.objects.all().select_related('patient', 'test').order_by('-appointment_date')
 
     status_filter = request.GET.get('status', '').strip()
@@ -130,20 +108,11 @@ def technician_dashboard_view(request):
         'today': today,
     })
 
-@login_required
+@role_required(is_lab_staff, redirect_to='dashboard')
 def view_test_requests(request):
     """
     Dedicated standalone page listing test requests for technicians/admins.
     """
-    is_tech = (
-        (hasattr(request.user, 'role') and request.user.role in ['admin', 'technician'])
-        or request.user.username == 'tech'
-        or request.user.is_superuser
-    )
-    if not is_tech:
-        messages.error(request, "Access restricted to authorized management profiles.")
-        return redirect('dashboard')
-
     search_query = request.GET.get('q', '').strip()
     status_filter = request.GET.get('status', '').strip()
 
@@ -166,17 +135,8 @@ def view_test_requests(request):
 # PROFILE CONFIGURATIONS & SETTINGS MANAGEMENT
 # =========================================================================
 
-@login_required
+@role_required(is_lab_staff, redirect_to='dashboard')
 def generate_report_view(request, appointment_id):
-    is_staff = (
-        (hasattr(request.user, 'role') and request.user.role in ['admin', 'technician'])
-        or request.user.username == 'tech'
-        or request.user.is_superuser
-    )
-    if not is_staff:
-        messages.error(request, "Access restricted to authorized management profiles.")
-        return redirect('dashboard')
-
     appointment = get_object_or_404(Appointment, id=appointment_id)
     result = TestResult.objects.filter(appointment=appointment).first()
 
@@ -252,8 +212,14 @@ def generate_report_view(request, appointment_id):
 # SECURE REPORT DOCUMENT STREAM DISTRIBUTION
 # =========================================================================
 
-@login_required
+@role_required(is_lab_staff, redirect_to='dashboard')
 def reports_list(request):
+    """
+    NOTE: this previously had no role check beyond @login_required --
+    any authenticated patient could browse every OTHER patient's
+    completed appointments (name, test, date) just by visiting this
+    URL directly. Now gated the same as the rest of the staff area.
+    """
     appointments = Appointment.objects.filter(status='Completed').select_related('patient', 'test').order_by('-appointment_date')
     return render(request, 'laboratory/report_list.html', {'appointments': appointments})
 

@@ -8,7 +8,6 @@ from django.urls import reverse
 from django.core.mail import EmailMultiAlternatives
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import FileResponse, JsonResponse
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
@@ -34,37 +33,10 @@ from reportlab.platypus import (
 # Database App Entities
 from ..models import LabTest, Appointment, TestResult, PatientProfile, Payment
 from accounts.utils import generate_unique_username, generate_strong_temp_password
+from accounts.decorators import is_admin, role_required
 
 
-# =========================================================================
-# APPOINTMENT SLOT CAPACITY CONFIG
-# =========================================================================
-
-SLOT_CAPACITY = 5
-
-TIME_SLOTS = [
-    "07:00 AM - 08:00 AM",
-    "09:00 AM - 10:00 AM",
-    "01:00 PM - 02:00 PM",
-    "02:00 PM - 03:00 PM",
-    "03:00 PM - 04:00 PM",
-    "04:00 PM - 05:00 PM",
-]
-
-def _is_admin(user):
-    """
-    True for accounts flagged with the 'admin' role, plus superusers
-    (so the Django-created superuser account can reach the professional
-    Admin Dashboard without needing its role field hand-edited).
-    Technicians are intentionally excluded even if a technician account
-    happens to also be a superuser -- see login_view routing.
-    """
-    is_tech = (hasattr(user, 'role') and user.role == 'technician') or user.username == 'tech'
-    if is_tech:
-        return False
-    return (hasattr(user, 'role') and user.role == 'admin') or user.is_superuser
-
-@login_required
+@role_required(is_admin)
 def admin_dashboard_view(request):
     """
     Professional Admin Command Center -- a real dashboard (matching the
@@ -73,10 +45,6 @@ def admin_dashboard_view(request):
     patient/technician headcounts, revenue collected, and workflow
     status across every appointment in the system.
     """
-    if not _is_admin(request.user):
-        messages.error(request, "Access restricted to authorized administrator profiles.")
-        return redirect('login')
-
     User = get_user_model()
 
     total_patients = User.objects.filter(role='patient').count()
@@ -124,16 +92,12 @@ def admin_dashboard_view(request):
         'today': today,
     })
 
-@login_required
+@role_required(is_admin)
 def admin_patient_records_view(request):
     """
     Dedicated, searchable roster of every patient account, with a
     quick appointment count per patient.
     """
-    if not _is_admin(request.user):
-        messages.error(request, "Access restricted to authorized administrator profiles.")
-        return redirect('login')
-
     User = get_user_model()
     search_query = request.GET.get('q', '').strip()
 
@@ -152,16 +116,12 @@ def admin_patient_records_view(request):
         'total_patients': User.objects.filter(role='patient').count(),
     })
 
-@login_required
+@role_required(is_admin)
 def admin_technician_records_view(request):
     """
     Dedicated, searchable roster of every technician account, with a
     quick count of how many results each has verified/signed off.
     """
-    if not _is_admin(request.user):
-        messages.error(request, "Access restricted to authorized administrator profiles.")
-        return redirect('login')
-
     User = get_user_model()
     search_query = request.GET.get('q', '').strip()
 
@@ -180,7 +140,7 @@ def admin_technician_records_view(request):
         'total_technicians': User.objects.filter(role='technician').count(),
     })
 
-@login_required
+@role_required(is_admin)
 def admin_add_technician_view(request):
     """
     Lets an administrator create technician accounts from inside the
@@ -189,10 +149,6 @@ def admin_add_technician_view(request):
     rules as everyone else -- so accounts no longer get set up with
     something like 'test' / '123'.
     """
-    if not _is_admin(request.user):
-        messages.error(request, "Access restricted to authorized administrator profiles.")
-        return redirect('login')
-
     User = get_user_model()
     suggested_username = ''
     suggested_password = generate_strong_temp_password()
@@ -267,17 +223,13 @@ def admin_add_technician_view(request):
         'phone': phone,
     })
 
-@login_required
+@role_required(is_admin)
 def admin_edit_technician_view(request, technician_id):
     """
     Lets an administrator update a single technician's profile details,
     reactivate/suspend their access, and reset their password -- all
     subject to the same strong-password validation as account creation.
     """
-    if not _is_admin(request.user):
-        messages.error(request, "Access restricted to authorized administrator profiles.")
-        return redirect('login')
-
     User = get_user_model()
     tech = get_object_or_404(User, id=technician_id, role='technician')
 
@@ -324,7 +276,7 @@ def admin_edit_technician_view(request, technician_id):
 
     return render(request, 'laboratory/admin_edit_technician.html', {'tech': tech})
 
-@login_required
+@role_required(is_admin)
 def admin_reports_list(request):
     """
     Dedicated, read-only "All Reports" page for administrators -- a
@@ -332,10 +284,6 @@ def admin_reports_list(request):
     styled to match the rest of the admin dashboard instead of
     reusing the technician's "Generate Reports" workspace.
     """
-    if not _is_admin(request.user):
-        messages.error(request, "Access restricted to authorized administrator profiles.")
-        return redirect('login')
-
     search_query = request.GET.get('q', '').strip()
 
     appointments = Appointment.objects.filter(status='Completed').select_related(

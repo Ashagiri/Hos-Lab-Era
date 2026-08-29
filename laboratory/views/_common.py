@@ -295,7 +295,7 @@ def _build_report_pdf_bytes(appointment):
         Paragraph(
             f'<font color="white" size="9">Report ID</font><br/>'
             f'<font color="white" size="13"><b>#LMS-00{appointment.id}</b></font><br/>'
-            f'<font color="#4ade80" size="8"><b>&#128274; BLOCKCHAIN VERIFIED</b></font>',
+            f'<font color="#4ade80" size="8"><b>&#128274; INTEGRITY-CHECKSUMMED</b></font>',
             ParagraphStyle("HeaderId", alignment=TA_RIGHT, fontName="Helvetica", leading=14),
         ),
     ]]
@@ -492,7 +492,7 @@ def _build_report_pdf_bytes(appointment):
 
     blockchain_data = [[
         Paragraph(
-            '<font color="#16a34a" size="9"><b>&#128274; BLOCKCHAIN VERIFIED</b></font><br/>'
+            '<font color="#16a34a" size="9"><b>&#128274; INTEGRITY-CHECKSUMMED</b></font><br/>'
             '<font color="#64748b" size="7.5">This report\'s data is sealed with a cryptographic '
             'hash below. Any change to the results would produce a different hash. '
             'Scan the code to compare it.</font>',

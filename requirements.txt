@@ -1,4 +1,4 @@
 Django==6.0.6
-python-dotenv
-reportlab
-requests
+python-dotenv==1.2.2
+reportlab==4.4.10
+requests==2.33.1

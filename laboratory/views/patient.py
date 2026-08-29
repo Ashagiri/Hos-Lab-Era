@@ -36,23 +36,10 @@ from reportlab.platypus import (
 from ..models import LabTest, Appointment, TestResult, PatientProfile, Payment
 from ..ai_report_chat import ask_report_question
 from accounts.utils import generate_unique_username, generate_strong_temp_password
+from accounts.decorators import is_lab_staff
 
 
-# =========================================================================
-# APPOINTMENT SLOT CAPACITY CONFIG
-# =========================================================================
-
-SLOT_CAPACITY = 5
-
-TIME_SLOTS = [
-    "07:00 AM - 08:00 AM",
-    "09:00 AM - 10:00 AM",
-    "01:00 PM - 02:00 PM",
-    "02:00 PM - 03:00 PM",
-    "03:00 PM - 04:00 PM",
-    "04:00 PM - 05:00 PM",
-]
-from ._common import _build_report_pdf_bytes
+from ._common import _build_report_pdf_bytes, SLOT_CAPACITY, TIME_SLOTS
 
 def _slot_patient_count(appointment_date, appointment_time, exclude_patient_id=None):
     """
@@ -449,13 +436,7 @@ def settings_view(request):
 
 @login_required
 def download_report_view(request, appointment_id):
-    is_staff = (
-        (hasattr(request.user, 'role') and request.user.role in ['admin', 'technician'])
-        or request.user.username == 'tech'
-        or request.user.is_superuser
-    )
-
-    if is_staff:
+    if is_lab_staff(request.user):
         appointment = get_object_or_404(Appointment, id=appointment_id)
     else:
         appointment = get_object_or_404(Appointment, id=appointment_id, patient=request.user)

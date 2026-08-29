@@ -8,16 +8,9 @@ from django.urls import reverse
 
 from .models import Payment
 from . import payments as gateway
+from accounts.decorators import is_lab_staff
 
 logger = logging.getLogger(__name__)
-
-
-def _is_staff_user(user):
-    return (
-        (hasattr(user, 'role') and user.role in ['admin', 'technician'])
-        or user.username == 'tech'
-        or user.is_superuser
-    )
 
 
 def _absolute_url(request, name, *args):
@@ -272,7 +265,7 @@ def admin_payments_view(request):
     and manually confirm/reject bank-transfer (NIC Asia) payments that
     are waiting on a human to check the bank statement.
     """
-    if not _is_staff_user(request.user):
+    if not is_lab_staff(request.user):
         messages.error(request, "Access restricted to authorized management profiles.")
         return redirect('dashboard')
 
@@ -296,7 +289,7 @@ def admin_payments_view(request):
 
 @login_required
 def admin_verify_payment_view(request, payment_id):
-    if not _is_staff_user(request.user):
+    if not is_lab_staff(request.user):
         messages.error(request, "Access restricted to authorized management profiles.")
         return redirect('dashboard')
 
