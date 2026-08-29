@@ -98,7 +98,7 @@ Email Notification
 Patient Access
 
 
-🛠️ Technology Stack
+## 🛠️ Technology Stack
 Category	Technology
 Language	Python
 Backend	Django 6.x
@@ -134,7 +134,8 @@ Hos-Lab-Era follows the Django MTV architecture.
           ┌──────────┼──────────┐
           ▼          ▼          ▼
         Email       AI      Blockchain
-📂 Project Structure
+
+## 📂 Project Structure
 Hos-Lab-Era/
 │
 ├── core/
@@ -146,7 +147,8 @@ Hos-Lab-Era/
 ├── requirements.txt
 ├── .gitignore
 └── README.md
-🚀 Installation
+
+## 🚀 Installation
 1. Clone the repository
 git clone https://github.com/YOUR-USERNAME/Hos-Lab-Era.git
 cd Hos-Lab-Era
