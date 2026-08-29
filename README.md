@@ -82,17 +82,17 @@ venv\Scripts\activate
 source venv/bin/activate
 
 
- 2. Install Dependencies & Migrate
+ # 2. Install Dependencies & Migrate
 pip install -r requirements.txt
 python manage.py makemigrations
 python manage.py migrate
 
-3. Initialize Superuser & Run Server
+# 3. Initialize Superuser & Run Server
 python manage.py createsuperuser
 python manage.py runserver
 Navigate to http://127.0.0.1:8000/ in your browser.
 
-#🔧 Environment Configuration
+# 🔧 Environment Configuration
 Create a .env file in the root project folder:
 SECRET_KEY=your-custom-django-secret-key
 DEBUG=True
@@ -109,8 +109,9 @@ Security Note: Never commit your active .env file or private credentials to GitH
 # 📊 Current Development Status
 ModuleStatusUser Authentication & RBAC✅ CompleteTest Booking & Queue Management✅ CompletePayment Workflow & History✅ CompleteAutomated Email Notifications✅ CompleteDigital PDF Report Generator✅ CompleteSHA-256 Blockchain Integrity Seal✅ CompleteAsk AI Diagnostic Assistant✅ Complete
 
-Planned
-👩‍💻 Author
+--- 
+
+#👩‍💻 Author
 Asha Giri
 Komal Basnet
 
