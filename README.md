@@ -495,19 +495,15 @@ By combining:
 *Django + Digital Healthcare + Secure Reports + AI + Cryptographic Verification*
 
 the project provides a foundation for modernizing traditional laboratory management workflows.
----
 
-#👩‍💻 Author
-Asha Giri
-Komal Basnet
-=======
+
 ## 👩‍💻 Authors
 
 ### Asha Giri
+**IT Engineering Student**
 
-Nepal College of Information Technology (NCIT)
-=======
-**IT Engineering Student | Python & Django Developer**
+**Nepal College of Information Technology (NCIT)** 
+ **Python & Django Developer**
 
 ### Komal Basnet
 
