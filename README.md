@@ -501,12 +501,10 @@ the project provides a foundation for modernizing traditional laboratory managem
 **Nepal College of Information Technology (NCIT)** 
 
 ### Komal Basnet
-**IT Engineering Student**
-**Frontent Developer**
+|**IT Engineering Student**||**Frontent Developer**|
 
 ### Asha Giri
-**IT Engineering Student**
- **Backend Developer**
+|**IT Engineering Student**|**Backend Developer**|
 
 
 
