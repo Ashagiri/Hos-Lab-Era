@@ -334,7 +334,11 @@ Payment records are maintained to support transaction tracking and laboratory se
 ### 1. Clone the Repository
 
 ```bash
+<<<<<<< HEAD
 git clone [https://github.com/YOUR-USERNAME/Hos-Lab-Era.git](https://github.com/YOUR-USERNAME/Hos-Lab-Era.git)
+=======
+git clone https://github.com/YOUR-USERNAME/Hos-Lab-Era.git
+>>>>>>> cf5f37116c8f270a43372a6ea0232ae7529e8e0e
 cd Hos-Lab-Era
 ```
 
@@ -406,17 +410,143 @@ EMAIL_HOST_PASSWORD=your-app-password
 EMAIL_USE_TLS=True
 
 PAYMENT_API_KEY=your-payment-api-key
-Security Note: Never commit your active .env file or private credentials to GitHub repositories.
+```
 
+<<<<<<< HEAD
 # 📊 Current Development Status
 ModuleStatusUser Authentication & RBAC✅ CompleteTest Booking & Queue Management✅ CompletePayment Workflow & History✅ CompleteAutomated Email Notifications✅ CompleteDigital PDF Report Generator✅ CompleteSHA-256 Blockchain Integrity Seal✅ CompleteAsk AI Diagnostic Assistant✅ Complete
+=======
+### ⚠️ Security Note
+
+**Never commit your ****.env**** file, API keys, passwords, secret keys, or other private credentials to GitHub.**
+
+Add `.env` to your `.gitignore` file:
+
+```gitignore
+.env
+venv/
+__pycache__/
+*.pyc
+db.sqlite3
+```
+
+---
+
+## 📁 Suggested Project Structure
+
+```text
+Hos-Lab-Era/
+│
+├── manage.py
+├── requirements.txt
+├── .env
+├── .gitignore
+├── db.sqlite3
+│
+├── project/
+│   ├── settings.py
+│   ├── urls.py
+│   ├── wsgi.py
+│   └── asgi.py
+│
+├── apps/
+│   ├── authentication/
+│   ├── patients/
+│   ├── laboratory/
+│   ├── payments/
+│   ├── reports/
+│   ├── notifications/
+│   └── ai_assistant/
+│
+├── templates/
+├── static/
+├── media/
+└── README.md
+```
+
+> The exact folder structure may vary depending on the implementation of the project.
+
+---
+
+## 🚀 Future Enhancements
+
+Hos-Lab-Era is designed to support future technologies and advanced healthcare features.
+
+Planned enhancements include:
+
+* 🤖 Advanced AI-powered laboratory report analysis
+* ⛓️ Expanded blockchain-based medical record verification
+* ☁️ Cloud deployment and scalable infrastructure
+* 🗄️ Distributed database architecture
+* 📱 Mobile application
+* 🔔 Real-time notifications
+* 📊 Advanced laboratory analytics and dashboards
+* 🔐 Enhanced security and audit logging
+* 🧠 Machine Learning-based health insights
+* 🔗 Interoperability with external healthcare systems
+
+---
+
+## 🎯 Project Objectives
+
+The main objectives of Hos-Lab-Era are to:
+
+1. Digitize traditional laboratory management processes.
+2. Reduce paperwork and manual record management.
+3. Improve laboratory workflow efficiency.
+4. Provide patients with convenient online test booking.
+5. Simplify payment and transaction management.
+6. Provide secure digital laboratory reports.
+7. Improve medical report integrity and verification.
+8. Provide understandable laboratory information through AI.
+9. Improve communication through automated notifications.
+10. Build a foundation for future intelligent healthcare technologies.
+
+---
+
+## 🌍 Impact
+
+Hos-Lab-Era aims to contribute toward a more **digital, efficient, secure, and patient-friendly laboratory environment**.
+
+By combining:
+
+**Django + Digital Healthcare + Secure Reports + AI + Cryptographic Verification**
+
+the project provides a foundation for modernizing traditional laboratory management workflows.
+>>>>>>> cf5f37116c8f270a43372a6ea0232ae7529e8e0e
 
 --- 
 
+<<<<<<< HEAD
 #👩‍💻 Author
 Asha Giri
 Komal Basnet
+=======
+## 👩‍💻 Authors
+>>>>>>> cf5f37116c8f270a43372a6ea0232ae7529e8e0e
 
-IT Engineering Student | Python & Django Developer
+### Asha Giri
 
+<<<<<<< HEAD
 Nepal College of Information Technology (NCIT)
+=======
+**IT Engineering Student | Python & Django Developer**
+
+### Komal Basnet
+
+**IT Engineering Student**
+
+**Nepal College of Information Technology (NCIT)**
+
+---
+
+## ⭐ Support the Project
+
+If you find **Hos-Lab-Era** useful or interesting, consider giving the repository a ⭐ on GitHub.
+
+---
+
+<p align="center">
+  <strong>🏥 Hos-Lab-Era — Building a Smarter, Safer & More Digital Laboratory Experience</strong>
+</p>
+>>>>>>> cf5f37116c8f270a43372a6ea0232ae7529e8e0e
