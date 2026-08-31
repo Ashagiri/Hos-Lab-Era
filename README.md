@@ -334,11 +334,10 @@ Payment records are maintained to support transaction tracking and laboratory se
 ### 1. Clone the Repository
 
 ```bash
-<<<<<<< HEAD
 git clone [https://github.com/YOUR-USERNAME/Hos-Lab-Era.git](https://github.com/YOUR-USERNAME/Hos-Lab-Era.git)
-=======
+
 git clone https://github.com/YOUR-USERNAME/Hos-Lab-Era.git
->>>>>>> cf5f37116c8f270a43372a6ea0232ae7529e8e0e
+
 cd Hos-Lab-Era
 ```
 
