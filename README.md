@@ -26,6 +26,11 @@ The platform also includes an **AI Assistant** that helps patients understand la
 
 ---
 
+## 📸 Application Screenshots
+<img width="1895" height="1028" alt="Screenshot 2026-08-31 163112" src="https://github.com/user-attachments/assets/d087bec2-795c-455b-b959-6173afa62da2" />
+
+
+
 ## 🌟 Key Features
 
 ### ⛓️ Secure Report Verification
