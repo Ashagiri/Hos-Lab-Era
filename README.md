@@ -412,7 +412,7 @@ EMAIL_USE_TLS=True
 PAYMENT_API_KEY=your-payment-api-key
 ```
 
-<<<<<<< HEAD
+
 # 📊 Current Development Status
 ModuleStatusUser Authentication & RBAC✅ CompleteTest Booking & Queue Management✅ CompletePayment Workflow & History✅ CompleteAutomated Email Notifications✅ CompleteDigital PDF Report Generator✅ CompleteSHA-256 Blockchain Integrity Seal✅ CompleteAsk AI Diagnostic Assistant✅ Complete
 =======
@@ -513,8 +513,6 @@ By combining:
 **Django + Digital Healthcare + Secure Reports + AI + Cryptographic Verification**
 
 the project provides a foundation for modernizing traditional laboratory management workflows.
->>>>>>> cf5f37116c8f270a43372a6ea0232ae7529e8e0e
-
 --- 
 
 #👩‍💻 Author
