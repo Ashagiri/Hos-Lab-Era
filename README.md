@@ -517,17 +517,14 @@ the project provides a foundation for modernizing traditional laboratory managem
 
 --- 
 
-<<<<<<< HEAD
 #👩‍💻 Author
 Asha Giri
 Komal Basnet
 =======
 ## 👩‍💻 Authors
->>>>>>> cf5f37116c8f270a43372a6ea0232ae7529e8e0e
 
 ### Asha Giri
 
-<<<<<<< HEAD
 Nepal College of Information Technology (NCIT)
 =======
 **IT Engineering Student | Python & Django Developer**
