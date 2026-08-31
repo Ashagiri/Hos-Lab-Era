@@ -490,17 +490,10 @@ Planned enhancements include:
 ## 🎯 Project Objectives
 
 The main objectives of Hos-Lab-Era are to:
+•	To maintain and securely manage patient records, laboratory test information, and test results.
+•	To enable online laboratory test booking and appointment scheduling for patients.
+•	To provide automated notifications regarding test status and report availability through email.
 
-1. Digitize traditional laboratory management processes.
-2. Reduce paperwork and manual record management.
-3. Improve laboratory workflow efficiency.
-4. Provide patients with convenient online test booking.
-5. Simplify payment and transaction management.
-6. Provide secure digital laboratory reports.
-7. Improve medical report integrity and verification.
-8. Provide understandable laboratory information through AI.
-9. Improve communication through automated notifications.
-10. Build a foundation for future intelligent healthcare technologies.
 
 ---
 
