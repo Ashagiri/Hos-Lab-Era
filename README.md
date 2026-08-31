@@ -492,10 +492,10 @@ Hos-Lab-Era aims to contribute toward a more **digital, efficient, secure, and p
 
 By combining:
 
-**Django + Digital Healthcare + Secure Reports + AI + Cryptographic Verification**
+*Django + Digital Healthcare + Secure Reports + AI + Cryptographic Verification*
 
 the project provides a foundation for modernizing traditional laboratory management workflows.
---- 
+---
 
 #👩‍💻 Author
 Asha Giri
@@ -526,4 +526,3 @@ If you find **Hos-Lab-Era** useful or interesting, consider giving the repositor
 <p align="center">
   <strong>🏥 Hos-Lab-Era — Building a Smarter, Safer & More Digital Laboratory Experience</strong>
 </p>
->>>>>>> cf5f37116c8f270a43372a6ea0232ae7529e8e0e
