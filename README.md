@@ -474,24 +474,24 @@ Hos-Lab-Era is designed to support future technologies and advanced healthcare f
 
 Planned enhancements include:
 
-* 🤖 Advanced AI-powered laboratory report analysis
-* ⛓️ Expanded blockchain-based medical record verification
-* ☁️ Cloud deployment and scalable infrastructure
-* 🗄️ Distributed database architecture
-* 📱 Mobile application
-* 🔔 Real-time notifications
-* 📊 Advanced laboratory analytics and dashboards
-* 🔐 Enhanced security and audit logging
-* 🧠 Machine Learning-based health insights
-* 🔗 Interoperability with external healthcare systems
+* SMS Notification: Integrate SMS notifications with the existing email system to provide timely updates about appointments, test status, and report availability.
+* Enhanced Security: Implement stronger password policies, data encryption, and improved access control to protect sensitive laboratory information.
+* Online Payment: Add secure online payment facilities for laboratory tests and services.
+* Advanced Search: Provide advanced search and filtering options for easier access to patient records, tests, and reports.
+* Reporting and Analytics: Introduce improved reporting and analytics features to support better decision-making.
+* Scalable Deployment: Host the system on a production server with a more scalable database for larger-scale use.
+* Mobile Application: Develop a mobile application to provide convenient access for patients and laboratory staff.
 
 ---
 
 ## 🎯 Project Objectives
 
 The main objectives of Hos-Lab-Era are to:
+
 •	To maintain and securely manage patient records, laboratory test information, and test results.
+
 •	To enable online laboratory test booking and appointment scheduling for patients.
+
 •	To provide automated notifications regarding test status and report availability through email.
 
 
