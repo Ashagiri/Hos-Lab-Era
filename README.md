@@ -487,8 +487,6 @@ Planned enhancements include:
 
 * SMS Notification: Integrate SMS notifications with the existing email system to provide timely updates about appointments, test status, and report availability.
 * Enhanced Security: Implement stronger password policies, data encryption, and improved access control to protect sensitive laboratory information.
-* Online Payment: Add secure online payment facilities for laboratory tests and services.
-* Advanced Search: Provide advanced search and filtering options for easier access to patient records, tests, and reports.
 * Reporting and Analytics: Introduce improved reporting and analytics features to support better decision-making.
 * Scalable Deployment: Host the system on a production server with a more scalable database for larger-scale use.
 * Mobile Application: Develop a mobile application to provide convenient access for patients and laboratory staff.
