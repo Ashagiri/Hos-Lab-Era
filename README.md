@@ -515,7 +515,7 @@ the project provides a foundation for modernizing traditional laboratory managem
 
 ## ⭐ Support the Project
 
-If you find **Hos-Lab-Era** useful or interesting, consider giving the repository a ⭐ on GitHub.
+If you find **Hos-Lab-Era** useful or interesting, consider giving the repository a *⭐* on **GitHub**.
 
 ---
 
