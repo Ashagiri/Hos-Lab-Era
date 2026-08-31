@@ -498,18 +498,17 @@ the project provides a foundation for modernizing traditional laboratory managem
 
 
 ## 👩‍💻 Authors
+**Nepal College of Information Technology (NCIT)** 
+
+### Komal Basnet
+**IT Engineering Student**
+**Frontent Developer**
 
 ### Asha Giri
 **IT Engineering Student**
+ **Backend Developer**
 
-**Nepal College of Information Technology (NCIT)** 
- **Python & Django Developer**
 
-### Komal Basnet
-
-**IT Engineering Student**
-
-**Nepal College of Information Technology (NCIT)**
 
 ---
 
