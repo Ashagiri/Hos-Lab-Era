@@ -34,6 +34,7 @@ The platform also includes an **AI Assistant** that helps patients understand la
 <img width="1915" height="1021" alt="Screenshot 2026-08-31 215026" src="https://github.com/user-attachments/assets/4ef98a12-84b9-4054-b7ff-159eac329e5d" />
 <img width="1907" height="1022" alt="Screenshot 2026-08-31 163744" src="https://github.com/user-attachments/assets/71220bc6-538d-4efc-bc69-03bb50afc6cd" />
 <img width="1897" height="692" alt="Screenshot 2026-08-31 163635" src="https://github.com/user-attachments/assets/4461a5d6-ad9e-49b5-bce0-d96be852266c" />
+<img width="1902" height="1026" alt="Screenshot 2026-08-31 163655" src="https://github.com/user-attachments/assets/75d1b441-8ee1-4748-b9e9-da25de05a129" />
 <img width="817" height="966" alt="Screenshot 2026-08-31 203436" src="https://github.com/user-attachments/assets/3216f35e-b06d-4f34-ba39-0b9129b81b11" />
 
 
