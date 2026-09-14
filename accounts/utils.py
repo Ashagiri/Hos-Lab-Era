@@ -3,7 +3,7 @@ import secrets
 
 from django.contrib.auth import get_user_model
 
-
+ 
 def generate_unique_username(full_name, role_prefix='user'):
     """
     Builds a short, human-readable, unique username from a person's
