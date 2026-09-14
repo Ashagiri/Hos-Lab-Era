@@ -2,7 +2,7 @@
 Single source of truth for role-based access control.
 
 Previously every view module (admin.py, staff.py, patient.py,
-payment_views.py) re-implemented its own copy of:
+payment_views.py) re-implemented its own copy of: 
 
     (hasattr(user, 'role') and user.role in [...]) or user.username == 'tech' or user.is_superuser
 
