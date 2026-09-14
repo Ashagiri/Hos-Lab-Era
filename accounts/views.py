@@ -8,7 +8,7 @@ from .utils import generate_unique_username
 
 # Initialize the dynamic model lookup handle for your custom accounts.User swap
 User = get_user_model()
-
+ 
 
 def register_view(request):
     if request.method == 'POST':
