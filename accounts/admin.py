@@ -8,7 +8,7 @@ class CustomUserAdmin(BaseUserAdmin):
         'username', 
         'full_name', 
         'assigned_role',  
-        'phone', 
+        'phone',  
         'email', 
         'patient_gender',
         'patient_age',
